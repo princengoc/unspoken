@@ -1,46 +1,46 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthProvider";
-import { GameLayout } from "@/components/game/GameLayout";
-import { Container, Button, Center, Stack, Title, Loader } from "@mantine/core";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthProvider';
+import { Container, Button, Stack, Title, Text, Group } from '@mantine/core';
 
 export default function Home() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
-
-  console.log(`User: ${user}`);
-  console.log(`Loading: ${loading}`);
 
   useEffect(() => {
     if (!loading && !user) {
-      console.log("User not logged in, redirecting to /auth");
-      router.push("/auth");
+      router.push('/auth');
     }
   }, [user, loading, router]);
 
-  if (loading) {
-    return (
-      <Center style={{ height: "100vh" }}>
-        <Loader size="xl" />
-      </Center>
-    );
-  }
-
-  if (!user) return null; // Prevent flickering while redirecting
+  if (loading || !user) return null;
 
   return (
-    <Container>
-      <Center>
-        <Stack align="center" spacing="md">
-          <Title order={2}>Welcome, {user.email}</Title>
-          <Button color="red" onClick={logout}>
-            Logout
-          </Button>
+    <Container size="sm" py="xl">
+      <Stack gap="xl">
+        <Stack gap="xs" ta="center">
+          <Title order={1}>Welcome to Deeper</Title>
+          <Text c="dimmed">Create or join a room to start playing</Text>
         </Stack>
-      </Center>
-      <GameLayout />
+
+        <Group justify="center" gap="md">
+          <Button 
+            size="lg"
+            onClick={() => router.push('/room/create')}
+          >
+            Create Room
+          </Button>
+          <Button 
+            size="lg" 
+            variant="light"
+            onClick={() => router.push('/room/join')}
+          >
+            Join Room
+          </Button>
+        </Group>
+      </Stack>
     </Container>
   );
 }
