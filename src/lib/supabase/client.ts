@@ -177,28 +177,43 @@ export const roomsTable = {
     // Generate a 6-character alphanumeric passcode
     const passcode = Math.random().toString(36).substring(2, 8).toUpperCase();
     
+    const roomData = {
+      name,
+      created_by: createdBy,
+      passcode,
+      game_mode: 'irl',
+      is_active: true,
+      players: [],
+      settings: {
+        allow_card_exchanges: true,
+        allow_ripple_effects: true,
+        rounds_per_player: 3,
+        card_selection_time: 30,
+        base_sharing_time: 120,
+        ...settings
+      }
+    };
+
+    console.log('Creating room with data:', roomData);
+    
     const { data, error } = await supabase
       .from('rooms')
-      .insert([{
-        name,
-        created_by: createdBy,
-        passcode,
-        game_mode: 'irl',
-        is_active: true,
-        players: [],
-        settings: {
-          allow_card_exchanges: true,
-          allow_ripple_effects: true,
-          rounds_per_player: 3,
-          card_selection_time: 30,
-          base_sharing_time: 120,
-          ...settings
-        }
-      }])
+      .insert([roomData])
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Failed to create room:', {
+        error,
+        errorMessage: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw error;
+    }
+
+    console.log('Room created successfully:', data);
     return data as Room;
   },
 

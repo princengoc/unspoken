@@ -1,7 +1,6 @@
-// src/app/room/[id]/page.tsx
-
 'use client';
 
+import { use } from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/core';
@@ -12,13 +11,12 @@ import { GameLayout } from '@/components/game/GameLayout';
 import { notifications } from '@mantine/notifications';
 
 interface RoomPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default function RoomPage({ params }: RoomPageProps) {
-  const { id: roomId } = params;
+  // Unwrap the params Promise using React.use()
+  const { id: roomId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
   const { room, loading, error, leaveRoom } = useRoom(roomId);

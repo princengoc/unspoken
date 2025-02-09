@@ -1,5 +1,3 @@
-// src/lib/hooks/useRoom.ts
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { roomsTable } from '../supabase/client';
@@ -22,7 +20,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+    let subscription: ReturnType<typeof roomsTable.subscribeToRoom>;
 
     async function loadRoom() {
       if (!roomId) {
@@ -35,9 +33,9 @@ export function useRoom(roomId?: string): UseRoomReturn {
         setRoom(roomData);
 
         // Subscribe to room changes
-        unsubscribe = roomsTable.subscribeToRoom(roomId, (updatedRoom) => {
+        subscription = roomsTable.subscribeToRoom(roomId, (updatedRoom) => {
           setRoom(updatedRoom);
-        }).unsubscribe;
+        });
 
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to load room'));
@@ -50,8 +48,8 @@ export function useRoom(roomId?: string): UseRoomReturn {
 
     // Cleanup subscription
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
       }
     };
   }, [roomId]);

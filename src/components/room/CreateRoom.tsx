@@ -31,9 +31,12 @@ export function CreateRoom() {
       });
       return;
     }
-
+  
     try {
+      console.log('Creating room with name:', name, 'and settings:', settings);
       const room = await createRoom(name, settings);
+      console.log('Room created:', room);
+      
       setCreatedRoomId(room.id);
       setRoomPasscode(room.passcode);
       notifications.show({
@@ -42,9 +45,26 @@ export function CreateRoom() {
         color: 'green'
       });
     } catch (error) {
+      console.error('CreateRoom error:', error);
+      let errorMessage = 'Failed to create room';
+      
+      if (error instanceof Error) {
+        // Extract more specific error details if available
+        const supabaseError = error as any; // Type assertion for Supabase error properties
+        errorMessage = supabaseError.details || supabaseError.message || errorMessage;
+        
+        // Log detailed error information
+        console.error('Detailed error:', {
+          message: supabaseError.message,
+          details: supabaseError.details,
+          hint: supabaseError.hint,
+          code: supabaseError.code
+        });
+      }
+  
       notifications.show({
         title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to create room',
+        message: errorMessage,
         color: 'red'
       });
     }
