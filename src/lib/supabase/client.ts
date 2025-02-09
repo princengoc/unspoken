@@ -10,53 +10,115 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Helper functions for game sessions
 export const sessionsTable = {
   async create(initialData: Partial<GameSession>) {
-    const { data, error } = await supabase
-      .from('game_sessions')
-      .insert([initialData])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as GameSession;
+    try {
+      console.log('Creating game session with data:', initialData);
+      
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .insert([{
+          current_phase: 'setup',
+          cards_in_play: [],
+          discard_pile: [],
+          player_hands: {},
+          players: [],
+          ...initialData
+        }])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Supabase error creating session:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('No data returned from session creation');
+      }
+
+      console.log('Session created successfully:', data);
+      return data as GameSession;
+    } catch (error) {
+      console.error('Failed to create game session:', error);
+      throw error;
+    }
   },
 
   async get(sessionId: string) {
-    const { data, error } = await supabase
-      .from('game_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .single();
-    
-    if (error) throw error;
-    return data as GameSession;
+    try {
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+      
+      if (error) throw error;
+      if (!data) throw new Error('Session not found');
+      
+      return data as GameSession;
+    } catch (error) {
+      console.error('Failed to get session:', error);
+      throw error;
+    }
   },
 
   async update(sessionId: string, updates: Partial<GameSession>) {
-    const { data, error } = await supabase
-      .from('game_sessions')
-      .update(updates)
-      .eq('id', sessionId)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as GameSession;
-  },  
+    try {
+      const { data, error } = await supabase
+        .from('game_sessions')
+        .update(updates)
+        .eq('id', sessionId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      if (!data) throw new Error('Session not found for update');
+      
+      return data as GameSession;
+    } catch (error) {
+      console.error('Failed to update session:', error);
+      throw error;
+    }
+  },
 
   async addPlayer(sessionId: string, userId: string) {
-    // First get current players
-    const session = await this.get(sessionId);
-    const currentPlayers = session.players || [];
-    
-    const { error } = await supabase
-      .from('game_sessions')
-      .update({
-        players: [...currentPlayers, { id: userId, isOnline: true }]
-      })
-      .eq('id', sessionId);
-    
-    if (error) throw error;
+    try {
+      // First get current players
+      const session = await this.get(sessionId);
+      const currentPlayers = session.players || [];
+      
+      const { error } = await supabase
+        .from('game_sessions')
+        .update({
+          players: [...currentPlayers, { id: userId, isOnline: true }]
+        })
+        .eq('id', sessionId);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to add player to session:', error);
+      throw error;
+    }
   },
+
+  subscribeToChanges(sessionId: string, callback: (session: GameSession) => void) {
+    try {
+      return supabase
+        .channel(`game_session:${sessionId}`)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'game_sessions',
+            filter: `id=eq.${sessionId}`
+          }, 
+          (payload) => callback(payload.new as GameSession)
+        )
+        .subscribe();
+    } catch (error) {
+      console.error('Failed to subscribe to session changes:', error);
+      throw error;
+    }
+  }, 
 
   async removePlayer(sessionId: string, userId: string) {
     const session = await this.get(sessionId);
@@ -105,23 +167,7 @@ export const sessionsTable = {
     if (updateError) throw updateError;
     
     return availableCards as Card[];
-  },
-
-  // Subscribe to changes in a game session
-  subscribeToChanges(sessionId: string, callback: (session: GameSession) => void) {
-    return supabase
-      .channel(`game_session:${sessionId}`)
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'game_sessions',
-          filter: `id=eq.${sessionId}`
-        }, 
-        (payload) => callback(payload.new as GameSession)
-      )
-      .subscribe();
-  }
+  } 
 };
 
 // Helper functions for exchanges

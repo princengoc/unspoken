@@ -1,12 +1,13 @@
+// src/app/room/[id]/page.tsx
 'use client';
 
-import { use } from 'react';
-import { useEffect } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/core';
 import { IconDoorExit, IconSettings, IconUsers } from '@tabler/icons-react';
 import { useRoom } from '@/lib/hooks/useRoom';
 import { useAuth } from '@/context/AuthProvider';
+import { useGameStore } from '@/lib/hooks/useGameStore';
 import { GameLayout } from '@/components/game/GameLayout';
 import { notifications } from '@mantine/notifications';
 
@@ -15,11 +16,42 @@ interface RoomPageProps {
 }
 
 export default function RoomPage({ params }: RoomPageProps) {
-  // Unwrap the params Promise using React.use()
   const { id: roomId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-  const { room, loading, error, leaveRoom } = useRoom(roomId);
+  const { room, loading: roomLoading, error, leaveRoom } = useRoom(roomId);
+  const { initSession, sessionId, loading: sessionLoading } = useGameStore();
+  const [sessionInitialized, setSessionInitialized] = useState(false);
+
+  // Initialize or join game session when room loads
+  useEffect(() => {
+    if (!user || !room || sessionInitialized) return;
+
+    const setupSession = async () => {
+      try {
+        // If room has a current session, join it, otherwise create new
+        if (room.current_session_id) {
+          await initSession(user.id, room.id);
+        } else {
+          // Create new session as we're the first to join
+          const cleanup = await initSession(user.id, room.id);
+          if (cleanup) {
+            return () => cleanup();
+          }
+        }
+        setSessionInitialized(true);
+      } catch (err) {
+        console.error('Failed to initialize game session:', err);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to initialize game session',
+          color: 'red'
+        });
+      }
+    };
+
+    setupSession();
+  }, [user, room, sessionInitialized, initSession]);
 
   useEffect(() => {
     if (error) {
@@ -31,26 +63,6 @@ export default function RoomPage({ params }: RoomPageProps) {
       router.push('/');
     }
   }, [error, router]);
-
-  if (loading) {
-    return (
-      <Container py="xl">
-        <Card p="xl" withBorder>
-          <Stack align="center" gap="md">
-            <Loader size="lg" />
-            <Text>Loading room...</Text>
-          </Stack>
-        </Card>
-      </Container>
-    );
-  }
-
-  if (!room || !user) {
-    return null;
-  }
-
-  const isCreator = room.created_by === user.id;
-  const activePlayers = room.players.filter(p => p.is_active);
 
   const handleLeaveRoom = async () => {
     try {
@@ -64,6 +76,26 @@ export default function RoomPage({ params }: RoomPageProps) {
       });
     }
   };
+
+  if (roomLoading || sessionLoading) {
+    return (
+      <Container py="xl">
+        <Card p="xl" withBorder>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text>Setting up game session...</Text>
+          </Stack>
+        </Card>
+      </Container>
+    );
+  }
+
+  if (!room || !user || !sessionId) {
+    return null;
+  }
+
+  const isCreator = room.created_by === user.id;
+  const activePlayers = room.players.filter(p => p.is_active);
 
   return (
     <Container py="xl">
@@ -104,7 +136,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         </Card>
 
         {/* Game Layout */}
-        <GameLayout />
+        {sessionInitialized && <GameLayout />}
       </Stack>
     </Container>
   );

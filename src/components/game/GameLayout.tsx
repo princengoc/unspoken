@@ -1,8 +1,8 @@
 // src/components/game/GameLayout.tsx
-
 'use client';
 
-import { Container, Stack, Paper, Button } from '@mantine/core';
+import { useEffect } from 'react';
+import { Container, Stack, Paper, Button, Text } from '@mantine/core';
 import { Setup } from './GamePhases/Setup';
 import { Speaking } from './GamePhases/Speaking';
 import { Listening } from './GamePhases/Listening';
@@ -18,10 +18,27 @@ export function GameLayout() {
     activePlayerId,
     isSpeakerSharing,
     setSpeakerSharing,
-    setActivePlayer  // new
+    setActivePlayer,
+    setGamePhase,
+    sessionId
   } = useGameStore();
 
-  if (!user || !room) return null;
+  // Ensure game starts in setup phase for new sessions
+  useEffect(() => {
+    if (sessionId && gamePhase === null) {
+      setGamePhase('setup');
+    }
+  }, [sessionId, gamePhase, setGamePhase]);
+
+  if (!user || !room || !sessionId) {
+    return (
+      <Container size="sm">
+        <Text ta="center" c="dimmed">
+          Waiting for game session...
+        </Text>
+      </Container>
+    );
+  }
 
   const isActiveSpeaker = user.id === activePlayerId;
 
@@ -58,7 +75,11 @@ export function GameLayout() {
       case 'listening':
         return <Listening />;
       default:
-        return null;
+        return (
+          <Text ta="center" c="dimmed">
+            Initializing game...
+          </Text>
+        );
     }
   };
 
@@ -82,6 +103,7 @@ export function GameLayout() {
             <pre>
               {JSON.stringify(
                 {
+                  sessionId,
                   phase: gamePhase,
                   activePlayer: activePlayerId,
                   isSpeakerSharing,

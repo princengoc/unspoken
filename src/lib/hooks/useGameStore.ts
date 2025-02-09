@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { sessionsTable, exchangesTable } from '../supabase/client';
 import type { GameSession, Card, Exchange } from '../supabase/types';
+import { supabase } from '../supabase/client';
 
 interface GameState {
   // Session state
   sessionId: string | null;
+  loading: boolean;
   gamePhase: GameSession['current_phase'];
   activePlayerId: string | null;
   players: Array<{
@@ -54,6 +56,7 @@ const fetchCardsByIds = async (cardIds: string[]): Promise<Card[]> => {
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
   sessionId: null,
+  loading: true,
   gamePhase: 'setup',
   activePlayerId: null,
   players: [],
@@ -68,14 +71,33 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Actions
   initSession: async (userId: string, roomId?: string) => {
     try {
+      console.log('Initializing game session for user:', userId, 'room:', roomId);
+      
       const session = await sessionsTable.create({
         active_player_id: userId,
         room_id: roomId,
         current_phase: 'setup',
         cards_in_play: [],
-        discard_pile: []
+        discard_pile: [],
+        player_hands: {},
+        players: [{ id: userId, isOnline: true }]
       });
       
+      console.log('Game session created:', session);
+
+      // If room exists, update its current_session_id
+      if (roomId) {
+        const { error: updateError } = await supabase
+          .from('rooms')
+          .update({ current_session_id: session.id })
+          .eq('id', roomId);
+
+        if (updateError) {
+          console.error('Failed to update room with session ID:', updateError);
+          throw updateError;
+        }
+      }
+
       // Subscribe to session changes
       const subscription = sessionsTable.subscribeToChanges(session.id, async (updatedSession) => {
         const [cardsInPlay, discardPile] = await Promise.all([
@@ -84,7 +106,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         ]);
     
         set({
-          gamePhase: updatedSession.current_phase,  // renamed
+          gamePhase: updatedSession.current_phase,
           activePlayerId: updatedSession.active_player_id,
           cardsInPlay,
           discardPile,
@@ -94,13 +116,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       set({ 
         sessionId: session.id,
-        activePlayerId: userId
+        activePlayerId: userId,
+        gamePhase: 'setup'
       });
 
-      return subscription.unsubscribe;
+      return () => {
+        subscription.unsubscribe();
+      };
     } catch (error) {
       console.error('Failed to initialize session:', error);
-      return undefined;
+      // Re-throw the error so it can be handled by the component
+      throw error;
     }
   },
 
