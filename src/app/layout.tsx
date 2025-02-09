@@ -5,6 +5,7 @@ import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { AuthProvider } from '../context/AuthProvider';
+import { NavBar } from '@/components/layout/NavBar';
 
 const theme = {
   primaryColor: 'blue',
@@ -39,7 +40,8 @@ export default function RootLayout({
         <MantineProvider theme={theme} defaultColorScheme="light">
           <AuthProvider>
             <Notifications />
-            {children}
+            <NavBar />
+              {children}
           </AuthProvider>
         </MantineProvider>
       </body>

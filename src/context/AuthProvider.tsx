@@ -35,14 +35,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const createInitialProfile = async (userId: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .insert([{ id: userId }])
+      .single();
+  
+    if (error && error.code !== '23505') { // Ignore duplicate key violations
+      console.error('Error creating profile:', error);
+    }
+  };
+  
+
   const loginWithEmail = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signUpWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
+    if (data.user) {
+      await createInitialProfile(data.user.id);
+    }
   };
 
   const logout = async () => {
