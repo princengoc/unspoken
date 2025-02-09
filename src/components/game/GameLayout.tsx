@@ -1,7 +1,9 @@
 'use client';
 
 import { Container, Title, SegmentedControl, Group, Switch, Stack, Paper } from '@mantine/core';
-import { Setup, Speaking, Listening } from './GamePhases';
+import { Setup } from './GamePhases/Setup';
+import { Speaking } from './GamePhases/Speaking';
+import { Listening } from './GamePhases/Listening';
 import { useGameStore } from '@/lib/hooks/useGameStore';
 
 export function GameLayout() {

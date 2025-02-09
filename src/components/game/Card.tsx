@@ -2,7 +2,8 @@
 
 import { Card, Group, Text, Button, Avatar, Tooltip, Badge, Stack } from '@mantine/core';
 import { IconShare2 } from '@tabler/icons-react';
-import { useGameStore, type Card as CardType } from '@/lib/hooks/useGameStore';
+import { useGameStore } from '@/lib/hooks/useGameStore';
+import type { Card as CardType } from '@/lib/supabase/types';
 
 interface GameCardProps {
   card: CardType;
@@ -45,9 +46,9 @@ export function GameCard({ card, index, total, showExchange = false }: GameCardP
             radius="xl"
             color="blue"
           >
-            {card.contributor[0].toUpperCase()}
+            {card.contributor_id?.toUpperCase()}
           </Avatar>
-          <Text size="sm" c="dimmed">{card.contributor}</Text>
+          <Text size="sm" c="dimmed">{card.contributor_id}</Text>
         </Group>
       </Stack>
     </Card>

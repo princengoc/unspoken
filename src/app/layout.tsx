@@ -1,8 +1,10 @@
 'use client';
 
 import './globals.css';
+import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import { AuthProvider } from '../context/AuthProvider';
 
 const theme = {
   primaryColor: 'blue',
@@ -35,8 +37,10 @@ export default function RootLayout({
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="light">
-          <Notifications />
-          {children}
+          <AuthProvider>
+            <Notifications />
+            {children}
+          </AuthProvider>
         </MantineProvider>
       </body>
     </html>
