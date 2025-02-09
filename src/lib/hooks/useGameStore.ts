@@ -1,4 +1,3 @@
-// src/lib/hooks/useGameStore.ts
 import { create } from 'zustand';
 import { sessionsTable, exchangesTable } from '../supabase/client';
 import type { GameSession, Card, Exchange } from '../supabase/types';
@@ -8,25 +7,34 @@ interface GameState {
   sessionId: string | null;
   currentPhase: GameSession['current_phase'];
   activePlayerId: string | null;
+  players: Array<{
+    id: string;
+    username: string | null;
+    isOnline: boolean;
+  }>;
   
   // Local UI state
   isSpeakerSharing: boolean;
   activeReactions: string[];
   isRippled: boolean;
   
-  // Card state (cached from Supabase)
+  // Card state
   cardsInPlay: Card[];
   discardPile: Card[];
+  playerHands: Record<string, Card[]>;
   
   // Exchange state
   pendingExchanges: Exchange[];
   
   // Actions
-  initSession: (userId: string) => Promise<void>;
+  initSession: (userId: string, roomId?: string) => Promise<(() => void) | undefined>;
+  joinSession: (sessionId: string, userId: string) => Promise<void>;
+  leaveSession: (userId: string) => Promise<void>;
   setPhase: (phase: GameSession['current_phase']) => Promise<void>;
   setSpeakerSharing: (isSharing: boolean) => void;
   toggleReaction: (reaction: string) => void;
   toggleRipple: () => void;
+  dealCards: (userId: string) => Promise<void>;
   proposeExchange: (recipientId: string, offeredCardId: string, requestedCardId: string) => Promise<void>;
   respondToExchange: (exchangeId: string, accept: boolean) => Promise<void>;
 }
@@ -36,35 +44,79 @@ export const useGameStore = create<GameState>((set, get) => ({
   sessionId: null,
   currentPhase: 'setup',
   activePlayerId: null,
+  players: [],
   isSpeakerSharing: false,
   activeReactions: [],
   isRippled: false,
   cardsInPlay: [],
   discardPile: [],
+  playerHands: {},
   pendingExchanges: [],
   
   // Actions
-  initSession: async (userId: string) => {
+  initSession: async (userId: string, roomId?: string) => {
     try {
-      const session = await sessionsTable.create(userId);
+      const session = await sessionsTable.create({
+        active_player_id: userId,
+        room_id: roomId,
+        current_phase: 'setup',
+        cards_in_play: [],
+        discard_pile: []
+      });
       
       // Subscribe to session changes
-      sessionsTable.subscribeToChanges(session.id, (updatedSession) => {
+      const subscription = sessionsTable.subscribeToChanges(session.id, (updatedSession) => {
         set({
           currentPhase: updatedSession.current_phase,
           activePlayerId: updatedSession.active_player_id,
-          // Update cards when they change in the session
           cardsInPlay: updatedSession.cards_in_play,
           discardPile: updatedSession.discard_pile,
+          players: updatedSession.players || []
         });
       });
       
       set({ 
         sessionId: session.id,
-        activePlayerId: userId,
+        activePlayerId: userId
       });
+
+      // Return cleanup function
+      return () => {
+        subscription.unsubscribe();
+      };
     } catch (error) {
       console.error('Failed to initialize session:', error);
+      return undefined;
+    }
+  },
+
+  joinSession: async (sessionId: string, userId: string) => {
+    try {
+      await sessionsTable.addPlayer(sessionId, userId);
+      set({ sessionId });
+
+      // Subscribe to exchanges
+      exchangesTable.subscribeToChanges(sessionId, (exchanges) => {
+        set({ pendingExchanges: exchanges });
+      });
+    } catch (error) {
+      console.error('Failed to join session:', error);
+    }
+  },
+
+  leaveSession: async (userId: string) => {
+    const { sessionId } = get();
+    if (!sessionId) return;
+
+    try {
+      await sessionsTable.removePlayer(sessionId, userId);
+      set({ 
+        sessionId: null,
+        activePlayerId: null,
+        players: get().players.filter(p => p.id !== userId)
+      });
+    } catch (error) {
+      console.error('Failed to leave session:', error);
     }
   },
   
@@ -95,18 +147,36 @@ export const useGameStore = create<GameState>((set, get) => ({
   toggleRipple: () => {
     set((state) => ({ isRippled: !state.isRippled }));
   },
-  
-  proposeExchange: async (recipientId, offeredCardId, requestedCardId) => {
+
+  dealCards: async (userId: string) => {
     const { sessionId } = get();
     if (!sessionId) return;
+
+    try {
+      const cards = await sessionsTable.dealCards(sessionId, userId);
+      set((state) => ({
+        playerHands: {
+          ...state.playerHands,
+          [userId]: cards
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to deal cards:', error);
+    }
+  },
+  
+  proposeExchange: async (recipientId, offeredCardId, requestedCardId) => {
+    const { sessionId, activePlayerId } = get();
+    if (!sessionId || !activePlayerId) return;
     
     try {
       const exchange = await exchangesTable.create({
         session_id: sessionId,
-        requester_id: get().activePlayerId!,
+        requester_id: activePlayerId,
         recipient_id: recipientId,
         offered_card_id: offeredCardId,
-        requested_card_id: requestedCardId
+        requested_card_id: requestedCardId,
+        status: 'pending'
       });
       
       set((state) => ({
