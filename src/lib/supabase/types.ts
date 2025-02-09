@@ -33,3 +33,44 @@ export type Exchange = {
   status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
 }
+
+
+export type Room = {
+  id: string;
+  passcode: string;
+  created_by: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  game_mode: 'irl' | 'remote';
+  current_session_id?: string;
+  players: RoomPlayer[];
+  settings?: RoomSettings;
+}
+
+export type RoomPlayer = {
+  id: string;
+  username: string | null;
+  joined_at: string;
+  is_active: boolean;
+  last_seen_at: string;
+}
+
+export type RoomSettings = {
+  allow_card_exchanges: boolean;
+  allow_ripple_effects: boolean;
+  rounds_per_player: number;
+  card_selection_time: number;  // in seconds
+  base_sharing_time: number;    // in seconds
+}
+
+export type RoomInvite = {
+  id: string;
+  room_id: string;
+  passcode: string;
+  created_at: string;
+  expires_at: string;
+  created_by: string;
+  is_valid: boolean;
+}

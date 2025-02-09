@@ -5,7 +5,7 @@ import type { GameSession, Card, Exchange } from '../supabase/types';
 interface GameState {
   // Session state
   sessionId: string | null;
-  currentPhase: GameSession['current_phase'];
+  gamePhase: GameSession['current_phase'];
   activePlayerId: string | null;
   players: Array<{
     id: string;
@@ -30,7 +30,8 @@ interface GameState {
   initSession: (userId: string, roomId?: string) => Promise<(() => void) | undefined>;
   joinSession: (sessionId: string, userId: string) => Promise<void>;
   leaveSession: (userId: string) => Promise<void>;
-  setPhase: (phase: GameSession['current_phase']) => Promise<void>;
+  setGamePhase: (phase: GameSession['current_phase']) => Promise<void>;
+  setActivePlayer: (playerId: string) => Promise<void>;
   setSpeakerSharing: (isSharing: boolean) => void;
   toggleReaction: (reaction: string) => void;
   toggleRipple: () => void;
@@ -53,7 +54,7 @@ const fetchCardsByIds = async (cardIds: string[]): Promise<Card[]> => {
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
   sessionId: null,
-  currentPhase: 'setup',
+  gamePhase: 'setup',
   activePlayerId: null,
   players: [],
   isSpeakerSharing: false,
@@ -77,23 +78,18 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       // Subscribe to session changes
       const subscription = sessionsTable.subscribeToChanges(session.id, async (updatedSession) => {
-        try {
-          // Fetch full card objects for both cards in play and discard pile
-          const [cardsInPlay, discardPile] = await Promise.all([
-            fetchCardsByIds(updatedSession.cards_in_play || []),
-            fetchCardsByIds(updatedSession.discard_pile || [])
-          ]);
-      
-          set({
-            currentPhase: updatedSession.current_phase,
-            activePlayerId: updatedSession.active_player_id,
-            cardsInPlay,
-            discardPile,
-            players: updatedSession.players || []
-          });
-        } catch (error) {
-          console.error('Error fetching cards:', error);
-        }
+        const [cardsInPlay, discardPile] = await Promise.all([
+          fetchCardsByIds(updatedSession.cards_in_play || []),
+          fetchCardsByIds(updatedSession.discard_pile || [])
+        ]);
+    
+        set({
+          gamePhase: updatedSession.current_phase,  // renamed
+          activePlayerId: updatedSession.active_player_id,
+          cardsInPlay,
+          discardPile,
+          players: updatedSession.players || []
+        });
       });
       
       set({ 
@@ -101,10 +97,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         activePlayerId: userId
       });
 
-      // Return cleanup function
-      return () => {
-        subscription.unsubscribe();
-      };
+      return subscription.unsubscribe;
     } catch (error) {
       console.error('Failed to initialize session:', error);
       return undefined;
@@ -141,15 +134,27 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
   
-  setPhase: async (phase) => {
+  setGamePhase: async (phase) => {  
     const { sessionId } = get();
     if (!sessionId) return;
     
     try {
       await sessionsTable.update(sessionId, { current_phase: phase });
-      set({ currentPhase: phase });
+      set({ gamePhase: phase });  // renamed
     } catch (error) {
       console.error('Failed to update phase:', error);
+    }
+  },
+
+  setActivePlayer: async (playerId) => {
+    const { sessionId } = get();
+    if (!sessionId) return;
+
+    try {
+      await sessionsTable.update(sessionId, { active_player_id: playerId });
+      set({ activePlayerId: playerId });
+    } catch (error) {
+      console.error('Failed to update active player:', error);
     }
   },
   

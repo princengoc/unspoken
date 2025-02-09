@@ -1,0 +1,144 @@
+// src/lib/hooks/useRoom.ts
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthProvider';
+import { roomsTable } from '../supabase/client';
+import type { Room, RoomSettings } from '../supabase/types';
+
+interface UseRoomReturn {
+  room: Room | null;
+  loading: boolean;
+  error: Error | null;
+  createRoom: (name: string, settings?: Partial<RoomSettings>) => Promise<Room>;
+  joinRoom: (passcode: string) => Promise<Room>;
+  updateSettings: (settings: Partial<RoomSettings>) => Promise<void>;
+  leaveRoom: () => Promise<void>;
+}
+
+export function useRoom(roomId?: string): UseRoomReturn {
+  const { user } = useAuth();
+  const [room, setRoom] = useState<Room | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    async function loadRoom() {
+      if (!roomId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const roomData = await roomsTable.get(roomId);
+        setRoom(roomData);
+
+        // Subscribe to room changes
+        unsubscribe = roomsTable.subscribeToRoom(roomId, (updatedRoom) => {
+          setRoom(updatedRoom);
+        }).unsubscribe;
+
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to load room'));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadRoom();
+
+    // Cleanup subscription
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [roomId]);
+
+  // Update player's "last seen" status periodically while in room
+  useEffect(() => {
+    if (!room?.id || !user?.id) return;
+
+    const intervalId = setInterval(() => {
+      roomsTable.updatePlayerStatus(room.id, user.id, true).catch(console.error);
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [room?.id, user?.id]);
+
+  const createRoom = async (name: string, settings?: Partial<RoomSettings>): Promise<Room> => {
+    if (!user) throw new Error('Must be logged in to create a room');
+
+    try {
+      setLoading(true);
+      const newRoom = await roomsTable.create(name, user.id, settings);
+      setRoom(newRoom);
+      return newRoom;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to create room');
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const joinRoom = async (passcode: string): Promise<Room> => {
+    if (!user) throw new Error('Must be logged in to join a room');
+
+    try {
+      setLoading(true);
+      const joinedRoom = await roomsTable.join(passcode, {
+        id: user.id,
+        username: null, // Will be populated from profiles
+        is_active: true
+      });
+      setRoom(joinedRoom);
+      return joinedRoom;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to join room');
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateSettings = async (settings: Partial<RoomSettings>): Promise<void> => {
+    if (!room?.id) throw new Error('No active room');
+    if (room.created_by !== user?.id) throw new Error('Only room creator can update settings');
+
+    try {
+      const updatedRoom = await roomsTable.updateSettings(room.id, settings);
+      setRoom(updatedRoom);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to update settings');
+      setError(error);
+      throw error;
+    }
+  };
+
+  const leaveRoom = async (): Promise<void> => {
+    if (!room?.id || !user?.id) return;
+
+    try {
+      await roomsTable.updatePlayerStatus(room.id, user.id, false);
+      setRoom(null);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to leave room');
+      setError(error);
+      throw error;
+    }
+  };
+
+  return {
+    room,
+    loading,
+    error,
+    createRoom,
+    joinRoom,
+    updateSettings,
+    leaveRoom
+  };
+}
