@@ -30,6 +30,18 @@ export const sessionsTable = {
     return data as GameSession;
   },
 
+  async update(sessionId: string, updates: Partial<GameSession>) {
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .update(updates)
+      .eq('id', sessionId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as GameSession;
+  },  
+
   async addPlayer(sessionId: string, userId: string) {
     // First get current players
     const session = await this.get(sessionId);

@@ -39,6 +39,17 @@ interface GameState {
   respondToExchange: (exchangeId: string, accept: boolean) => Promise<void>;
 }
 
+const fetchCardsByIds = async (cardIds: string[]): Promise<Card[]> => {
+  if (!cardIds.length) return [];
+  const { data, error } = await supabase
+    .from('cards')
+    .select('*')
+    .in('id', cardIds);
+    
+  if (error) throw error;
+  return data as Card[];
+};
+
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
   sessionId: null,
@@ -65,14 +76,24 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
       
       // Subscribe to session changes
-      const subscription = sessionsTable.subscribeToChanges(session.id, (updatedSession) => {
-        set({
-          currentPhase: updatedSession.current_phase,
-          activePlayerId: updatedSession.active_player_id,
-          cardsInPlay: updatedSession.cards_in_play,
-          discardPile: updatedSession.discard_pile,
-          players: updatedSession.players || []
-        });
+      const subscription = sessionsTable.subscribeToChanges(session.id, async (updatedSession) => {
+        try {
+          // Fetch full card objects for both cards in play and discard pile
+          const [cardsInPlay, discardPile] = await Promise.all([
+            fetchCardsByIds(updatedSession.cards_in_play || []),
+            fetchCardsByIds(updatedSession.discard_pile || [])
+          ]);
+      
+          set({
+            currentPhase: updatedSession.current_phase,
+            activePlayerId: updatedSession.active_player_id,
+            cardsInPlay,
+            discardPile,
+            players: updatedSession.players || []
+          });
+        } catch (error) {
+          console.error('Error fetching cards:', error);
+        }
       });
       
       set({ 
@@ -176,7 +197,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         recipient_id: recipientId,
         offered_card_id: offeredCardId,
         requested_card_id: requestedCardId,
-        status: 'pending'
       });
       
       set((state) => ({
