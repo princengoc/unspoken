@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Stack, Text, rem, Card } from '@mantine/core';
+import { Stack, Text, rem } from '@mantine/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 import type { Card as CardType } from '@/core/game/types';
+import { Card } from '../Card';
 import { CardIndicators } from './CardIndicators';
 import { useCardControls } from './useCardControls';
 import { ScaleIn } from '@/components/animations/Motion';
@@ -23,10 +24,10 @@ export function CardDeck({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [showDirections, setShowDirections] = useState(true);
-  const { controls, handleSwipe } = useCardControls();
+  const [highlightedCard, setHighlightedCard] = useState<string | null>(null);
+  const { controls } = useCardControls();
 
   useEffect(() => {
-    // Hide direction indicators after first interaction
     if (direction) {
       setShowDirections(false);
     }
@@ -36,13 +37,43 @@ export function CardDeck({
     if (!canSwipe) return;
 
     setDirection(swipeDirection);
-    await handleSwipe(swipeDirection);
+    setHighlightedCard(null);
 
-    if (swipeDirection === 'right' && onSelect) {
-      onSelect(cards[currentIndex]);
+    // Smooth transition with minimal animation
+    await controls.start({ 
+      x: swipeDirection === 'right' ? 100 : -100,
+      opacity: 0,
+      transition: { duration: 0.2, ease: 'easeOut' }
+    });
+
+    // Update index with cycling
+    setCurrentIndex(prev => {
+      if (swipeDirection === 'right') {
+        return prev === cards.length - 1 ? 0 : prev + 1;
+      } else {
+        return prev === 0 ? cards.length - 1 : prev - 1;
+      }
+    });
+
+    // Reset position smoothly
+    await controls.set({ x: swipeDirection === 'right' ? -50 : 50, opacity: 0 });
+    await controls.start({ 
+      x: 0, 
+      opacity: 1,
+      transition: { duration: 0.2, ease: 'easeOut' }
+    });
+  };
+
+  const handleCardTap = () => {
+    const currentCard = cards[currentIndex];
+    if (highlightedCard === currentCard.id) {
+      // If already highlighted, select it
+      onSelect?.(currentCard);
+      setHighlightedCard(null);
+    } else {
+      // First tap highlights
+      setHighlightedCard(currentCard.id);
     }
-
-    setCurrentIndex(prev => Math.min(prev + 1, cards.length - 1));
   };
 
   if (!cards.length) {
@@ -81,12 +112,14 @@ export function CardDeck({
               controls.start({ x: 0 });
             }
           }}
-          whileDrag={{ scale: 1.05 }}
+          onClick={handleCardTap}
+          whileDrag={{ scale: 1.02 }}
         >
           <Card
             card={cards[currentIndex]}
             index={currentIndex}
             total={cards.length}
+            selected={highlightedCard === cards[currentIndex].id}
           />
         </motion.div>
       </AnimatePresence>

@@ -143,35 +143,6 @@ export function GameBoardContent({ room, sessionId }: GameBoardProps) {
     <Container size="sm">
       <Stack gap="xl">
         {renderGamePhase()}
-
-        {process.env.NODE_ENV === 'development' && (
-          <Paper 
-            shadow="sm" 
-            pos="fixed" 
-            bottom={0} 
-            left={0} 
-            right={0} 
-            bg="gray.0"
-            p="md"
-            withBorder
-          >
-            <pre>
-              {JSON.stringify(
-                {
-                  sessionId,
-                  phase,
-                  activePlayer: activePlayerId,
-                  isSpeakerSharing,
-                  currentUser: user.id,
-                  playerCount: room.players.length,
-                  roomId: room.id
-                },
-                null,
-                2
-              )}
-            </pre>
-          </Paper>
-        )}
       </Stack>
     </Container>
   );

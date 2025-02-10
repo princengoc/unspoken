@@ -27,6 +27,7 @@ export function Setup({
 
   const stateMachine = useGameState();
   const userHand = playerHands[user.id] || [];
+  console.log('Debug userHand:', userHand);
   const hasSelected = !!selectedCards[user.id];
   const allPlayersSelected = Object.keys(playerHands).length > 0 && 
     stateMachine.areAllPlayersSelected();
