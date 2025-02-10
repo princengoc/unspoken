@@ -1,13 +1,14 @@
 'use client';
-import { use, useState } from 'react';
-import { Box, Container, ActionIcon, Group, Text, Stack } from '@mantine/core';
+
+import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { IconDoorExit, IconSettings, IconUsers, IconMenu2 } from '@tabler/icons-react';
+import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/core';
+import { IconDoorExit, IconSettings, IconUsers } from '@tabler/icons-react';
 import { useRoom } from '@/hooks/room/useRoom';
 import { useAuth } from '@/context/AuthProvider';
+import { gameStatesService } from '@/services/supabase/gameStates';
 import { GameBoard } from '@/components/game/GameBoard';
 import { notifications } from '@mantine/notifications';
-import BottomSheet from '@/components/layout/BottomSheet';
 
 interface RoomPageProps {
   params: Promise<{ id: string }>;
@@ -17,8 +18,79 @@ export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-  const { room, loading, error, leaveRoom } = useRoom(roomId);
-  const [showMenu, setShowMenu] = useState(false);
+  const { room, loading: roomLoading, error, leaveRoom } = useRoom(roomId);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize or join game session when room loads
+  useEffect(() => {
+    if (!user || !room || sessionId) return;
+
+    const setupSession = async () => {
+      try {
+        setLoading(true);
+        
+        if (room.current_session_id) {
+          // Join existing session
+          const gameState = await gameStatesService.get(room.current_session_id);
+          
+          // Update state with current player if not already present
+          const playerExists = gameState.players.some(p => p.id === user.id);
+          if (!playerExists) {
+            await gameStatesService.update(room.current_session_id, {
+              players: [...gameState.players, { 
+                id: user.id, 
+                username: null, 
+                isOnline: true 
+              }]
+            });
+          }
+          
+          setSessionId(room.current_session_id);
+        } else {
+          // Create new game state with current room players
+          const gameState = await gameStatesService.create({
+            activePlayerId: user.id,
+            room_id: room.id,
+            phase: 'setup',
+            cardsInPlay: [],
+            discardPile: [],
+            playerHands: {},
+            isSpeakerSharing: false,
+            pendingExchanges: [],
+            players: room.players.map(p => ({
+              id: p.id,
+              username: p.username,
+              isOnline: p.isOnline
+            }))
+          });
+          setSessionId(gameState.id);
+        }
+      } catch (err) {
+        console.error('Failed to initialize game state:', err);
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to initialize game state',
+          color: 'red'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setupSession();
+  }, [user, room, sessionId]);
+
+  useEffect(() => {
+    if (error) {
+      notifications.show({
+        title: 'Error',
+        message: error.message,
+        color: 'red'
+      });
+      router.push('/');
+    }
+  }, [error, router]);
 
   const handleLeaveRoom = async () => {
     try {
@@ -33,73 +105,76 @@ export default function RoomPage({ params }: RoomPageProps) {
     }
   };
 
-  if (loading || !room || !user) {
-    return null; // Or a loading spinner
+  if (roomLoading || loading) {
+    return (
+      <Container py="xl">
+        <Card p="xl" withBorder>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text>Setting up game session...</Text>
+          </Stack>
+        </Card>
+      </Container>
+    );
   }
 
-  const activePlayers = room.players.filter(p => p.isOnline);
+  if (!room || !user) {
+    return (
+      <Container py="xl">
+        <Card p="xl" withBorder>
+          <Stack align="center" gap="md">
+            <Text>Room not found</Text>
+            <Button onClick={() => router.push('/')}>Return Home</Button>
+          </Stack>
+        </Card>
+      </Container>
+    );
+  }
+
   const isCreator = room.created_by === user.id;
+  const activePlayers = room.players.filter(p => p.isOnline);
 
   return (
-    <Box style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Main Content Area */}
-      <Box style={{ flex: 1, overflow: 'auto' }}>
-        <GameBoard room={room} sessionId={room.current_session_id || ''} />
-      </Box>
+    <Container py="xl">
+      <Stack gap="lg">
+        {/* Room Header */}
+        <Card withBorder>
+          <Stack gap="md">
+            <Group justify="space-between">
+              <Text size="xl" fw={700}>{room.name}</Text>
+              <Group>
+                {isCreator && (
+                  <Button
+                    variant="light"
+                    leftSection={<IconSettings size={16} />}
+                    onClick={() => {/* Open settings modal */}}
+                  >
+                    Settings
+                  </Button>
+                )}
+                <Button
+                  variant="light"
+                  color="red"
+                  leftSection={<IconDoorExit size={16} />}
+                  onClick={handleLeaveRoom}
+                >
+                  Leave Room
+                </Button>
+              </Group>
+            </Group>
 
-      {/* Bottom Navigation */}
-      <Box 
-        py="xs" 
-        px="md" 
-        bg="var(--mantine-color-body)"
-        style={{ 
-          borderTop: '1px solid var(--mantine-color-gray-2)',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
-        <Group justify="space-between">
-          {/* Left side - Room info */}
-          <Group gap="sm">
-            <ActionIcon variant="subtle" size="lg" color="blue">
-              <IconUsers size={20} />
-            </ActionIcon>
-            <Text size="sm">{activePlayers.length} online</Text>
-          </Group>
+            <Group gap="xs">
+              <IconUsers size={16} />
+              <Text size="sm" c="dimmed">
+                {activePlayers.length} active player{activePlayers.length !== 1 ? 's' : ''}
+              </Text>
+            </Group>
+          </Stack>
+        </Card>
 
-          {/* Right side - Actions */}
-          <Group gap="xs">
-            {isCreator && (
-              <ActionIcon 
-                variant="subtle" 
-                color="blue" 
-                size="lg"
-                onClick={() => setShowMenu(true)}
-              >
-                <IconSettings size={20} />
-              </ActionIcon>
-            )}
-            <ActionIcon 
-              variant="subtle" 
-              color="red" 
-              size="lg"
-              onClick={handleLeaveRoom}
-            >
-              <IconDoorExit size={20} />
-            </ActionIcon>
-          </Group>
-        </Group>
-      </Box>
-
-      {/* Settings Menu (for room creator) */}
-      <BottomSheet
-        opened={showMenu}
-        onClose={() => setShowMenu(false)}
-      >
-        <Stack>
-          <Text size="lg" fw={500}>Room Settings</Text>
-          {/* Add room settings controls here */}
-        </Stack>
-      </BottomSheet>
-    </Box>
+        {/* Game Board */}
+        {sessionId && <GameBoard room={room} sessionId={sessionId} />}
+      </Stack>
+    </Container>
   );
 }
