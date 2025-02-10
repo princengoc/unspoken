@@ -18,12 +18,11 @@ export async function fetchCardsByIds(cardIds: string[]): Promise<Card[]> {
 }
 
 const fromDatabaseState = async (dbState: any): Promise<GameState> => {
-  // Fetch full card objects for all card IDs
   const allCardIds = [
     ...(dbState.cardsInPlay || []),
     ...(dbState.discardPile || []),
     ...Object.values(dbState.playerHands || {}).flat()
-  ] as string[];
+  ];
 
   let cards: Card[] = [];
   if (allCardIds.length > 0) {
@@ -36,10 +35,9 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     cards = data;
   }
 
-  // Create lookup for efficient card finding
   const cardMap = new Map(cards.map(card => [card.id, card]));
 
-  // Convert card IDs to Card objects
+  // Convert card Ids to Card objects
   const cardsInPlay = (dbState.cardsInPlay || [])
     .map((id: string) => cardMap.get(id))
     .filter(Boolean) as Card[];
@@ -65,7 +63,7 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     discardPile,
     playerHands,
     isSpeakerSharing: dbState.isSpeakerSharing || false,
-    pendingExchanges: [] // Handled by separate subscription
+    pendingExchanges: []
   };
 };
 
@@ -131,7 +129,11 @@ export const gameStatesService = {
   },
 
   async update(stateId: string, updates: Partial<GameState>): Promise<GameState> {
-    // Convert Card objects to IDs for database
+    if (updates.cardsInPlay && !updates.cardsInPlay.every(card => typeof card === 'object' && 'id' in card)) {
+      throw new Error(`Invalid cardsInPlay: expected array of Card objects. See: ${JSON.stringify(updates.cardsInPlay)}`);
+    }
+
+    // Convert Card objects to IDs for database update
     const dbUpdates = {
       ...updates,
       cardsInPlay: updates.cardsInPlay?.map(card => card.id),

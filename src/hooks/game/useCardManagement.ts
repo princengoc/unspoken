@@ -44,15 +44,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         cardsInPlay: updatedCardsInPlay
       });
 
-      // Fetch and update the full card objects
-      const { data: cards } = await supabase
-        .from('cards')
-        .select('*')
-        .in('id', updatedCardsInPlay);
-
-      if (cards) {
-        stateMachine.dispatch(gameActions.cardsSelected(cards));
-      }
+      stateMachine.dispatch(gameActions.cardsSelected(updatedCardsInPlay));
 
     } catch (error) {
       console.error('Failed to select card:', error);
