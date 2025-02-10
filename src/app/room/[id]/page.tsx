@@ -36,8 +36,7 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [loading, setLoading] = useState(true);
   const [gameState, setGameState] = useState<any>(null);
 
-  // Initialize or join game session when room loads.
-  // This logic remains unchanged. Any live updates to gameState are handled elsewhere.
+  // Initialize or join game session (logic remains unchanged)
   useEffect(() => {
     if (!user || !room || sessionId) return;
 
@@ -46,10 +45,10 @@ export default function RoomPage({ params }: RoomPageProps) {
         setLoading(true);
 
         if (room.current_session_id) {
-          // Join an existing session.
+          // Join existing session
           const state = await gameStatesService.get(room.current_session_id);
 
-          // Ensure the current user is included as a player.
+          // Ensure the current user is included as a player
           const playerExists = state.players.some((p: any) => p.id === user.id);
           if (!playerExists) {
             await gameStatesService.update(room.current_session_id, {
@@ -62,13 +61,12 @@ export default function RoomPage({ params }: RoomPageProps) {
           setSessionId(room.current_session_id);
           setGameState(state);
         } else {
-          // Create a new game state.
-          // (Note: The "round" property is added here if available. If not used elsewhere, it will simply not display.)
+          // Create a new game state
           const state = await gameStatesService.create({
             activePlayerId: user.id,
             room_id: room.id,
             phase: 'setup',
-            round: 1, // Optional: Remove or adjust if your core game state doesn't use this.
+            round: 1, // Optional: Include round number if needed
             cardsInPlay: [],
             discardPile: [],
             playerHands: {},
@@ -98,7 +96,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     setupSession();
   }, [user, room, sessionId]);
 
-  // Handle room errors as before.
+  // Handle any room errors (unchanged)
   useEffect(() => {
     if (error) {
       notifications.show({
@@ -149,41 +147,53 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   return (
     <Container py="xl">
-      {/* Slim Top Bar */}
-      <Group position="apart" align="center" mb="md">
-        {/* Left: Avatars for each room player */}
-        <Group spacing="xs">
+      {/* Top Bar */}
+      <Group position="apart" align="center" mb="md" style={{ width: '100%' }}>
+        {/* Left: Player Avatars */}
+        <Group spacing="md">
           {room.players.map((p: any) => (
-            <Avatar key={p.id} radius="xl" size="md">
+            <Avatar
+              key={p.id}
+              radius="xl"
+              size="lg"
+              // Highlight the current user's avatar with a border
+              sx={(theme) => ({
+                border: p.id === user.id ? `2px solid ${theme.colors.green[6]}` : undefined,
+              })}
+            >
               {p.username ? p.username.charAt(0).toUpperCase() : 'U'}
             </Avatar>
           ))}
         </Group>
 
-        {/* Right: Game state info & control buttons */}
-        <Group spacing="xs">
+        {/* Middle: Game State Indicators */}
+        <Group spacing="md">
           {gameState && (
             <>
-              <Indicator label={gameState.cardsInPlay?.length || 0} size={16} color="blue">
-                <IconLayoutGrid size={20} />
+              <Indicator label={gameState.cardsInPlay?.length || 0} size={20} color="blue">
+                <IconLayoutGrid size={24} />
               </Indicator>
-              <Indicator label={gameState.discardPile?.length || 0} size={16} color="red">
-                <IconTrash size={20} />
+              <Indicator label={gameState.discardPile?.length || 0} size={20} color="red">
+                <IconTrash size={24} />
               </Indicator>
               {typeof gameState.round !== 'undefined' && (
-                <Indicator label={gameState.round} size={16} color="green">
-                  <IconReload size={20} />
+                <Indicator label={gameState.round} size={20} color="green">
+                  <IconReload size={24} />
                 </Indicator>
               )}
             </>
           )}
+        </Group>
+
+        {/* Right: Settings & Exit */}
+        <Group spacing="md">
           {isCreator && (
-            <Button variant="subtle" compact="true" onClick={() => { /* Open settings modal */ }}>
-              <IconSettings size={16} />
+            <Button variant="subtle" size="lg" onClick={() => { /* Open settings modal */ }}>
+              <IconSettings size={24} />
             </Button>
           )}
-          <Button variant="subtle" compact="true" color="red" onClick={handleLeaveRoom}>
-            <IconDoorExit size={16} />
+          <Button variant="subtle" size="lg" color="red" onClick={handleLeaveRoom}>
+            <IconDoorExit size={24} />
           </Button>
         </Group>
       </Group>

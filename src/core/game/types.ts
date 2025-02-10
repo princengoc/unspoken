@@ -16,6 +16,7 @@ export type GameState = {
   players: Player[];
   cardsInPlay: Card[];
   discardPile: Card[];
+  round: number;
   isSpeakerSharing: boolean;
   pendingExchanges: Exchange[];
   playerHands: Record<string, Card[]>;
