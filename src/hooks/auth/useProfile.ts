@@ -1,4 +1,3 @@
-// src/lib/hooks/useProfile.ts
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/services/supabase/client';

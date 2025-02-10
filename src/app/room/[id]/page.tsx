@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/core';
 import { IconDoorExit, IconSettings, IconUsers } from '@tabler/icons-react';
-import { useRoom } from '@/lib/hooks/useRoom';
+import { useRoom } from '@/hooks/room/useRoom';
 import { useAuth } from '@/context/AuthProvider';
 import { sessionsService } from '@/services/supabase/sessions';
 import { GameBoard } from '@/components/game/GameBoard';

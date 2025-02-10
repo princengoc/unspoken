@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, TextInput, Stack, Button, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useRoom } from '@/lib/hooks/useRoom';
+import { useRoom } from '@/hooks/room/useRoom';
 
 export function JoinRoom() {
   const router = useRouter();

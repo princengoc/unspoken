@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Card, TextInput, Stack, Button, Switch, Group, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconAdjustments } from '@tabler/icons-react';
-import { useRoom } from '@/lib/hooks/useRoom';
+import { useRoom } from '@/hooks/room/useRoom';
 import { RoomPasscode } from './RoomPasscode';
-import type { RoomSettings } from '@/lib/supabase/types';
+import type { RoomSettings } from '@/core/game/types';
 
 export function CreateRoom() {
   const router = useRouter();
