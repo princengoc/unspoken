@@ -26,14 +26,15 @@ export function Setup({
 
   const userHand = playerHands[user.id] || [];
   const hasSelected = !!selectedCards[user.id];
-  const allPlayersSelected = Object.keys(playerHands).every(playerId => selectedCards[playerId]);
+  const allPlayersSelected = Object.keys(playerHands).length > 0 &&
+    Object.keys(playerHands).every(playerId => selectedCards[playerId]);
 
   // When all players have selected their cards, add wild cards to the pool
   useEffect(() => {
     if (allPlayersSelected) {
       onAddWildCards();
     }
-  }, [allPlayersSelected, onAddWildCards]);
+  }, [allPlayersSelected]);
   
   return (
     <Stack gap="xl">

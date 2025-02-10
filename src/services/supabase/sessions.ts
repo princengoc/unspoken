@@ -82,11 +82,11 @@ export const sessionsService = {
     const { data: availableCards, error: cardsError } = await supabase
       .from('cards')
       .select('*')
-      .not('id', 'in', [
-        ...(session.cards_in_play || []),
-        ...(session.discard_pile || [])
-      ])
-      .order('RANDOM()')
+      // .not('id', 'in', [
+      //   ...(session.cards_in_play || []),
+      //   ...(session.discard_pile || [])
+      // ])
+      // .order('RANDOM()')
       .limit(INITIAL_CARDS_PER_PLAYER);
     
     if (cardsError) throw cardsError;

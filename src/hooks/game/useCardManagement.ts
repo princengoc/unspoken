@@ -66,7 +66,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         [userId]: cards
       }));
     } catch (error) {
-      console.error('Failed to deal cards:', error);
+      console.error(`Failed to deal cards: ${JSON.stringify(error)}`);
       throw error;
     } finally {
       setLoading(false);
@@ -115,6 +115,8 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         .limit(WILD_CARDS_COUNT);
 
       if (!wildCards) throw new Error('Failed to get wild cards');
+
+      console.log(`Wild cards: ${JSON.stringify(wildCards)}`);
       
       const allCardIds = [...currentCardIds, ...wildCards.map(c => c.id)];
       
