@@ -5,13 +5,25 @@ import { GameState, Card, Exchange } from '@/core/game/types';
 // Helper functions for database conversion
 export const toCardIds = (cards: Card[]): string[] => cards.map(card => card.id);
 
-const fromDatabaseSession = async (dbSession: any): Promise<Partial<GameState>> => {
+export async function fetchCardsByIds(cardIds: string[]): Promise<Card[]> {
+  if (!cardIds.length) return [];
+  
+  const { data, error } = await supabase
+    .from('cards')
+    .select('*')
+    .in('id', cardIds);
+    
+  if (error) throw error;
+  return data;
+}
+
+const fromDatabaseState = async (dbState: any): Promise<GameState> => {
   // Fetch full card objects for all card IDs
   const allCardIds = [
-    ...(dbSession.cards_in_play || []),
-    ...(dbSession.discard_pile || []),
-    ...Object.values(dbSession.player_hands || {}).flat()
-  ];
+    ...(dbState.cardsInPlay || []),
+    ...(dbState.discardPile || []),
+    ...Object.values(dbState.playerHands || {}).flat()
+  ] as string[];
 
   let cards: Card[] = [];
   if (allCardIds.length > 0) {
@@ -28,78 +40,67 @@ const fromDatabaseSession = async (dbSession: any): Promise<Partial<GameState>> 
   const cardMap = new Map(cards.map(card => [card.id, card]));
 
   // Convert card IDs to Card objects
-  const cardsInPlay = (dbSession.cards_in_play || [])
-  .map((id: string) => cardMap.get(id))
-  .filter(Boolean) as Card[];
+  const cardsInPlay = (dbState.cardsInPlay || [])
+    .map((id: string) => cardMap.get(id))
+    .filter(Boolean) as Card[];
 
-  const discardPile = (dbSession.discard_pile || [])
-  .map((id: string) => cardMap.get(id))
-  .filter(Boolean) as Card[];
+  const discardPile = (dbState.discardPile || [])
+    .map((id: string) => cardMap.get(id))
+    .filter(Boolean) as Card[];
 
   const playerHands: Record<string, Card[]> = {};
-  Object.entries(dbSession.player_hands || {}).forEach(([playerId, cardIds]) => {
+  Object.entries(dbState.playerHands || {}).forEach(([playerId, cardIds]) => {
     playerHands[playerId] = (cardIds as string[])
       .map(id => cardMap.get(id))
       .filter(Boolean) as Card[];
   });
 
   return {
-    phase: dbSession.current_phase,
-    activePlayerId: dbSession.active_player_id,
-    players: dbSession.players,
+    id: dbState.id,
+    room_id: dbState.room_id,
+    phase: dbState.phase,
+    activePlayerId: dbState.activePlayerId,
+    players: dbState.players,
     cardsInPlay,
     discardPile,
     playerHands,
-    isSpeakerSharing: dbSession.is_speaker_sharing || false,
-    pendingExchanges: [] // This would be handled by a separate subscription
+    isSpeakerSharing: dbState.isSpeakerSharing || false,
+    pendingExchanges: [] // Handled by separate subscription
   };
 };
 
-const toDatabaseSession = (state: Partial<GameState>) => ({
-  current_phase: state.phase,
-  active_player_id: state.activePlayerId,
-  players: state.players,
-  cards_in_play: state.cardsInPlay ? toCardIds(state.cardsInPlay) : undefined,
-  discard_pile: state.discardPile ? toCardIds(state.discardPile) : undefined,
-  player_hands: state.playerHands 
-    ? Object.fromEntries(
-        Object.entries(state.playerHands).map(
-          ([playerId, cards]) => [playerId, toCardIds(cards)]
-        )
-      )
-    : undefined,
-  is_speaker_sharing: state.isSpeakerSharing
-});
-
-export const sessionsService = {
-  async create(initialState: Partial<GameState>): Promise<GameState> {
+export const gameStatesService = {
+  async create(initialState: Omit<GameState, 'id'>): Promise<GameState> {
     try {
       if (!initialState.activePlayerId) {
-        throw new Error('active_player_id is required');
+        throw new Error('activePlayerId is required');
       }      
       
       if (!initialState.players?.length) {
         throw new Error('At least one player is required');
       }
-      
-      const dbSession = toDatabaseSession({
-        phase: 'setup',
-        cardsInPlay: [],
-        discardPile: [],
-        playerHands: {},
-        ...initialState
-      });
 
+      // Convert Card objects to IDs for database storage
+      const dbState = {
+        ...initialState,
+        cardsInPlay: initialState.cardsInPlay.map(card => card.id),
+        discardPile: initialState.discardPile.map(card => card.id),
+        playerHands: Object.fromEntries(
+          Object.entries(initialState.playerHands)
+            .map(([playerId, cards]) => [playerId, cards.map(card => card.id)])
+        )
+      };
+      
       const { data, error } = await supabase
-        .from('game_sessions')
-        .insert([dbSession])
+        .from('game_states')
+        .insert([dbState])
         .select()
         .single();
       
       if (error) throw error;
-      if (!data) throw new Error('No data returned from session creation');
+      if (!data) throw new Error('No data returned from state creation');
 
-      // Update room with session ID if room_id provided
+      // Update room with state ID
       if (initialState.room_id) {
         const { error: updateError } = await supabase
           .from('rooms')
@@ -109,40 +110,49 @@ export const sessionsService = {
         if (updateError) throw updateError;
       }      
 
-      return await fromDatabaseSession(data) as GameState;
+      return await fromDatabaseState(data);
     } catch (error) {
-      console.error('Failed to create game session:', error);
+      console.error(`Failed to create game state: ${JSON.stringify(error)}`);
       throw error;
     }
   },
 
-  async get(sessionId: string): Promise<GameState> {
+  async get(stateId: string): Promise<GameState> {
     const { data, error } = await supabase
-      .from('game_sessions')
+      .from('game_states')
       .select('*')
-      .eq('id', sessionId)
+      .eq('id', stateId)
       .single();
     
     if (error) throw error;
-    if (!data) throw new Error('Session not found');
+    if (!data) throw new Error('Game state not found');
     
-    return await fromDatabaseSession(data) as GameState;
+    return await fromDatabaseState(data);
   },
 
-  async update(sessionId: string, updates: Partial<GameState>): Promise<GameState> {
-    const dbUpdates = toDatabaseSession(updates);
+  async update(stateId: string, updates: Partial<GameState>): Promise<GameState> {
+    // Convert Card objects to IDs for database
+    const dbUpdates = {
+      ...updates,
+      cardsInPlay: updates.cardsInPlay?.map(card => card.id),
+      discardPile: updates.discardPile?.map(card => card.id),
+      playerHands: updates.playerHands && Object.fromEntries(
+        Object.entries(updates.playerHands)
+          .map(([playerId, cards]) => [playerId, cards.map(card => card.id)])
+      )
+    };
 
     const { data, error } = await supabase
-      .from('game_sessions')
+      .from('game_states')
       .update(dbUpdates)
-      .eq('id', sessionId)
+      .eq('id', stateId)
       .select()
       .single();
     
     if (error) throw error;
-    if (!data) throw new Error('Session not found');
+    if (!data) throw new Error('Game state not found');
     
-    return await fromDatabaseSession(data) as GameState;
+    return await fromDatabaseState(data);
   },
 
   async dealCards(sessionId: string, userId: string): Promise<Card[]> {
@@ -187,7 +197,7 @@ export const sessionsService = {
           filter: `id=eq.${sessionId}`
         }, 
         async (payload) => {
-          const state = await fromDatabaseSession(payload.new);
+          const state = await fromDatabaseState(payload.new);
           callback(state as GameState);
         }
       )

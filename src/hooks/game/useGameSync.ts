@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
-import { exchangesService, sessionsService } from '@/services/supabase/gameStates';
+import { exchangesService, gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
+
+
 
 export function useGameSync(sessionId: string | null) {
   const stateMachine = useGameState();
@@ -9,7 +11,7 @@ export function useGameSync(sessionId: string | null) {
   useEffect(() => {
     if (!sessionId) return;
 
-    const subscription = sessionsService.subscribeToChanges(sessionId, async (session) => {
+    const subscription = gameStatesService.subscribeToChanges(sessionId, async (session) => {
       const currentState = stateMachine.getState();
 
       // Sync phase changes
@@ -17,8 +19,7 @@ export function useGameSync(sessionId: string | null) {
         stateMachine.dispatch(gameActions.phaseChanged(session.phase));
       }
 
-      // Sync active player changes
-      // FIXME: what happens with session.activePlayerId is null?
+      // Handle active player changes, allowing null values
       if (session.activePlayerId !== currentState.activePlayerId) {
         stateMachine.dispatch(gameActions.activePlayerChanged(session.activePlayerId));
       }
@@ -36,27 +37,24 @@ export function useGameSync(sessionId: string | null) {
       }
     });
 
-    // Subscribe to exchanges if needed
-    // FIXME: callback needed?
-    const exchangeSubscription = exchangesService.subscribeToChanges(sessionId);
+    // Subscribe to exchanges and handle updates
+    const exchangeSubscription = exchangesService.subscribeToChanges(sessionId, (exchanges) => {
+      // Update state machine with new exchanges
+      exchanges.forEach(exchange => {
+        if (exchange.status === 'pending') {
+          stateMachine.dispatch(gameActions.proposeExchange(exchange));
+        } else {
+          stateMachine.dispatch(gameActions.respondToExchange(
+            exchange.id, 
+            exchange.status === 'accepted'
+          ));
+        }
+      });
+    });
 
     return () => {
       subscription.unsubscribe();
       exchangeSubscription.unsubscribe();
     };
   }, [sessionId, stateMachine]);
-
-  // Helper function to fetch cards by IDs
-  // FIXME: this should be accessible so functions in useCardManagement.ts can call it to convert cardIds to cards???
-  async function fetchCardsByIds(cardIds: string[]) {
-    if (!cardIds.length) return [];
-    
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*')
-      .in('id', cardIds);
-      
-    if (error) throw error;
-    return data;
-  }
 }

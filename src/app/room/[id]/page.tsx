@@ -6,7 +6,7 @@ import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/co
 import { IconDoorExit, IconSettings, IconUsers } from '@tabler/icons-react';
 import { useRoom } from '@/hooks/room/useRoom';
 import { useAuth } from '@/context/AuthProvider';
-import { sessionsService } from '@/services/supabase/gameStates';
+import { gameStatesService } from '@/services/supabase/gameStates';
 import { GameBoard } from '@/components/game/GameBoard';
 import { notifications } from '@mantine/notifications';
 
@@ -32,13 +32,13 @@ export default function RoomPage({ params }: RoomPageProps) {
         
         if (room.current_session_id) {
           // Join existing session
-          const session = await sessionsService.get(room.current_session_id);
+          const gameState = await gameStatesService.get(room.current_session_id);
           
-          // Update session with current player if not already present
-          const playerExists = session.players.some(p => p.id === user.id);
+          // Update state with current player if not already present
+          const playerExists = gameState.players.some(p => p.id === user.id);
           if (!playerExists) {
-            await sessionsService.update(room.current_session_id, {
-              players: [...session.players, { 
+            await gameStatesService.update(room.current_session_id, {
+              players: [...gameState.players, { 
                 id: user.id, 
                 username: null, 
                 isOnline: true 
@@ -48,23 +48,29 @@ export default function RoomPage({ params }: RoomPageProps) {
           
           setSessionId(room.current_session_id);
         } else {
-          // Create new session with current room players
-          const session = await sessionsService.create({
+          // Create new game state with current room players
+          const gameState = await gameStatesService.create({
             activePlayerId: user.id,
             room_id: room.id,
+            phase: 'setup',
+            cardsInPlay: [],
+            discardPile: [],
+            playerHands: {},
+            isSpeakerSharing: false,
+            pendingExchanges: [],
             players: room.players.map(p => ({
               id: p.id,
               username: p.username,
               isOnline: p.isOnline
             }))
           });
-          setSessionId(session.room_id);
+          setSessionId(gameState.id);
         }
       } catch (err) {
-        console.error('Failed to initialize game session:', err);
+        console.error('Failed to initialize game state:', err);
         notifications.show({
           title: 'Error',
-          message: 'Failed to initialize game session',
+          message: 'Failed to initialize game state',
           color: 'red'
         });
       } finally {

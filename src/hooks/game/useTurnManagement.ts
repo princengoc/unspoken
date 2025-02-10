@@ -1,4 +1,4 @@
-import { sessionsService } from '@/services/supabase/gameStates';
+import { gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
 import { Player } from '@/core/game/types';
@@ -15,7 +15,7 @@ export function useTurnManagement(sessionId: string | null, players: Player[]) {
       stateMachine.dispatch(gameActions.activePlayerChanged(playerId));
       
       // Then sync with Supabase
-      await sessionsService.update(sessionId, {
+      await gameStatesService.update(sessionId, {
         activePlayerId: playerId,
         isSpeakerSharing: false
       });
@@ -33,7 +33,7 @@ export function useTurnManagement(sessionId: string | null, players: Player[]) {
       stateMachine.dispatch(gameActions.startSharing());
       
       // Sync with Supabase
-      await sessionsService.update(sessionId, {
+      await gameStatesService.update(sessionId, {
         phase: 'listening',
         isSpeakerSharing: true
       });

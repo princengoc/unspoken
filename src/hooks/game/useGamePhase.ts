@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GamePhase } from '@/core/game/types';
-import { sessionsService } from '@/services/supabase/gameStates';
+import { gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
 import { useGameSync } from './useGameSync';
@@ -33,7 +33,7 @@ export function useGamePhase(sessionId: string | null) {
       stateMachine.dispatch(gameActions.startGame());
       
       // Then sync with Supabase
-      await sessionsService.update(sessionId, {
+      await gameStatesService.update(sessionId, {
         phase: 'speaking',
         activePlayerId: activePlayerId
       });
@@ -48,7 +48,7 @@ export function useGamePhase(sessionId: string | null) {
 
     try {
       stateMachine.dispatch(gameActions.startSharing());
-      await sessionsService.update(sessionId, {
+      await gameStatesService.update(sessionId, {
         phase: 'listening',
         isSpeakerSharing: true
       });
@@ -65,7 +65,7 @@ export function useGamePhase(sessionId: string | null) {
       stateMachine.dispatch(gameActions.endSharing());
       const state = stateMachine.getState();
       
-      await sessionsService.update(sessionId, {
+      await gameStatesService.update(sessionId, {
         phase: 'speaking',
         isSpeakerSharing: false,
         activePlayerId: state.activePlayerId

@@ -7,7 +7,7 @@ export const gameActions = {
     phase
   }),
 
-  activePlayerChanged: (playerId: string) => ({
+  activePlayerChanged: (playerId: string | null) => ({
     type: 'ACTIVE_PLAYER_CHANGED' as const,
     playerId
   }),

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { sessionsService } from '@/services/supabase/gameStates';
+import { gameStatesService } from '@/services/supabase/gameStates';
 import { WILD_CARDS_COUNT } from '@/core/game/constants';
 import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
@@ -15,7 +15,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
     
     try {
       setLoading(true);
-      const cards = await sessionsService.dealCards(sessionId, userId);
+      const cards = await gameStatesService.dealCards(sessionId, userId);
       
       // Update state machine
       stateMachine.dispatch(gameActions.cardsDealt(userId, cards));
@@ -40,7 +40,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
       const updatedCardsInPlay = [...state.cardsInPlay, selectedCard];
       
       // Then sync with Supabase
-      await sessionsService.update(sessionId, {
+      await gameStatesService.update(sessionId, {
         cardsInPlay: updatedCardsInPlay
       });
 
@@ -71,6 +71,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
       const currentCardIds = state.cardsInPlay.map(card => card.id);
       
       // Get random wild cards
+      // this supabase function returns entries of cards table, which can be directly casted
       const { data: wildCards, error: wildCardsError } = await supabase.rpc(
         'get_random_cards',
         {
@@ -81,16 +82,16 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
   
       if (wildCardsError) throw wildCardsError;
       if (!wildCards) throw new Error('Failed to get wild cards');
-      
+
+      const wildCardsCasted = wildCards as Card[];
+
       // Update Supabase first
-      const allCardIds = [...currentCardIds, ...wildCards.map(c => c.id)];
-      // FIXME: mismatch here: cardsInPlay should be Card[], but allCardIds is string[]
-      await sessionsService.update(sessionId, {
-        cardsInPlay: allCardIds,
+      await gameStatesService.update(sessionId, {
+        cardsInPlay: [...state.cardsInPlay, ...wildCardsCasted]
       });
-      
+
       // Then update state machine
-      stateMachine.dispatch(gameActions.cardsSelected(wildCards));
+      stateMachine.dispatch(gameActions.cardsSelected(wildCardsCasted));
       
     } catch (error) {
       console.error('Failed to add wild cards:', error);

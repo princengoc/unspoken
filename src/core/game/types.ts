@@ -10,6 +10,7 @@ export type Player = {
 
 export type GameState = {
   id: string;
+  room_id: string;
   phase: GamePhase;
   activePlayerId: string | null;
   players: Player[];
@@ -18,7 +19,6 @@ export type GameState = {
   isSpeakerSharing: boolean;
   pendingExchanges: Exchange[];
   playerHands: Record<string, Card[]>;
-  room_id: string | null;
 };
 
 export type Exchange = {
