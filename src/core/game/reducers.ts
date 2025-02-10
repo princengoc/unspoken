@@ -3,6 +3,7 @@ import { ERRORS } from './constants';
 import { GameEvent } from './actions';
 
 export function gameReducer(state: GameState, event: GameEvent): GameState {
+  const safeCardsInPlay = state.cardsInPlay ?? [];
   switch (event.type) {
     case 'PHASE_CHANGED':
       return {
@@ -41,8 +42,13 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
       }
       const selectedCard = state.playerHands[event.playerId]?.find(card => card.id === event.cardId);
       if (!selectedCard) {
-        throw new Error('Card not found in player hand');
+        throw new Error(`Card not found in player hand. State: ${JSON.stringify(state)} \n Event: ${JSON.stringify(event)}`);
       }
+      // Use the same deduplication logic here for CARDS_SELECTED
+      const uniqueCardsAfterSelection = new Map(
+        [...safeCardsInPlay, selectedCard].map(card => [card.id, card])
+      );
+      
       return {
         ...state,
         players: state.players.map(p =>
@@ -50,7 +56,7 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
             ? { ...p, hasSelected: true }
             : p
         ),
-        cardsInPlay: [...state.cardsInPlay, selectedCard],
+        cardsInPlay: Array.from(uniqueCardsAfterSelection.values()),
         playerHands: {
           ...state.playerHands,
           [event.playerId]: state.playerHands[event.playerId].filter(card => card.id !== event.cardId)
@@ -92,11 +98,15 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
         }
       };
 
-    case 'CARDS_SELECTED':
-      return {
-        ...state,
-        cardsInPlay: [...state.cardsInPlay, ...event.cards]
-      };
+      case 'CARDS_SELECTED':
+        // Use Map to ensure uniqueness by card ID
+        const uniqueCards = new Map(
+          [...safeCardsInPlay, ...event.cards].map(card => [card.id, card])
+        );
+        return {
+          ...state,
+          cardsInPlay: Array.from(uniqueCards.values())
+        };
 
     case 'EXCHANGE_PROPOSED':
       return {

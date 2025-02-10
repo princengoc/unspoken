@@ -30,28 +30,47 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
 
   const selectCardForPool = async (playerId: string, cardId: string) => {
     if (!sessionId) return;
-
+  
     try {
-      // Update state machine first
+      const currentState = stateMachine.getState();
+      
+      // Check if card is already in play
+      const isCardAlreadyInPlay = currentState.cardsInPlay.some(card => card.id === cardId);
+      if (isCardAlreadyInPlay) {
+        return;
+      }
+  
+      // Update state machine - deduplication happens in reducer
       stateMachine.dispatch(gameActions.selectCard(playerId, cardId));
       
-      const state = stateMachine.getState();
-      const selectedCard = state.playerHands[playerId]?.find(card => card.id === cardId) as Card;
-      const updatedCardsInPlay = [...state.cardsInPlay, selectedCard];
+      // Get the deduplicated state
+      const updatedState = stateMachine.getState();
       
-      // Then sync with Supabase
+      // Sync with Supabase using the deduplicated state
       await gameStatesService.update(sessionId, {
-        cardsInPlay: updatedCardsInPlay
+        cardsInPlay: updatedState.cardsInPlay,
+        players: updatedState.players
       });
-
-      stateMachine.dispatch(gameActions.cardsSelected(updatedCardsInPlay));
-
+  
+      // Check if all players have selected
+      const allPlayersSelected = updatedState.players.every(p => p.hasSelected);
+      if (allPlayersSelected) {
+        // Move to next phase
+        stateMachine.dispatch(gameActions.startGame());
+        
+        // Update game phase in database
+        await gameStatesService.update(sessionId, {
+          phase: 'speaking',
+          activePlayerId: updatedState.players[0].id
+        });
+      }
+  
     } catch (error) {
       console.error('Failed to select card:', error);
       throw error;
     }
   };
-
+  
   const addWildCards = async () => {
     if (!sessionId) return;
     
@@ -77,13 +96,14 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
 
       const wildCardsCasted = wildCards as Card[];
 
-      // Update Supabase first
-      await gameStatesService.update(sessionId, {
-        cardsInPlay: [...state.cardsInPlay, ...wildCardsCasted]
-      });
-
-      // Then update state machine
+      // First dispatch to state machine - it will handle deduplication
       stateMachine.dispatch(gameActions.cardsSelected(wildCardsCasted));
+
+      // Then update Supabase with the deduplicated state
+      const updatedState = stateMachine.getState();
+      await gameStatesService.update(sessionId, {
+        cardsInPlay: updatedState.cardsInPlay
+      });
       
     } catch (error) {
       console.error('Failed to add wild cards:', error);

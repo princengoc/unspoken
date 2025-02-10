@@ -3,7 +3,9 @@ import { supabase } from './client';
 import { GameState, Card, Exchange } from '@/core/game/types';
 
 // Helper functions for database conversion
-export const toCardIds = (cards: Card[]): string[] => cards.map(card => card.id);
+const toCardIds = (cards: Card[]): string[] => {
+  return Array.from(new Set(cards.map(card => card.id)));
+};
 
 export async function fetchCardsByIds(cardIds: string[]): Promise<Card[]> {
   if (!cardIds.length) return [];
