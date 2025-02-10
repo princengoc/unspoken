@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { Room, RoomPlayer, RoomSettings } from '@/core/game/types';
+import type { Room, Player, RoomSettings } from '@/core/game/types';
 
 export const roomsService = {
   async create(name: string, createdBy: string, settings?: Partial<RoomSettings>): Promise<Room> {
@@ -32,7 +32,7 @@ export const roomsService = {
     return data as Room;
   },
 
-  async join(passcode: string, player: Omit<RoomPlayer, 'joined_at'>): Promise<Room> {
+  async join(passcode: string, player: Omit<Player, 'joined_at'>): Promise<Room> {
     const { data: room, error: findError } = await supabase
       .from('rooms')
       .select()

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthProvider';
-import { roomsTable } from '../supabase/client';
-import type { Room, RoomSettings } from '../supabase/types';
+import { roomsService } from '@/services/supabase/rooms';
+import type { Room, RoomSettings } from '@/core/game/types';
 
 interface UseRoomReturn {
   room: Room | null;
@@ -20,7 +20,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let subscription: ReturnType<typeof roomsTable.subscribeToRoom>;
+    let subscription: ReturnType<typeof roomsService.subscribeToRoom>;
 
     async function loadRoom() {
       if (!roomId) {
@@ -29,11 +29,11 @@ export function useRoom(roomId?: string): UseRoomReturn {
       }
 
       try {
-        const roomData = await roomsTable.get(roomId);
+        const roomData = await roomsService.get(roomId);
         setRoom(roomData);
 
         // Subscribe to room changes
-        subscription = roomsTable.subscribeToRoom(roomId, (updatedRoom) => {
+        subscription = roomsService.subscribeToRoom(roomId, (updatedRoom) => {
           setRoom(updatedRoom);
         });
 
@@ -60,7 +60,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
     if (!room?.id || !user?.id) return;
 
     const intervalId = setInterval(() => {
-      roomsTable.updatePlayerStatus(room.id, user.id, true).catch(console.error);
+      roomsService.updatePlayerStatus(room.id, user.id, true).catch(console.error);
     }, 30000); // Every 30 seconds
 
     return () => clearInterval(intervalId);
@@ -71,7 +71,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
 
     try {
       setLoading(true);
-      const newRoom = await roomsTable.create(name, user.id, settings);
+      const newRoom = await roomsService.create(name, user.id, settings);
       setRoom(newRoom);
       return newRoom;
     } catch (err) {
@@ -88,10 +88,10 @@ export function useRoom(roomId?: string): UseRoomReturn {
 
     try {
       setLoading(true);
-      const joinedRoom = await roomsTable.join(passcode, {
+      const joinedRoom = await roomsService.join(passcode, {
         id: user.id,
         username: null, // Will be populated from profiles
-        is_active: true
+        isOnline: true
       });
       setRoom(joinedRoom);
       return joinedRoom;
@@ -109,7 +109,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
     if (room.created_by !== user?.id) throw new Error('Only room creator can update settings');
 
     try {
-      const updatedRoom = await roomsTable.updateSettings(room.id, settings);
+      const updatedRoom = await roomsService.updateSettings(room.id, settings);
       setRoom(updatedRoom);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to update settings');
@@ -122,7 +122,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
     if (!room?.id || !user?.id) return;
 
     try {
-      await roomsTable.updatePlayerStatus(room.id, user.id, false);
+      await roomsService.updatePlayerStatus(room.id, user.id, false);
       setRoom(null);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to leave room');

@@ -1,4 +1,3 @@
-// src/app/room/[id]/page.tsx
 'use client';
 
 import { use, useEffect, useState } from 'react';
@@ -7,8 +6,8 @@ import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/co
 import { IconDoorExit, IconSettings, IconUsers } from '@tabler/icons-react';
 import { useRoom } from '@/lib/hooks/useRoom';
 import { useAuth } from '@/context/AuthProvider';
-import { useGameStore } from '@/lib/hooks/useGameStore';
-import { GameLayout } from '@/components/game/GameLayout';
+import { sessionsService } from '@/services/supabase/sessions';
+import { GameBoard } from '@/components/game/GameBoard';
 import { notifications } from '@mantine/notifications';
 
 interface RoomPageProps {
@@ -20,26 +19,30 @@ export default function RoomPage({ params }: RoomPageProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { room, loading: roomLoading, error, leaveRoom } = useRoom(roomId);
-  const { initSession, sessionId, loading: sessionLoading } = useGameStore();
-  const [sessionInitialized, setSessionInitialized] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Initialize or join game session when room loads
   useEffect(() => {
-    if (!user || !room || sessionInitialized) return;
+    if (!user || !room || sessionId) return;
 
     const setupSession = async () => {
       try {
-        // If room has a current session, join it, otherwise create new
+        setLoading(true);
+        
         if (room.current_session_id) {
-          await initSession(user.id, room.id);
+          // Join existing session
+          await sessionsService.get(room.current_session_id);
+          setSessionId(room.current_session_id);
         } else {
-          // Create new session as we're the first to join
-          const cleanup = await initSession(user.id, room.id);
-          if (cleanup) {
-            return () => cleanup();
-          }
+          // Create new session
+          const session = await sessionsService.create({
+            active_player_id: user.id,
+            room_id: room.id,
+            players: [{ id: user.id, username: null, isOnline: true }]
+          });
+          setSessionId(session.id);
         }
-        setSessionInitialized(true);
       } catch (err) {
         console.error('Failed to initialize game session:', err);
         notifications.show({
@@ -47,11 +50,13 @@ export default function RoomPage({ params }: RoomPageProps) {
           message: 'Failed to initialize game session',
           color: 'red'
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     setupSession();
-  }, [user, room, sessionInitialized, initSession]);
+  }, [user, room, sessionId]);
 
   useEffect(() => {
     if (error) {
@@ -77,7 +82,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     }
   };
 
-  if (roomLoading || sessionLoading) {
+  if (roomLoading || loading) {
     return (
       <Container py="xl">
         <Card p="xl" withBorder>
@@ -104,7 +109,7 @@ export default function RoomPage({ params }: RoomPageProps) {
   }
 
   const isCreator = room.created_by === user.id;
-  const activePlayers = room.players.filter(p => p.is_active);
+  const activePlayers = room.players.filter(p => p.isOnline);
 
   return (
     <Container py="xl">
@@ -144,8 +149,8 @@ export default function RoomPage({ params }: RoomPageProps) {
           </Stack>
         </Card>
 
-        {/* Game Layout */}
-        {sessionInitialized && <GameLayout room={room} />}
+        {/* Game Board */}
+        {sessionId && <GameBoard room={room} sessionId={sessionId} />}
       </Stack>
     </Container>
   );
