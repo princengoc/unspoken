@@ -78,6 +78,7 @@ export class GameStateMachine {
   private handleStartGame(): GameAction[] {
     const allPlayersSelected = this.state.players.every(p => p.hasSelected);
     if (!allPlayersSelected) {
+      console.log(`Players: ${JSON.stringify(this.state.players)}`);
       throw new Error('All players must select cards before starting');
     }
 

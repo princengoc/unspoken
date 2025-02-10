@@ -29,12 +29,13 @@ export function Setup({
   const allPlayersSelected = Object.keys(playerHands).length > 0 &&
     Object.keys(playerHands).every(playerId => selectedCards[playerId]);
 
+  // COMMENTED THIS OUT BECAUSE IT IS BUGGY, LEADING TO INFINITE RELOADS
   // When all players have selected their cards, add wild cards to the pool
-  useEffect(() => {
-    if (allPlayersSelected) {
-      onAddWildCards();
-    }
-  }, [allPlayersSelected]);
+  // useEffect(() => {
+  //   if (allPlayersSelected) {
+  //     onAddWildCards();
+  //   }
+  // }, [allPlayersSelected]);
   
   return (
     <Stack gap="xl">
