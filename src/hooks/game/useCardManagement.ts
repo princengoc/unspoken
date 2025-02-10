@@ -110,8 +110,8 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
       const { data: wildCards } = await supabase
         .from('cards')
         .select('*')
-        .not('id', 'in', currentCardIds)
-        .order('RANDOM()')
+        // .not('id', 'in', currentCardIds)
+        // .order('RANDOM()')
         .limit(WILD_CARDS_COUNT);
 
       if (!wildCards) throw new Error('Failed to get wild cards');

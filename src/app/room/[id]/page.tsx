@@ -32,14 +32,31 @@ export default function RoomPage({ params }: RoomPageProps) {
         
         if (room.current_session_id) {
           // Join existing session
-          await sessionsService.get(room.current_session_id);
+          const session = await sessionsService.get(room.current_session_id);
+          
+          // Update session with current player if not already present
+          const playerExists = session.players.some(p => p.id === user.id);
+          if (!playerExists) {
+            await sessionsService.update(room.current_session_id, {
+              players: [...session.players, { 
+                id: user.id, 
+                username: null, 
+                isOnline: true 
+              }]
+            });
+          }
+          
           setSessionId(room.current_session_id);
         } else {
-          // Create new session
+          // Create new session with current room players
           const session = await sessionsService.create({
             active_player_id: user.id,
             room_id: room.id,
-            players: [{ id: user.id, username: null, isOnline: true }]
+            players: room.players.map(p => ({
+              id: p.id,
+              username: p.username,
+              isOnline: p.isOnline
+            }))
           });
           setSessionId(session.id);
         }

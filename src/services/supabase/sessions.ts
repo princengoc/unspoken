@@ -9,6 +9,11 @@ export const sessionsService = {
         throw new Error('active_player_id is required');
       }      
       
+      // Ensure we have players array and it's not empty
+      if (!initialData.players || initialData.players.length === 0) {
+        throw new Error('At least one player is required');
+      }
+      
       const { data, error } = await supabase
         .from('game_sessions')
         .insert([{
@@ -16,7 +21,8 @@ export const sessionsService = {
           cards_in_play: [],
           discard_pile: [],
           player_hands: {},
-          players: [],
+          active_player_id: initialData.active_player_id,
+          players: initialData.players,
           ...initialData
         }])
         .select()
