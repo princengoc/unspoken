@@ -11,7 +11,9 @@ export const roomsService = {
       passcode,
       game_mode: 'irl',
       is_active: true,
-      players: [],
+      players: [
+        { id: createdBy, username: null, isOnline: true }
+      ],
       settings: {
         allow_card_exchanges: true,
         allow_ripple_effects: true,
@@ -32,7 +34,7 @@ export const roomsService = {
     return data as Room;
   },
 
-  async join(passcode: string, player: Omit<Player, 'joined_at'>): Promise<Room> {
+  async join(passcode: string, player: Player): Promise<Room> {
     const { data: room, error: findError } = await supabase
       .from('rooms')
       .select()
@@ -43,16 +45,10 @@ export const roomsService = {
     if (findError) throw findError;
     if (!room) throw new Error('Room not found');
 
-    const newPlayer = {
-      ...player,
-      joined_at: new Date().toISOString(),
-      last_seen_at: new Date().toISOString()
-    };
-
     const { data, error } = await supabase
       .from('rooms')
       .update({
-        players: [...(room.players || []), newPlayer]
+        players: [...(room.players || []), player]
       })
       .eq('id', room.id)
       .select()
@@ -81,8 +77,7 @@ export const roomsService = {
       player.id === playerId
         ? {
             ...player,
-            is_active: isActive,
-            last_seen_at: new Date().toISOString()
+            isOnline: isActive,
           }
         : player
     );

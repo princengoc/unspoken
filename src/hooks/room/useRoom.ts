@@ -55,17 +55,6 @@ export function useRoom(roomId?: string): UseRoomReturn {
     };
   }, [roomId]);
 
-  // Update player's "last seen" status periodically while in room
-  useEffect(() => {
-    if (!room?.id || !user?.id) return;
-
-    const intervalId = setInterval(() => {
-      roomsService.updatePlayerStatus(room.id, user.id, true).catch(console.error);
-    }, 30000); // Every 30 seconds
-
-    return () => clearInterval(intervalId);
-  }, [room?.id, user?.id]);
-
   const createRoom = async (name: string, settings?: Partial<RoomSettings>): Promise<Room> => {
     if (!user) throw new Error('Must be logged in to create a room');
 
@@ -75,7 +64,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
       setRoom(newRoom);
       return newRoom;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to create room');
+      const error = err instanceof Error ? err : new Error(`Failed to create room ${JSON.stringify(err)}`);
       setError(error);
       throw error;
     } finally {
