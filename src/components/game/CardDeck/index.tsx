@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Group, Text, Button } from '@mantine/core';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconMoodSmile, IconMoodSad, IconMoodEmpty } from '@tabler/icons-react';
+import { IconCirclesRelation, IconIkosaedr, IconCell } from '@tabler/icons-react';
 import type { Card as CardType } from '@/core/game/types';
 import { Card } from '../Card';
 import { MiniCard, MoodType } from './MiniCard';
@@ -22,18 +22,29 @@ export function CardDeck({
   const [assignedMoods, setAssignedMoods] = useState<Record<number, MoodType>>({});
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
 
-  // Animation variants for the flip effect used on the main card
   const flipVariants = {
     initial: { rotateY: -30, opacity: 0 },
     animate: { rotateY: 0, opacity: 1, transition: { duration: 0.5 } },
     exit: { rotateY: 40, opacity: 0, transition: { duration: 0.5 } },
   };
 
-  // Available moods for card categorization
-  const moods: { type: MoodType; icon: typeof IconMoodSmile; label: string }[] = [
-    { type: 'Positive', icon: IconMoodSmile, label: 'Uplifting' },
-    { type: 'Neutral', icon: IconMoodEmpty, label: 'Balanced' },
-    { type: 'Reflective', icon: IconMoodSad, label: 'Contemplative' },
+  // Updated moods with new icons and colors
+  const moods: { type: MoodType; icon: typeof IconCirclesRelation; color: string }[] = [
+    { 
+      type: 'Expansive', 
+      icon: IconCirclesRelation, 
+      color: '#E67E22',
+    },
+    { 
+      type: 'Centered', 
+      icon: IconIkosaedr, 
+      color: '#8E44AD',
+    },
+    { 
+      type: 'Introspective', 
+      icon: IconCell, 
+      color: '#C0392B',
+    },
   ];
 
   const handleAssign = (mood: MoodType) => {
@@ -62,7 +73,6 @@ export function CardDeck({
         }}
       >
         {currentIndex < cards.length ? (
-          // In-progress: show the animated main card with its indicators.
           <>
             <AnimatePresence mode="wait">
               <motion.div
@@ -85,7 +95,6 @@ export function CardDeck({
             )}
           </>
         ) : (
-          // Finished: display a centered mini card group with a small instruction.
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Text size="sm" ta="center" fw={400} mb={8}>
               Select one
@@ -108,20 +117,25 @@ export function CardDeck({
         )}
       </div>
 
-      {/* While categorization is in progress, show mood buttons and a row of peripheral mini cards */}
       {currentIndex < cards.length && (
         <>
           <Group justify="center" mt="xs" spacing="sm">
-            {moods.map(({ type, icon: Icon, label }) => (
-              <Button
-                key={type}
-                onClick={() => handleAssign(type)}
-                leftSection={<Icon size={16} />}
-                variant="light"
-                size="sm"
-              >
-                {label}
-              </Button>
+            {moods.map(({ type, icon: Icon, color }) => (
+                <Button key={type}
+                  onClick={() => handleAssign(type)}
+                  variant="light"
+                  size="lg"
+                  p={8}
+                  style={{
+                    color: color,
+                    backgroundColor: `${color}15`,
+                    '&:hover': {
+                      backgroundColor: `${color}25`
+                    }
+                  }}
+                >
+                  <Icon size={24} />
+                </Button>
             ))}
           </Group>
 
