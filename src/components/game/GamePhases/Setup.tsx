@@ -50,13 +50,7 @@ export function Setup({
           </Button>
         </SlideIn>
       ) : !hasSelected ? (
-        <>
-          <FadeIn delay={0.2}>
-            <Text size="sm" c="dimmed" ta="center">
-              Swipe right to select a card for the shared pool
-            </Text>
-          </FadeIn>
-          
+        <>          
           <CardDeck
             cards={userHand}
             onSelect={(card) => onSelectCard(user.id, card.id)}
