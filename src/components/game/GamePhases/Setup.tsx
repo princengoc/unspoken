@@ -1,9 +1,9 @@
-import { Stack, Button, Text, SimpleGrid, Paper, Group } from '@mantine/core';
-import { GameCard } from '../Card';
+import { Stack, Button, Text, Group, Paper } from '@mantine/core';
 import { useAuth } from '@/context/AuthProvider';
 import { Card } from '@/core/game/types';
-import { useEffect } from 'react';
 import { useGameState } from '@/context/GameStateProvider';
+import { CardDeck } from '../CardDeck';
+import { FadeIn, SlideIn } from '@/components/animations/Motion';
 
 interface SetupProps {
   playerHands: Record<string, Card[]>;
@@ -29,83 +29,73 @@ export function Setup({
   const userHand = playerHands[user.id] || [];
   const hasSelected = !!selectedCards[user.id];
   const allPlayersSelected = Object.keys(playerHands).length > 0 && 
-    stateMachine.areAllPlayersSelected();  // Use this instead of checking selectedCards
-
-  // COMMENTED THIS OUT BECAUSE IT IS BUGGY, LEADING TO INFINITE RELOADS
-  // When all players have selected their cards, add wild cards to the pool
-  // useEffect(() => {
-  //   if (allPlayersSelected) {
-  //     onAddWildCards();
-  //   }
-  // }, [allPlayersSelected]);
+    stateMachine.areAllPlayersSelected();
   
   return (
     <Stack gap="xl">
-      <Text size="lg" fw={500} ta="center">Game Setup</Text>
+      <FadeIn>
+        <Text size="lg" fw={500} ta="center">Game Setup</Text>
+      </FadeIn>
       
-      {!userHand.length && (
-        <Button 
-          onClick={onDealCards}
-          fullWidth
-          size="lg"
-          variant="filled"
-        >
-          Deal Cards
-        </Button>
-      )}
-      
-      {userHand.length > 0 && !hasSelected && (
+      {!userHand.length ? (
+        <SlideIn>
+          <Button 
+            onClick={onDealCards}
+            fullWidth
+            size="lg"
+            variant="filled"
+          >
+            Deal Cards
+          </Button>
+        </SlideIn>
+      ) : !hasSelected ? (
         <>
-          <Text size="sm" c="dimmed" ta="center">
-            Select one card to add to the shared pool
-          </Text>
+          <FadeIn delay={0.2}>
+            <Text size="sm" c="dimmed" ta="center">
+              Swipe right to select a card for the shared pool
+            </Text>
+          </FadeIn>
           
-          <SimpleGrid cols={3}>
-            {userHand.map((card, index) => (
-              <div 
-                key={card.id}
-                style={{ 
-                  opacity: hasSelected ? 0.5 : 1,
-                  cursor: hasSelected ? 'default' : 'pointer'
-                }}
-                onClick={() => !hasSelected && onSelectCard(user.id, card.id)}
-              >
-                <GameCard
-                  card={card}
-                  index={index}
-                  total={userHand.length}
-                />
-              </div>
-            ))}
-          </SimpleGrid>
+          <CardDeck
+            cards={userHand}
+            onSelect={(card) => onSelectCard(user.id, card.id)}
+          />
           
-          <Group justify="center" gap="xs">
-            {Object.keys(playerHands).map(playerId => (
-              <Paper 
-                key={playerId}
-                p="xs" 
-                bg={selectedCards[playerId] ? 'blue.1' : 'gray.1'}
-                style={{ minWidth: '100px', textAlign: 'center' }}
-              >
-                <Text size="sm">
-                  {playerId === user.id ? 'You' : 'Player'} 
-                  {selectedCards[playerId] ? ' ✓' : ''}
-                </Text>
-              </Paper>
-            ))}
-          </Group>
+          <SlideIn direction="up">
+            <Group justify="center" gap="xs">
+              {Object.keys(playerHands).map((playerId, index) => (
+                <Paper 
+                  key={playerId}
+                  p="xs" 
+                  bg={selectedCards[playerId] ? 'blue.1' : 'gray.1'}
+                  style={{ minWidth: '100px', textAlign: 'center' }}
+                >
+                  <Text size="sm">
+                    {playerId === user.id ? 'You' : `Player ${index + 1}`}
+                    {selectedCards[playerId] ? ' ✓' : ''}
+                  </Text>
+                </Paper>
+              ))}
+            </Group>
+          </SlideIn>
         </>
-      )}
-      
-      {allPlayersSelected && (
-        <Button 
-          onClick={onStartGame}
-          fullWidth
-          size="lg"
-          variant="filled"
-        >
-          Start Game
-        </Button>
+      ) : allPlayersSelected ? (
+        <SlideIn>
+          <Button 
+            onClick={onStartGame}
+            fullWidth
+            size="lg"
+            variant="filled"
+          >
+            Start Game
+          </Button>
+        </SlideIn>
+      ) : (
+        <FadeIn>
+          <Text size="sm" c="dimmed" ta="center">
+            Waiting for other players to select their cards...
+          </Text>
+        </FadeIn>
       )}
     </Stack>
   );

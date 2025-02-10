@@ -31,7 +31,9 @@ export function GameCard({
       withBorder
       style={{
         cursor: isSelectable ? 'pointer' : 'default',
-        border: selected ? '2px solid blue' : undefined
+        border: selected ? '2px solid blue' : undefined,
+        width: '320px',
+        maxWidth: '90vw'
       }}
       onClick={isSelectable ? onSelect : undefined}
     >
@@ -85,3 +87,6 @@ export function GameCard({
     </MantineCard>
   );
 }
+
+// Export the component
+export { GameCard as Card };
