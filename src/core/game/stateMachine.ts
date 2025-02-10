@@ -75,6 +75,10 @@ export class GameStateMachine {
     }
   }
 
+  public areAllPlayersSelected(): boolean {
+    return this.state.players.every(p => p.hasSelected);
+  }
+
   private handleStartGame(): GameAction[] {
     const allPlayersSelected = this.state.players.every(p => p.hasSelected);
     if (!allPlayersSelected) {

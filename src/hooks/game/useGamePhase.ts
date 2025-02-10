@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { GameStateMachine } from '@/core/game/stateMachine';
 import { GamePhase, Player } from '@/core/game/types';
 import { sessionsService } from '@/services/supabase/sessions';
+import { useGameState } from '@/context/GameStateProvider';
 
 export function useGamePhase(sessionId: string | null, initialPlayers: Player[]) {
-  const [stateMachine] = useState(() => new GameStateMachine(initialPlayers));
+  const stateMachine = useGameState();
   const [phase, setPhase] = useState<GamePhase>('setup');
   const [isSpeakerSharing, setIsSpeakerSharing] = useState(false);
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
@@ -41,8 +41,22 @@ export function useGamePhase(sessionId: string | null, initialPlayers: Player[])
     };
   }, [sessionId, stateMachine, phase, activePlayerId]);
 
-  const startGame = () => {
-    stateMachine.dispatch({ type: 'START_GAME' });
+  const startGame = async () => {
+    if (!sessionId) return;
+    
+    try {
+      // Update state machine
+      stateMachine.dispatch({ type: 'START_GAME' });
+      
+      // Add this Supabase update
+      await sessionsService.update(sessionId, {
+        current_phase: 'speaking',
+        active_player_id: activePlayerId
+      });
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      throw error;
+    }
   };
 
   const startSharing = () => {

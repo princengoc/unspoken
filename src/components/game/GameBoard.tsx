@@ -8,13 +8,35 @@ import { useCardManagement } from '@/hooks/game/useCardManagement';
 import { useTurnManagement } from '@/hooks/game/useTurnManagement';
 import { useAuth } from '@/context/AuthProvider';
 import { Room } from '@/core/game/types';
+import { GameStateProvider } from '@/context/GameStateProvider';
 
 interface GameBoardProps {
   room: Room;
   sessionId: string;
+  user: any
 }
 
 export function GameBoard({ room, sessionId }: GameBoardProps) {
+  const { user } = useAuth();
+
+  if (!user || !room) {
+    return (
+      <Container size="sm">
+        <Text ta="center" c="dimmed">
+          Waiting for game session...
+        </Text>
+      </Container>
+    );
+  }
+
+  return (
+    <GameStateProvider players={room.players}>
+      <GameBoardContent room={room} sessionId={sessionId} user={user} />
+    </GameStateProvider>
+  );
+}
+
+export function GameBoardContent({ room, sessionId }: GameBoardProps) {
   const { user } = useAuth();
   const { phase, startGame } = useGamePhase(sessionId, room.players);
   const { 

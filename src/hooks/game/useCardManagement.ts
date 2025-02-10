@@ -3,6 +3,7 @@ import { supabase } from '@/services/supabase/client';
 import { Card } from '@/core/game/types';
 import { sessionsService } from '@/services/supabase/sessions';
 import { WILD_CARDS_COUNT } from '@/core/game/constants';
+import { useGameState } from '@/context/GameStateProvider';
 
 // Helper function to fetch cards by their IDs
 const fetchCardsByIds = async (cardIds: string[]): Promise<Card[]> => {
@@ -18,6 +19,7 @@ const fetchCardsByIds = async (cardIds: string[]): Promise<Card[]> => {
 };
 
 export function useCardManagement(sessionId: string | null, userId: string | null) {
+  const stateMachine = useGameState();
   const [playerHands, setPlayerHands] = useState<Record<string, Card[]>>({});
   const [cardsInPlay, setCardsInPlay] = useState<Card[]>([]);
   const [selectedCards, setSelectedCards] = useState<Record<string, string>>({});
@@ -65,6 +67,8 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         ...prev,
         [userId]: cards
       }));
+      // update state machine
+      stateMachine.dispatch({ type: 'DEAL_CARDS' });
     } catch (error) {
       console.error(`Failed to deal cards: ${JSON.stringify(error)}`);
       throw error;
@@ -82,6 +86,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         [playerId]: cardId
       }));
 
+      // update Supabase
       const updatedCardsInPlay = [...cardsInPlay.map(c => c.id), cardId];
       
       // Update session with card ID
@@ -89,7 +94,10 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         cards_in_play: updatedCardsInPlay
       });
 
-      // Fetch and update the full card objects
+      // update state machine
+      stateMachine.dispatch({ type: 'SELECT_CARD', playerId, cardId });      
+
+      // Update local cards state
       const cards = await fetchCardsByIds(updatedCardsInPlay);
       setCardsInPlay(cards);
 
@@ -97,6 +105,8 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
       console.error('Failed to select card:', error);
       throw error;
     }
+
+
   };
 
   const addWildCards = async () => {

@@ -3,6 +3,7 @@ import { GameCard } from '../Card';
 import { useAuth } from '@/context/AuthProvider';
 import { Card } from '@/core/game/types';
 import { useEffect } from 'react';
+import { useGameState } from '@/context/GameStateProvider';
 
 interface SetupProps {
   playerHands: Record<string, Card[]>;
@@ -24,10 +25,11 @@ export function Setup({
   const { user } = useAuth();
   if (!user) return null;
 
+  const stateMachine = useGameState();
   const userHand = playerHands[user.id] || [];
   const hasSelected = !!selectedCards[user.id];
-  const allPlayersSelected = Object.keys(playerHands).length > 0 &&
-    Object.keys(playerHands).every(playerId => selectedCards[playerId]);
+  const allPlayersSelected = Object.keys(playerHands).length > 0 && 
+    stateMachine.areAllPlayersSelected();  // Use this instead of checking selectedCards
 
   // COMMENTED THIS OUT BECAUSE IT IS BUGGY, LEADING TO INFINITE RELOADS
   // When all players have selected their cards, add wild cards to the pool
