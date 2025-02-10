@@ -1,66 +1,126 @@
-// src/components/game/GamePhases/Setup.tsx
 'use client';
-import { Stack, Button, Text, Paper } from '@mantine/core';
+import { Stack, Button, Text, SimpleGrid, Paper, Group } from '@mantine/core';
 import { GameCard } from '../Card';
 import { useGameStore } from '@/lib/hooks/useGameStore';
 import { useAuth } from '@/context/AuthProvider';
 
 export function Setup() {
   const { user } = useAuth();
-  const { cardsInPlay, setGamePhase, dealCards } = useGameStore();
-    
+  const { 
+    players,
+    playerHands,
+    selectedCards,
+    gameStage,
+    cardsInPlay,
+    dealInitialCards,
+    selectCardForPool,
+    startMainPhase
+  } = useGameStore();
+  
+  const userHand = user ? playerHands[user.id] || [] : [];
+  const hasSelected = user ? !!selectedCards[user.id] : false;
+  const allPlayersSelected = players.every(p => selectedCards[p.id]);
+  
   const handleStartGame = async () => {
-    if (!user) {
-      return;
-    }
-    try {
-      await dealCards(user.id);
-      await setGamePhase('speaking');
-    } catch (error) {
-      console.error('Error starting game:', error);
-    }
+    if (!user) return;
+    await dealInitialCards();
+  };
+  
+  const handleSelectCard = async (cardId: string) => {
+    if (!user) return;
+    await selectCardForPool(user.id, cardId);
+  };
+  
+  const handleStartMainPhase = async () => {
+    await startMainPhase();
   };
   
   return (
-    <Stack gap="md">
+    <Stack gap="xl">
       <Text size="lg" fw={500} ta="center">Game Setup</Text>
       
-      <div style={{ position: 'relative', minHeight: '24rem', border: '1px dashed #ccc', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {cardsInPlay.length === 0 ? (
-          <Text ta="center" c="dimmed">Waiting for cards to be dealt...</Text>
-        ) : (
-          cardsInPlay.map((card, index) => (
-            <div key={card.id} style={{ position: 'absolute', width: '100%' }}>
-              <GameCard
-                card={card}
-                index={index}
-                total={cardsInPlay.length}
-              />
-            </div>
-          ))
-        )}
-      </div>
-
-      <Button 
-        onClick={handleStartGame}
-        fullWidth
-        size="lg"
-        variant="filled"
-      >
-        Deal Cards & Start Game
-      </Button>
-
-      {process.env.NODE_ENV === 'development' && (
-        <Paper p="xs" withBorder>
-          <Text size="sm" c="dimmed">Debug Info:</Text>
-          <pre style={{ fontSize: '12px' }}>
-            {JSON.stringify({
-              userPresent: !!user,
-              cardsInPlay: cardsInPlay.length,
-              userId: user?.id
-            }, null, 2)}
-          </pre>
-        </Paper>
+      {gameStage === 'dealing' && (
+        <Button 
+          onClick={handleStartGame}
+          fullWidth
+          size="lg"
+          variant="filled"
+        >
+          Deal Cards
+        </Button>
+      )}
+      
+      {gameStage === 'selecting' && (
+        <>
+          <Text size="sm" c="dimmed" ta="center">
+            Select one card to add to the shared pool
+          </Text>
+          
+          <SimpleGrid cols={3}>
+            {userHand.map((card, index) => (
+              <div 
+                key={card.id}
+                style={{ 
+                  opacity: hasSelected ? 0.5 : 1,
+                  cursor: hasSelected ? 'default' : 'pointer'
+                }}
+                onClick={() => !hasSelected && handleSelectCard(card.id)}
+              >
+                <GameCard
+                  card={card}
+                  index={index}
+                  total={userHand.length}
+                />
+              </div>
+            ))}
+          </SimpleGrid>
+          
+          <Group justify="center" gap="xs">
+            {players.map(player => (
+              <Paper 
+                key={player.id}
+                p="xs" 
+                bg={selectedCards[player.id] ? 'blue.1' : 'gray.1'}
+                style={{ minWidth: '100px', textAlign: 'center' }}
+              >
+                <Text size="sm">
+                  {player.id === user?.id ? 'You' : 'Player'} 
+                  {selectedCards[player.id] ? ' ✓' : ''}
+                </Text>
+              </Paper>
+            ))}
+          </Group>
+        </>
+      )}
+      
+      {gameStage === 'ready' && (
+        <>
+          <Text size="sm" c="dimmed" ta="center">
+            Cards in Play ({cardsInPlay.length})
+          </Text>
+          
+          <div style={{ position: 'relative', minHeight: '24rem' }}>
+            {cardsInPlay.map((card, index) => (
+              <div key={card.id} style={{ position: 'absolute', width: '100%' }}>
+                <GameCard
+                  card={card}
+                  index={index}
+                  total={cardsInPlay.length}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <Button 
+            onClick={handleStartMainPhase}
+            fullWidth
+            size="lg"
+            variant="filled"
+            disabled={!allPlayersSelected}
+          >
+            Start Game
+          </Button>
+        </>
       )}
     </Stack>
   );
