@@ -1,58 +1,53 @@
-// src/components/game/GamePhases/Listening.tsx
-
-import { Stack, Text } from '@mantine/core';
+import { Text } from '@mantine/core';
 import { GameCard } from '../Card';
 import { ListenerReactions } from '../ListenerReactions';
-import { useGameStore } from '@/lib/hooks/useGameStore';
+import { Card } from '@/core/game/types';
 
-export function Listening() {
-  const { 
-    isSpeakerSharing, 
-    cardsInPlay, 
-    discardPile,
-    setGamePhase
-  } = useGameStore();
-  
-  // When speaker is done, move back to speaking phase for next turn
+interface ListeningProps {
+  cardsInPlay: Card[];
+  isSpeakerSharing: boolean;
+  discardPile?: Card[];
+}
+
+export function Listening({ 
+  cardsInPlay, 
+  isSpeakerSharing,
+  discardPile = []
+}: ListeningProps) {
   if (!isSpeakerSharing) {
-    setGamePhase('speaking');
-    return null;
-  }
-  
-  return (
-    <Stack gap="md">
-      {!isSpeakerSharing ? (
-        <>
-          <Text ta="center" c="dimmed" size="sm">
-            Browse previous cards while waiting
-          </Text>
-          <div style={{ position: 'relative', height: '24rem' }}>
-            {discardPile.map((card, index) => (
-              <div key={card.id} style={{ position: 'absolute', width: '100%' }}>
-                <GameCard
-                  card={card}
-                  index={index}
-                  total={discardPile.length}
-                  showExchange
-                />
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        <div style={{ position: 'relative' }}>
-          {cardsInPlay[0] && (
-            <GameCard
-              card={cardsInPlay[0]}
-              index={0}
-              total={1}
-            />
-          )}
-          <div style={{ position: 'absolute', bottom: '1rem', left: 0, right: 0 }}>
-            <ListenerReactions />
-          </div>
+    return (
+      <>
+        <Text ta="center" c="dimmed" size="sm">
+          Browse previous cards while waiting
+        </Text>
+        <div style={{ position: 'relative', height: '24rem' }}>
+          {discardPile.map((card, index) => (
+            <div key={card.id} style={{ position: 'absolute', width: '100%' }}>
+              <GameCard
+                card={card}
+                index={index}
+                total={discardPile.length}
+                showExchange
+              />
+            </div>
+          ))}
         </div>
+      </>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {cardsInPlay[0] && (
+        <GameCard
+          card={cardsInPlay[0]}
+          index={0}
+          total={cardsInPlay.length}
+        />
       )}
-    </Stack>
+      <div style={{ position: 'absolute', bottom: '1rem', left: 0, right: 0 }}>
+        <ListenerReactions />
+      </div>
+    </div>
   );
 }

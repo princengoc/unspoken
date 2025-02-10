@@ -1,33 +1,28 @@
-// src/components/game/GamePhases/Speaking.tsx
-
 import { Stack, Group, Avatar, Button, Text } from '@mantine/core';
 import { GameCard } from '../Card';
-import { useGameStore } from '@/lib/hooks/useGameStore';
 import { useAuth } from '@/context/AuthProvider';
+import { Card } from '@/core/game/types';
 
-export function Speaking() {
+interface SpeakingProps {
+  cardsInPlay: Card[];
+  isActiveSpeaker: boolean;
+  onStartSharing: () => void;
+}
+
+export function Speaking({ 
+  cardsInPlay, 
+  isActiveSpeaker,
+  onStartSharing 
+}: SpeakingProps) {
   const { user } = useAuth();
-  const { 
-    cardsInPlay, 
-    activePlayerId,
-    isSpeakerSharing,
-    setSpeakerSharing,
-    setGamePhase 
-  } = useGameStore();
-  
-  const isActiveSpeaker = user?.id === activePlayerId;
-
-  const handleStartSharing = async () => {
-    setSpeakerSharing(true);
-    await setGamePhase('listening');
-  };
+  if (!user) return null;
 
   return (
     <Stack gap="md">
       <Group justify="space-between">
         <Group>
           <Avatar color="blue" radius="xl">
-            {user?.email?.charAt(0).toUpperCase() || 'U'}
+            {user.email?.charAt(0).toUpperCase() || 'U'}
           </Avatar>
           <Text fw={500}>
             {isActiveSpeaker ? 'Your turn' : 'Waiting for speaker...'}
@@ -40,15 +35,15 @@ export function Speaking() {
           <GameCard
             card={cardsInPlay[0]}
             index={0}
-            total={1}
+            total={cardsInPlay.length}
           />
         )}
       </div>
 
-      {isActiveSpeaker && !isSpeakerSharing && (
+      {isActiveSpeaker && (
         <Button 
           color="blue"
-          onClick={handleStartSharing}
+          onClick={onStartSharing}
           style={{ margin: '0 auto' }}
         >
           Start Sharing

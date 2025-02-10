@@ -1,47 +1,47 @@
-'use client';
 import { Stack, Button, Text, SimpleGrid, Paper, Group } from '@mantine/core';
 import { GameCard } from '../Card';
-import { useGameStore } from '@/lib/hooks/useGameStore';
 import { useAuth } from '@/context/AuthProvider';
+import { Card } from '@/core/game/types';
+import { useEffect } from 'react';
 
-export function Setup() {
+interface SetupProps {
+  playerHands: Record<string, Card[]>;
+  selectedCards: Record<string, string>;
+  onDealCards: () => Promise<void>;
+  onSelectCard: (playerId: string, cardId: string) => void;
+  onAddWildCards: () => Promise<void>;
+  onStartGame: () => void;
+}
+
+export function Setup({ 
+  playerHands, 
+  selectedCards, 
+  onDealCards,
+  onSelectCard,
+  onAddWildCards,
+  onStartGame 
+}: SetupProps) {
   const { user } = useAuth();
-  const { 
-    players,
-    playerHands,
-    selectedCards,
-    gameStage,
-    cardsInPlay,
-    dealInitialCards,
-    selectCardForPool,
-    startMainPhase
-  } = useGameStore();
-  
-  const userHand = user ? playerHands[user.id] || [] : [];
-  const hasSelected = user ? !!selectedCards[user.id] : false;
-  const allPlayersSelected = players.every(p => selectedCards[p.id]);
-  
-  const handleStartGame = async () => {
-    if (!user) return;
-    await dealInitialCards();
-  };
-  
-  const handleSelectCard = async (cardId: string) => {
-    if (!user) return;
-    await selectCardForPool(user.id, cardId);
-  };
-  
-  const handleStartMainPhase = async () => {
-    await startMainPhase();
-  };
+  if (!user) return null;
+
+  const userHand = playerHands[user.id] || [];
+  const hasSelected = !!selectedCards[user.id];
+  const allPlayersSelected = Object.keys(playerHands).every(playerId => selectedCards[playerId]);
+
+  // When all players have selected their cards, add wild cards to the pool
+  useEffect(() => {
+    if (allPlayersSelected) {
+      onAddWildCards();
+    }
+  }, [allPlayersSelected, onAddWildCards]);
   
   return (
     <Stack gap="xl">
       <Text size="lg" fw={500} ta="center">Game Setup</Text>
       
-      {gameStage === 'dealing' && (
+      {!userHand.length && (
         <Button 
-          onClick={handleStartGame}
+          onClick={onDealCards}
           fullWidth
           size="lg"
           variant="filled"
@@ -50,7 +50,7 @@ export function Setup() {
         </Button>
       )}
       
-      {gameStage === 'selecting' && (
+      {userHand.length > 0 && !hasSelected && (
         <>
           <Text size="sm" c="dimmed" ta="center">
             Select one card to add to the shared pool
@@ -64,7 +64,7 @@ export function Setup() {
                   opacity: hasSelected ? 0.5 : 1,
                   cursor: hasSelected ? 'default' : 'pointer'
                 }}
-                onClick={() => !hasSelected && handleSelectCard(card.id)}
+                onClick={() => !hasSelected && onSelectCard(user.id, card.id)}
               >
                 <GameCard
                   card={card}
@@ -76,16 +76,16 @@ export function Setup() {
           </SimpleGrid>
           
           <Group justify="center" gap="xs">
-            {players.map(player => (
+            {Object.keys(playerHands).map(playerId => (
               <Paper 
-                key={player.id}
+                key={playerId}
                 p="xs" 
-                bg={selectedCards[player.id] ? 'blue.1' : 'gray.1'}
+                bg={selectedCards[playerId] ? 'blue.1' : 'gray.1'}
                 style={{ minWidth: '100px', textAlign: 'center' }}
               >
                 <Text size="sm">
-                  {player.id === user?.id ? 'You' : 'Player'} 
-                  {selectedCards[player.id] ? ' ✓' : ''}
+                  {playerId === user.id ? 'You' : 'Player'} 
+                  {selectedCards[playerId] ? ' ✓' : ''}
                 </Text>
               </Paper>
             ))}
@@ -93,34 +93,15 @@ export function Setup() {
         </>
       )}
       
-      {gameStage === 'ready' && (
-        <>
-          <Text size="sm" c="dimmed" ta="center">
-            Cards in Play ({cardsInPlay.length})
-          </Text>
-          
-          <div style={{ position: 'relative', minHeight: '24rem' }}>
-            {cardsInPlay.map((card, index) => (
-              <div key={card.id} style={{ position: 'absolute', width: '100%' }}>
-                <GameCard
-                  card={card}
-                  index={index}
-                  total={cardsInPlay.length}
-                />
-              </div>
-            ))}
-          </div>
-          
-          <Button 
-            onClick={handleStartMainPhase}
-            fullWidth
-            size="lg"
-            variant="filled"
-            disabled={!allPlayersSelected}
-          >
-            Start Game
-          </Button>
-        </>
+      {allPlayersSelected && (
+        <Button 
+          onClick={onStartGame}
+          fullWidth
+          size="lg"
+          variant="filled"
+        >
+          Start Game
+        </Button>
       )}
     </Stack>
   );

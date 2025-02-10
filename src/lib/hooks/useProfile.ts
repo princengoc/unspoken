@@ -1,7 +1,7 @@
 // src/lib/hooks/useProfile.ts
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthProvider';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/services/supabase/client';
 
 interface Profile {
   id: string;
