@@ -1,17 +1,26 @@
-'use client';
-
 import { Group, ActionIcon, Tooltip, Paper, Divider } from '@mantine/core';
 import { IconSparkles, IconHeart, IconBulb, IconRipple} from '@tabler/icons-react';
-import { useGameStore } from '@/lib/hooks/useGameStore';
+import { useReactions } from '@/hooks/game/useReactions';
 
-const reactions = [
-  { icon: IconSparkles, label: "Inspiring" },
-  { icon: IconHeart, label: "Resonates" },
-  { icon: IconBulb, label: "Me too" }
-];
+// Map reaction icons
+const ICON_MAP = {
+  'sparkles': IconSparkles,
+  'heart': IconHeart,
+  'bulb': IconBulb
+} as const;
 
-export function ListenerReactions() {
-  const { activeReactions, toggleReaction, isRippled, toggleRipple } = useGameStore();
+interface ListenerReactionsProps {
+  sessionId: string;
+}
+
+export function ListenerReactions({ sessionId }: ListenerReactionsProps) {
+  const { 
+    activeReactions, 
+    isRippled, 
+    toggleReaction, 
+    toggleRipple,
+    availableReactions 
+  } = useReactions(sessionId);
 
   return (
     <Paper 
@@ -27,20 +36,25 @@ export function ListenerReactions() {
       style={{ backdropFilter: 'blur(8px)' }}
     >
       <Group gap="xs">
-        {reactions.map(({ icon: Icon, label }) => (
-          <Tooltip key={label} label={label}>
-            <ActionIcon
-              variant={activeReactions.includes(label) ? "filled" : "subtle"}
-              color="blue"
-              onClick={() => toggleReaction(label)}
-              radius="xl"
-              size="lg"
-            >
-              <Icon size={18} />
-            </ActionIcon>
-          </Tooltip>
-        ))}
+        {availableReactions.map(({ id, label, icon }) => {
+          const Icon = ICON_MAP[icon as keyof typeof ICON_MAP];
+          return (
+            <Tooltip key={id} label={label}>
+              <ActionIcon
+                variant={activeReactions.includes(id) ? "filled" : "subtle"}
+                color="blue"
+                onClick={() => toggleReaction(id)}
+                radius="xl"
+                size="lg"
+              >
+                <Icon size={18} />
+              </ActionIcon>
+            </Tooltip>
+          );
+        })}
+        
         <Divider orientation="vertical" />
+        
         <Tooltip label="Ripple - Save for your turn">
           <ActionIcon
             variant={isRippled ? "filled" : "subtle"}

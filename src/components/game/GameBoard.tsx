@@ -106,6 +106,7 @@ export function GameBoard({ room, sessionId }: GameBoardProps) {
           <Listening
             cardsInPlay={cardsInPlay}
             isSpeakerSharing={isSpeakerSharing}
+            sessionId={sessionId}
           />
         );
       default:

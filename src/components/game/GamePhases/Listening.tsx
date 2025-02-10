@@ -6,12 +6,14 @@ import { Card } from '@/core/game/types';
 interface ListeningProps {
   cardsInPlay: Card[];
   isSpeakerSharing: boolean;
+  sessionId: string;
   discardPile?: Card[];
 }
 
 export function Listening({ 
   cardsInPlay, 
   isSpeakerSharing,
+  sessionId,
   discardPile = []
 }: ListeningProps) {
   if (!isSpeakerSharing) {
@@ -46,7 +48,7 @@ export function Listening({
         />
       )}
       <div style={{ position: 'absolute', bottom: '1rem', left: 0, right: 0 }}>
-        <ListenerReactions />
+        <ListenerReactions sessionId={sessionId}/>
       </div>
     </div>
   );

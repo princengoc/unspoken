@@ -9,10 +9,12 @@ export const DEFAULT_GAME_CONFIG = {
 export const INITIAL_CARDS_PER_PLAYER = 3;
 export const WILD_CARDS_COUNT = 2;
 
+export type ReactionIcon = 'sparkles' | 'heart' | 'bulb';
+
 export const REACTIONS = [
-  { id: 'inspiring', label: 'Inspiring', icon: 'sparkles' },
-  { id: 'resonates', label: 'Resonates', icon: 'heart' },
-  { id: 'metoo', label: 'Me too', icon: 'bulb' }
+  { id: 'inspiring', label: 'Inspiring', icon: 'sparkles' as ReactionIcon },
+  { id: 'resonates', label: 'Resonates', icon: 'heart' as ReactionIcon },
+  { id: 'metoo', label: 'Me too', icon: 'bulb' as ReactionIcon }
 ] as const;
 
 export const SHARING_STATES = {

@@ -1,10 +1,6 @@
-// Enhanced Card.tsx
-'use client';
-
-import { Card, Group, Text, Button, Avatar, Tooltip, Badge, Stack } from '@mantine/core';
+import { Card as MantineCard, Group, Text, Button, Avatar, Tooltip, Badge, Stack } from '@mantine/core';
 import { IconShare2, IconCheck } from '@tabler/icons-react';
-import { useGameStore } from '@/lib/hooks/useGameStore';
-import type { Card as CardType } from '@/lib/supabase/types';
+import type { Card as CardType } from '@/core/game/types';
 
 interface GameCardProps {
   card: CardType;
@@ -13,6 +9,7 @@ interface GameCardProps {
   showExchange?: boolean;
   selected?: boolean;
   onSelect?: () => void;
+  onExchange?: () => void;
 }
 
 export function GameCard({ 
@@ -21,15 +18,13 @@ export function GameCard({
   total, 
   showExchange = false,
   selected = false,
-  onSelect
+  onSelect,
+  onExchange
 }: GameCardProps) {
-  const gamePhase = useGameStore(state => state.gamePhase);
-  const gameStage = useGameStore(state => state.gameStage);
-  
-  const isSelectable = gamePhase === 'setup' && gameStage === 'selecting' && onSelect;
+  const isSelectable = !!onSelect;
   
   return (
-    <Card 
+    <MantineCard 
       shadow="sm" 
       padding="lg" 
       radius="md" 
@@ -41,16 +36,21 @@ export function GameCard({
       onClick={isSelectable ? onSelect : undefined}
     >
       <Stack gap="lg">
+        {/* Card Header */}
         <Group justify="space-between">
           <Badge variant="light" size="lg">
             {index + 1}/{total}
           </Badge>
-          {showExchange && (
+          {showExchange && onExchange && (
             <Tooltip label="Exchange this card">
               <Button 
                 variant="subtle" 
                 size="sm"
                 leftSection={<IconShare2 size={16} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onExchange();
+                }}
               >
                 Exchange
               </Button>
@@ -63,21 +63,25 @@ export function GameCard({
           )}
         </Group>
 
+        {/* Card Content */}
         <Text size="lg" fw={500} ta="center" py="xl">
           {card.content}
         </Text>
 
+        {/* Card Footer */}
         <Group justify="flex-start" gap="sm">
           <Avatar 
             size="sm" 
             radius="xl"
             color="blue"
           >
-            {card.contributor_id?.charAt(0).toUpperCase()}
+            {card.contributor_id?.charAt(0).toUpperCase() || '?'}
           </Avatar>
-          <Text size="sm" c="dimmed">{card.contributor_id}</Text>
+          <Text size="sm" c="dimmed">
+            {card.contributor_id || 'Anonymous'}
+          </Text>
         </Group>
       </Stack>
-    </Card>
+    </MantineCard>
   );
 }
