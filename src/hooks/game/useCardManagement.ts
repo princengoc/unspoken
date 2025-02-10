@@ -104,36 +104,45 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
     
     try {
       setLoading(true);
+      
+      // Get an array of card IDs that are already in play.
       const currentCardIds = cardsInPlay.map(card => card.id);
       
-      // Get random cards not already in play
-      const { data: wildCards } = await supabase
-        .from('cards')
-        .select('*')
-        // .not('id', 'in', currentCardIds)
-        // .order('RANDOM()')
-        .limit(WILD_CARDS_COUNT);
-
+      // Call the server-side function via Supabase RPC.
+      // This will return WILD_CARDS_COUNT random cards that are not in currentCardIds.
+      const { data: wildCards, error: wildCardsError } = await supabase.rpc(
+        'get_random_cards',
+        {
+          limit_count: WILD_CARDS_COUNT,
+          exclude_ids: currentCardIds,
+        }
+      );
+  
+      if (wildCardsError) throw wildCardsError;
       if (!wildCards) throw new Error('Failed to get wild cards');
-
+  
       console.log(`Wild cards: ${JSON.stringify(wildCards)}`);
       
+      // Combine the current card IDs with the newly fetched wild card IDs.
       const allCardIds = [...currentCardIds, ...wildCards.map(c => c.id)];
       
-      // Update session with card IDs
+      // Update the session with the new cards in play.
       await sessionsService.update(sessionId, {
-        cards_in_play: allCardIds
+        cards_in_play: allCardIds,
       });
       
-      // Update local state with full card objects
+      // Update local state with the full card objects.
       setCardsInPlay([...cardsInPlay, ...wildCards]);
+      
     } catch (error) {
       console.error('Failed to add wild cards:', error);
       throw error;
+      
     } finally {
       setLoading(false);
     }
   };
+  
 
   return {
     playerHands,
