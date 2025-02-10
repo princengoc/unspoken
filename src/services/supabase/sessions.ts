@@ -78,36 +78,39 @@ export const sessionsService = {
   async dealCards(sessionId: string, userId: string): Promise<Card[]> {
     const session = await this.get(sessionId);
     
-    // Get undelt cards (not in any player's hand or in play)
-    const { data: availableCards, error: cardsError } = await supabase
-      .from('cards')
-      .select('*')
-      // .not('id', 'in', [
-      //   ...(session.cards_in_play || []),
-      //   ...(session.discard_pile || [])
-      // ])
-      // .order('RANDOM()')
-      .limit(INITIAL_CARDS_PER_PLAYER);
+    const cardsToExclude = [
+      ...(session.cards_in_play || []),
+      ...(session.discard_pile || [])
+    ];
     
+    // Call the PostgreSQL function via Supabase's RPC
+    const { data: availableCards, error: cardsError } = await supabase.rpc(
+      'get_random_cards',
+      {
+        limit_count: INITIAL_CARDS_PER_PLAYER,
+        exclude_ids: cardsToExclude,
+      }
+    );
+  
     if (cardsError) throw cardsError;
     if (!availableCards) throw new Error('No cards available to deal');
-
+  
     // Update session with the dealt cards for this player
     const { error: updateError } = await supabase
       .from('game_sessions')
       .update({
         player_hands: {
           ...session.player_hands,
-          [userId]: availableCards.map(card => card.id)
-        }
+          [userId]: availableCards.map(card => card.id),
+        },
       })
       .eq('id', sessionId);
-
+  
     if (updateError) throw updateError;
-    
+  
     return availableCards as Card[];
   },
-
+  
   subscribeToChanges(sessionId: string, callback: (session: GameSession) => void) {
     return supabase
       .channel(`game_session:${sessionId}`)
