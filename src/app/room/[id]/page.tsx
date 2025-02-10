@@ -6,7 +6,7 @@ import { Container, Stack, Group, Text, Button, Loader, Card } from '@mantine/co
 import { IconDoorExit, IconSettings, IconUsers } from '@tabler/icons-react';
 import { useRoom } from '@/hooks/room/useRoom';
 import { useAuth } from '@/context/AuthProvider';
-import { sessionsService } from '@/services/supabase/sessions';
+import { sessionsService } from '@/services/supabase/gameStates';
 import { GameBoard } from '@/components/game/GameBoard';
 import { notifications } from '@mantine/notifications';
 
@@ -50,7 +50,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         } else {
           // Create new session with current room players
           const session = await sessionsService.create({
-            active_player_id: user.id,
+            activePlayerId: user.id,
             room_id: room.id,
             players: room.players.map(p => ({
               id: p.id,
@@ -58,7 +58,7 @@ export default function RoomPage({ params }: RoomPageProps) {
               isOnline: p.isOnline
             }))
           });
-          setSessionId(session.id);
+          setSessionId(session.room_id);
         }
       } catch (err) {
         console.error('Failed to initialize game session:', err);

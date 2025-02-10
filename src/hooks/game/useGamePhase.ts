@@ -1,57 +1,41 @@
 import { useEffect, useState } from 'react';
-import { GamePhase, Player } from '@/core/game/types';
-import { sessionsService } from '@/services/supabase/sessions';
+import { GamePhase } from '@/core/game/types';
+import { sessionsService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
+import { gameActions } from '@/core/game/actions';
+import { useGameSync } from './useGameSync';
 
-export function useGamePhase(sessionId: string | null, initialPlayers: Player[]) {
+export function useGamePhase(sessionId: string | null) {
   const stateMachine = useGameState();
   const [phase, setPhase] = useState<GamePhase>('setup');
   const [isSpeakerSharing, setIsSpeakerSharing] = useState(false);
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!sessionId) return;
+  // Set up Supabase sync
+  useGameSync(sessionId);
 
-    // Subscribe to state machine changes
+  // Subscribe to state machine changes
+  useEffect(() => {
     const unsubscribe = stateMachine.subscribe((state) => {
       setPhase(state.phase);
       setIsSpeakerSharing(state.isSpeakerSharing);
       setActivePlayerId(state.activePlayerId);
-
-      // Sync with Supabase
-      sessionsService.update(sessionId, {
-        current_phase: state.phase,
-        active_player_id: state.activePlayerId
-      }).catch(console.error);
     });
 
-    // Subscribe to remote changes
-    const subscription = sessionsService.subscribeToChanges(sessionId, (session) => {
-      if (session.current_phase !== phase) {
-        stateMachine.dispatch({ type: 'PHASE_CHANGED', phase: session.current_phase });
-      }
-      if (session.active_player_id !== activePlayerId) {
-        stateMachine.dispatch({ type: 'ACTIVE_PLAYER_CHANGED', playerId: session.active_player_id });
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      subscription.unsubscribe();
-    };
-  }, [sessionId, stateMachine, phase, activePlayerId]);
+    return unsubscribe;
+  }, [stateMachine]);
 
   const startGame = async () => {
     if (!sessionId) return;
     
     try {
-      // Update state machine
-      stateMachine.dispatch({ type: 'START_GAME' });
+      // Update state machine first
+      stateMachine.dispatch(gameActions.startGame());
       
-      // Add this Supabase update
+      // Then sync with Supabase
       await sessionsService.update(sessionId, {
-        current_phase: 'speaking',
-        active_player_id: activePlayerId
+        phase: 'speaking',
+        activePlayerId: activePlayerId
       });
     } catch (error) {
       console.error('Failed to start game:', error);
@@ -59,12 +43,37 @@ export function useGamePhase(sessionId: string | null, initialPlayers: Player[])
     }
   };
 
-  const startSharing = () => {
-    stateMachine.dispatch({ type: 'START_SHARING' });
+  const startSharing = async () => {
+    if (!sessionId) return;
+
+    try {
+      stateMachine.dispatch(gameActions.startSharing());
+      await sessionsService.update(sessionId, {
+        phase: 'listening',
+        isSpeakerSharing: true
+      });
+    } catch (error) {
+      console.error('Failed to start sharing:', error);
+      throw error;
+    }
   };
 
-  const endSharing = () => {
-    stateMachine.dispatch({ type: 'END_SHARING' });
+  const endSharing = async () => {
+    if (!sessionId) return;
+
+    try {
+      stateMachine.dispatch(gameActions.endSharing());
+      const state = stateMachine.getState();
+      
+      await sessionsService.update(sessionId, {
+        phase: 'speaking',
+        isSpeakerSharing: false,
+        activePlayerId: state.activePlayerId
+      });
+    } catch (error) {
+      console.error('Failed to end sharing:', error);
+      throw error;
+    }
   };
 
   return {

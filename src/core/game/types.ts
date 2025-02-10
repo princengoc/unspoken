@@ -5,18 +5,20 @@ export type Player = {
   id: string;
   username: string | null;
   isOnline: boolean;
-  hand?: string[]; // Card IDs
   hasSelected?: boolean;
 };
 
 export type GameState = {
+  id: string;
   phase: GamePhase;
   activePlayerId: string | null;
   players: Player[];
-  cardsInPlay: string[]; // Card IDs
-  discardPile: string[]; // Card IDs
+  cardsInPlay: Card[];
+  discardPile: Card[];
   isSpeakerSharing: boolean;
   pendingExchanges: Exchange[];
+  playerHands: Record<string, Card[]>;
+  room_id: string | null;
 };
 
 export type Exchange = {
@@ -29,17 +31,6 @@ export type Exchange = {
   status: 'pending' | 'accepted' | 'rejected';
   created_at: string;
 }
-
-export type GameEvent = 
-  | { type: 'PHASE_CHANGED', phase: GamePhase}
-  | { type: 'ACTIVE_PLAYER_CHANGED', playerId: string}
-  | { type: 'START_GAME' }
-  | { type: 'DEAL_CARDS' }
-  | { type: 'SELECT_CARD'; playerId: string; cardId: string }
-  | { type: 'START_SHARING' }
-  | { type: 'END_SHARING' }
-  | { type: 'PROPOSE_EXCHANGE'; exchange: Omit<Exchange, 'id' | 'status'> }
-  | { type: 'RESPOND_TO_EXCHANGE'; exchangeId: string; accept: boolean };
 
 export type GameAction = {
   type: string;
@@ -62,22 +53,6 @@ export type Card = {
   depth: 1 | 2 | 3;
   created_at?: string;
   contributor_id?: string;
-}
-
-export type GameSession = {
-  id: string;
-  current_phase: 'setup' | 'speaking' | 'listening';
-  active_player_id: string;
-  room_id?: string;
-  created_at: string;
-  cards_in_play: string[];  // Card IDs
-  discard_pile: string[];   // Card IDs
-  player_hands: Record<string, string[]>;  // userId -> array of card IDs
-  players: Array<{
-    id: string;
-    username: string | null;
-    isOnline: boolean;
-  }>;
 }
 
 export type Room = {

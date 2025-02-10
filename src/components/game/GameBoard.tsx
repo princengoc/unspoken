@@ -13,7 +13,6 @@ import { GameStateProvider } from '@/context/GameStateProvider';
 interface GameBoardProps {
   room: Room;
   sessionId: string;
-  user: any
 }
 
 export function GameBoard({ room, sessionId }: GameBoardProps) {
@@ -31,14 +30,14 @@ export function GameBoard({ room, sessionId }: GameBoardProps) {
 
   return (
     <GameStateProvider players={room.players}>
-      <GameBoardContent room={room} sessionId={sessionId} user={user} />
+      <GameBoardContent room={room} sessionId={sessionId} />
     </GameStateProvider>
   );
 }
 
 export function GameBoardContent({ room, sessionId }: GameBoardProps) {
   const { user } = useAuth();
-  const { phase, startGame } = useGamePhase(sessionId, room.players);
+  const { phase, startGame } = useGamePhase(sessionId);
   const { 
     playerHands, 
     cardsInPlay, 
