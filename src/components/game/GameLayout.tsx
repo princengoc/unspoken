@@ -2,18 +2,23 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Container, Stack, Paper, Button, Text } from '@mantine/core';
+import { Container, Stack, Paper, Button, Text, Loader } from '@mantine/core';
 import { Setup } from './GamePhases/Setup';
 import { Speaking } from './GamePhases/Speaking';
 import { Listening } from './GamePhases/Listening';
 import { useGameStore } from '@/lib/hooks/useGameStore';
-import { useRoom } from '@/lib/hooks/useRoom';
 import { useAuth } from '@/context/AuthProvider';
+import { Room } from '@/lib/supabase/types';
 
-export function GameLayout() {
+interface GameLayoutProps {
+  room: Room;
+}
+
+export function GameLayout({ room }: GameLayoutProps) {
   const { user } = useAuth();
-  const { room } = useRoom();
   const { 
+    loading, 
+    initialized,
     gamePhase,
     activePlayerId,
     isSpeakerSharing,
@@ -30,7 +35,7 @@ export function GameLayout() {
     }
   }, [sessionId, gamePhase, setGamePhase]);
 
-  if (!user || !room || !sessionId) {
+  if (!user || !room) {
     return (
       <Container size="sm">
         <Text ta="center" c="dimmed">
@@ -39,6 +44,29 @@ export function GameLayout() {
       </Container>
     );
   }
+
+  if (!sessionId) {
+    return (
+      <Container size="sm">
+        <Text ta="center" c="dimmed">
+          Failed to initialize game session. Please try rejoining the room.
+        </Text>
+      </Container>
+    );
+  }  
+
+  if (loading || !initialized) {
+    return (
+      <Container size="sm">
+        <Stack align="center" gap="md">
+          <Loader size="lg" />
+          <Text ta="center" c="dimmed">
+            Setting up game session...
+          </Text>
+        </Stack>
+      </Container>
+    );
+  }  
 
   const isActiveSpeaker = user.id === activePlayerId;
 
@@ -108,7 +136,8 @@ export function GameLayout() {
                   activePlayer: activePlayerId,
                   isSpeakerSharing,
                   currentUser: user.id,
-                  playerCount: room.players.length
+                  playerCount: room.players.length,
+                  roomId: room.id
                 },
                 null,
                 2

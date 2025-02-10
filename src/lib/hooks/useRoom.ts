@@ -38,6 +38,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
         });
 
       } catch (err) {
+        console.error('Error loading room:', err); // Debug log
         setError(err instanceof Error ? err : new Error('Failed to load room'));
       } finally {
         setLoading(false);

@@ -7,6 +7,7 @@ interface GameState {
   // Session state
   sessionId: string | null;
   loading: boolean;
+  initialized: boolean;
   gamePhase: GameSession['current_phase'];
   activePlayerId: string | null;
   players: Array<{
@@ -53,10 +54,12 @@ const fetchCardsByIds = async (cardIds: string[]): Promise<Card[]> => {
   return data as Card[];
 };
 
+
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
   sessionId: null,
-  loading: true,
+  loading: false,
+  initialized: false,
   gamePhase: 'setup',
   activePlayerId: null,
   players: [],
@@ -71,8 +74,30 @@ export const useGameStore = create<GameState>((set, get) => ({
   // Actions
   initSession: async (userId: string, roomId?: string) => {
     try {
-      console.log('Initializing game session for user:', userId, 'room:', roomId);
-      
+      set({ loading: true });
+      // First check if room already has a session
+      if (roomId) {
+        const { data: room } = await supabase
+          .from('rooms')
+          .select('current_session_id')
+          .eq('id', roomId)
+          .single();
+        
+        if (room?.current_session_id) {
+          // Join existing session
+          const session = await sessionsTable.get(room.current_session_id);
+          set({ 
+            sessionId: session.id,
+            gamePhase: session.current_phase,
+            activePlayerId: session.active_player_id,
+            players: session.players || [],
+            initialized: true
+          });
+          return;
+        }
+      }
+
+      // Create new session if none exists
       const session = await sessionsTable.create({
         active_player_id: userId,
         room_id: roomId,
@@ -82,23 +107,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         player_hands: {},
         players: [{ id: userId, isOnline: true }]
       });
-      
-      console.log('Game session created:', session);
 
-      // If room exists, update its current_session_id
-      if (roomId) {
-        const { error: updateError } = await supabase
-          .from('rooms')
-          .update({ current_session_id: session.id })
-          .eq('id', roomId);
-
-        if (updateError) {
-          console.error('Failed to update room with session ID:', updateError);
-          throw updateError;
-        }
-      }
-
-      // Subscribe to session changes
+      // Set up real-time subscription
       const subscription = sessionsTable.subscribeToChanges(session.id, async (updatedSession) => {
         const [cardsInPlay, discardPile] = await Promise.all([
           fetchCardsByIds(updatedSession.cards_in_play || []),
@@ -113,11 +123,12 @@ export const useGameStore = create<GameState>((set, get) => ({
           players: updatedSession.players || []
         });
       });
-      
+
       set({ 
         sessionId: session.id,
         activePlayerId: userId,
-        gamePhase: 'setup'
+        gamePhase: 'setup',
+        initialized: true
       });
 
       return () => {
@@ -125,8 +136,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
     } catch (error) {
       console.error('Failed to initialize session:', error);
-      // Re-throw the error so it can be handled by the component
       throw error;
+    } finally {
+      set({ loading: false });
     }
   },
 
@@ -216,7 +228,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       console.error('Failed to deal cards:', error);
     }
   },
-  
+
   proposeExchange: async (recipientId, offeredCardId, requestedCardId) => {
     const { sessionId, activePlayerId } = get();
     if (!sessionId || !activePlayerId) return;

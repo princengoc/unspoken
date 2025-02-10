@@ -11,7 +11,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const sessionsTable = {
   async create(initialData: Partial<GameSession>) {
     try {
-      console.log('Creating game session with data:', initialData);
+      if (!initialData.active_player_id) {
+        throw new Error('active_player_id is required');
+      }      
       
       const { data, error } = await supabase
         .from('game_sessions')
@@ -35,7 +37,18 @@ export const sessionsTable = {
         throw new Error('No data returned from session creation');
       }
 
-      console.log('Session created successfully:', data);
+      // Update room with session ID if room_id provided
+      if (initialData.room_id) {
+        const { error: updateError } = await supabase
+          .from('rooms')
+          .update({ current_session_id: data.id })
+          .eq('id', initialData.room_id);
+
+        if (updateError) {
+          console.error('Failed to update room with session ID:', updateError);
+        }
+      }      
+
       return data as GameSession;
     } catch (error) {
       console.error('Failed to create game session:', error);
@@ -239,8 +252,6 @@ export const roomsTable = {
         ...settings
       }
     };
-
-    console.log('Creating room with data:', roomData);
     
     const { data, error } = await supabase
       .from('rooms')
@@ -259,7 +270,6 @@ export const roomsTable = {
       throw error;
     }
 
-    console.log('Room created successfully:', data);
     return data as Room;
   },
 
@@ -298,11 +308,18 @@ export const roomsTable = {
   async get(roomId: string): Promise<Room> {
     const { data, error } = await supabase
       .from('rooms')
-      .select()
+      .select('*')
       .eq('id', roomId)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error('Room not found');
+    }
+
     return data as Room;
   },
 

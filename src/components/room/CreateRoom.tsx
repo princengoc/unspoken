@@ -33,10 +33,7 @@ export function CreateRoom() {
     }
   
     try {
-      console.log('Creating room with name:', name, 'and settings:', settings);
       const room = await createRoom(name, settings);
-      console.log('Room created:', room);
-      
       setCreatedRoomId(room.id);
       setRoomPasscode(room.passcode);
       notifications.show({

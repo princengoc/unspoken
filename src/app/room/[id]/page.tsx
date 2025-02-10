@@ -90,8 +90,17 @@ export default function RoomPage({ params }: RoomPageProps) {
     );
   }
 
-  if (!room || !user || !sessionId) {
-    return null;
+  if (!room || !user) {
+    return (
+      <Container py="xl">
+        <Card p="xl" withBorder>
+          <Stack align="center" gap="md">
+            <Text>Room not found</Text>
+            <Button onClick={() => router.push('/')}>Return Home</Button>
+          </Stack>
+        </Card>
+      </Container>
+    );
   }
 
   const isCreator = room.created_by === user.id;
@@ -136,7 +145,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         </Card>
 
         {/* Game Layout */}
-        {sessionInitialized && <GameLayout />}
+        {sessionInitialized && <GameLayout room={room} />}
       </Stack>
     </Container>
   );
