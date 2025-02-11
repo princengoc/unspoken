@@ -45,11 +45,18 @@ export const roomsService = {
     if (findError) throw findError;
     if (!room) throw new Error('Room not found');
 
+    // Check if player already exists in the room
+    const existingPlayer = room.players.find(p => p.id === player.id);
+    
+    if (existingPlayer) {
+      // If player exists, return room without modifying players array
+      return room as Room;
+    }
+
+    // Only add player if they're completely new to the room
     const { data, error } = await supabase
       .from('rooms')
-      .update({
-        players: [...(room.players || []), player]
-      })
+      .update({ players: [...room.players, player] })
       .eq('id', room.id)
       .select()
       .single();
@@ -73,12 +80,14 @@ export const roomsService = {
 
   async updatePlayerStatus(roomId: string, playerId: string, isActive: boolean): Promise<void> {
     const room = await this.get(roomId);
+    
+    // Only update if player exists
+    const playerExists = room.players.some(p => p.id === playerId);
+    if (!playerExists) return;
+
     const updatedPlayers = room.players.map(player => 
       player.id === playerId
-        ? {
-            ...player,
-            isOnline: isActive,
-          }
+        ? { ...player, isOnline: isActive }
         : player
     );
 

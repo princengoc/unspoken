@@ -19,6 +19,15 @@ export function useRoom(roomId?: string): UseRoomReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Update cleanup for proper disconnection
+  useEffect(() => {
+    return () => {
+      if (roomId && user?.id) {
+        roomsService.updatePlayerStatus(roomId, user.id, false).catch(console.error);
+      }
+    };
+  }, [roomId, user?.id]);
+
   useEffect(() => {
     let subscription: ReturnType<typeof roomsService.subscribeToRoom>;
 
@@ -80,7 +89,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
       const joinedRoom = await roomsService.join(passcode, {
         id: user.id,
         username: null, // Will be populated from profiles
-        isOnline: true
+        isOnline: true, 
       });
       setRoom(joinedRoom);
       return joinedRoom;

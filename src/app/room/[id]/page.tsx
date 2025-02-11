@@ -36,28 +36,30 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [loading, setLoading] = useState(true);
   const [gameState, setGameState] = useState<any>(null);
 
-  // Initialize or join game session (logic remains unchanged)
+  // Initialize or join game session
   useEffect(() => {
     if (!user || !room || sessionId) return;
-
+  
     const setupSession = async () => {
       try {
         setLoading(true);
-
+  
         if (room.current_session_id) {
           // Join existing session
           const state = await gameStatesService.get(room.current_session_id);
-
-          // Ensure the current user is included as a player
-          const playerExists = state.players.some((p: any) => p.id === user.id);
-          if (!playerExists) {
+  
+          // If player already exists in state, just restore their session
+          const existingPlayer = state.players.find((p: any) => p.id === user.id);
+  
+          if (!existingPlayer) {
+            // Only add the player if they don't exist
             await gameStatesService.update(room.current_session_id, {
               players: [
                 ...state.players,
-                { id: user.id, username: user.username || null, isOnline: true }
+                { id: user.id, username: user.username || null, isOnline: true, hasSelected: false }
               ]
             });
-          }
+          } 
           setSessionId(room.current_session_id);
           setGameState(state);
         } else {
@@ -66,7 +68,7 @@ export default function RoomPage({ params }: RoomPageProps) {
             activePlayerId: user.id,
             room_id: room.id,
             phase: 'setup',
-            round: 1, // Optional: Include round number if needed
+            round: 1,
             cardsInPlay: [],
             discardPile: [],
             playerHands: {},
@@ -92,7 +94,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         setLoading(false);
       }
     };
-
+  
     setupSession();
   }, [user, room, sessionId]);
 
