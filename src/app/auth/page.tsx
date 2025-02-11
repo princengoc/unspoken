@@ -31,7 +31,7 @@ export default function AuthPage() {
     try {
       if (isSignUp) {
         await signUpWithEmail(email, password);
-        notifications.show({ title: "Success", message: "Sign-up successful! Please log in.", color: "green" });
+        notifications.show({ title: "Success", message: "Sign-up successful! Please check your email for confirmation.", color: "green" });
       } else {
         await loginWithEmail(email, password);
         notifications.show({ title: "Logged in", message: "Welcome back!", color: "blue" });
