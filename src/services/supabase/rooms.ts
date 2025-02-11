@@ -111,6 +111,19 @@ export const roomsService = {
     return data as Room;
   },
 
+  async findRoomByPasscode(passcode: string): Promise<Room | null> {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('passcode', passcode.toUpperCase())
+      .eq('is_active', true)
+      .single();
+    
+    if (error && error.code === 'PGRST116') return null; // Room not found
+    if (error) throw error;
+    return data;
+  },  
+
   subscribeToRoom(roomId: string, callback: (room: Room) => void) {
     return supabase
       .channel(`room:${roomId}`)

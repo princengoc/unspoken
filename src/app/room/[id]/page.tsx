@@ -8,7 +8,8 @@ import {
   Button,
   Loader,
   Avatar,
-  Indicator
+  Indicator, 
+  Box
 } from '@mantine/core';
 import {
   IconDoorExit,
@@ -18,6 +19,7 @@ import {
   IconReload
 } from '@tabler/icons-react';
 import { useRoom } from '@/hooks/room/useRoom';
+import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { useAuth } from '@/context/AuthProvider';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import { GameBoard } from '@/components/game/GameBoard';
@@ -199,6 +201,13 @@ export default function RoomPage({ params }: RoomPageProps) {
           </Button>
         </Group>
       </Group>
+
+      {/* Show Join Requests only to room creator */}
+      {room && user && room.created_by === user.id && (
+        <Box mb="xl">
+          <JoinRequests roomId={room.id} />
+        </Box>
+      )}      
 
       {/* Main Game Board */}
       {sessionId && <GameBoard room={room} sessionId={sessionId} />}

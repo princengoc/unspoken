@@ -7,8 +7,9 @@ interface UseRoomReturn {
   room: Room | null;
   loading: boolean;
   error: Error | null;
+  findRoomByPasscode: (passcode: string) => Promise<Room>;
   createRoom: (name: string, settings?: Partial<RoomSettings>) => Promise<Room>;
-  joinRoom: (passcode: string) => Promise<Room>;
+  joinRoom: (roomId: string) => Promise<Room>;
   updateSettings: (settings: Partial<RoomSettings>) => Promise<void>;
   leaveRoom: () => Promise<void>;
 }
@@ -81,12 +82,18 @@ export function useRoom(roomId?: string): UseRoomReturn {
     }
   };
 
-  const joinRoom = async (passcode: string): Promise<Room> => {
+  const findRoomByPasscode = async (passcode: string): Promise<Room> => {
+    const room = await roomsService.findRoomByPasscode(passcode);
+    if (!room) throw new Error('Room not found');
+    return room;
+  };
+
+  const joinRoom = async (roomId: string): Promise<Room> => {
     if (!user) throw new Error('Must be logged in to join a room');
 
     try {
       setLoading(true);
-      const joinedRoom = await roomsService.join(passcode, {
+      const joinedRoom = await roomsService.join(roomId, {
         id: user.id,
         username: null, // Will be populated from profiles
         isOnline: true, 
@@ -94,7 +101,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
       setRoom(joinedRoom);
       return joinedRoom;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to join room');
+      const error = err instanceof Error ? err : new Error(`Failed to join room: ${JSON.stringify(err)}`);
       setError(error);
       throw error;
     } finally {
@@ -133,6 +140,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
     room,
     loading,
     error,
+    findRoomByPasscode,
     createRoom,
     joinRoom,
     updateSettings,
