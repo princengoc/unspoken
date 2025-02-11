@@ -25,6 +25,29 @@ export function useGamePhase(sessionId: string | null) {
     return unsubscribe;
   }, [stateMachine]);
 
+  // restore old state if exist
+  const initializeGame = async () => {
+    if (!sessionId) return;
+    
+    try {
+      const gameState = await gameStatesService.get(sessionId);
+      
+      // Explicitly restore all game state aspects
+      stateMachine.dispatch(gameActions.phaseChanged(gameState.phase));
+      stateMachine.dispatch(gameActions.activePlayerChanged(gameState.activePlayerId));
+      
+      if (gameState.isSpeakerSharing) {
+        stateMachine.dispatch(gameActions.startSharing());
+      }
+      
+      setPhase(gameState.phase);
+      setIsSpeakerSharing(gameState.isSpeakerSharing);
+      setActivePlayerId(gameState.activePlayerId);
+    } catch (error) {
+      console.error('Failed to initialize game state:', error);
+    }
+  };
+
   const startGame = async () => {
     if (!sessionId) return;
     
@@ -81,6 +104,7 @@ export function useGamePhase(sessionId: string | null) {
     isSpeakerSharing,
     activePlayerId,
     startGame,
+    initializeGame,
     startSharing,
     endSharing
   };

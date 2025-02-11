@@ -64,12 +64,9 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
       };
 
     case 'START_SHARING':
-      if (state.phase !== 'speaking') {
-        throw new Error(ERRORS.INVALID_PHASE);
-      }
       return {
         ...state,
-        phase: 'listening',
+        phase: 'speaking',
         isSpeakerSharing: true
       };
 

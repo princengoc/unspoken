@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Container, Stack, Paper, Button, Text, Loader } from '@mantine/core';
+import { Container, Stack, Button, Text, Loader } from '@mantine/core';
 import { Setup } from './GamePhases/Setup';
 import { Speaking } from './GamePhases/Speaking';
 import { Listening } from './GamePhases/Listening';
@@ -37,7 +37,7 @@ export function GameBoard({ room, sessionId }: GameBoardProps) {
 
 export function GameBoardContent({ room, sessionId }: GameBoardProps) {
   const { user } = useAuth();
-  const { phase, startGame } = useGamePhase(sessionId);
+  const { phase, startGame, initializeGame } = useGamePhase(sessionId);
   const { 
     playerHands, 
     cardsInPlay, 
@@ -56,10 +56,14 @@ export function GameBoardContent({ room, sessionId }: GameBoardProps) {
   } = useTurnManagement(sessionId, room.players);
 
   useEffect(() => {
-    if (sessionId && phase === null) {
-      startGame();
+    if (sessionId) {
+      if (phase === null) {
+        startGame();
+      } else {
+        initializeGame();
+      }
     }
-  }, [sessionId, phase, startGame]);
+  }, [sessionId, phase, startGame, initializeGame]);
 
   if (!user || !room) {
     return (
