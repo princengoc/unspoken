@@ -35,7 +35,11 @@ export function useGamePhase(sessionId: string | null) {
       // Explicitly restore all game state aspects
       stateMachine.dispatch(gameActions.phaseChanged(gameState.phase));
       stateMachine.dispatch(gameActions.activePlayerChanged(gameState.activePlayerId));
-      
+
+      if (gameState.cardsInPlay && gameState.cardsInPlay.length > 0) {
+        stateMachine.dispatch(gameActions.cardsSelected(gameState.cardsInPlay));
+      }      
+
       if (gameState.isSpeakerSharing) {
         stateMachine.dispatch(gameActions.startSharing());
       }
