@@ -1,8 +1,7 @@
-// src/components/auth/ProfileSettings.tsx
 import { useState, useEffect } from 'react';
 import { Card, TextInput, Button, Stack, Group, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useProfile } from '../../lib/hooks/useProfile';
+import { useProfile } from '@/hooks/auth/useProfile';
 import { useAuth } from '@/context/AuthProvider';
 
 export function ProfileSettings() {
