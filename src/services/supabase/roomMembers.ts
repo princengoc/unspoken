@@ -90,7 +90,6 @@ export const roomMembersService = {
       .eq('room_id', roomId)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(1)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error; // Ignore not found error

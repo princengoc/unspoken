@@ -34,11 +34,11 @@ export const roomsService = {
     return data as Room;
   },
 
-  async join(passcode: string, player: Player): Promise<Room> {
+  async join(roomId: string, player: Player): Promise<Room> {
     const { data: room, error: findError } = await supabase
       .from('rooms')
       .select()
-      .eq('passcode', passcode.toUpperCase())
+      .eq('id', roomId)
       .eq('is_active', true)
       .single();
     

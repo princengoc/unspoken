@@ -101,9 +101,9 @@ export function useRoom(roomId?: string): UseRoomReturn {
       setRoom(joinedRoom);
       return joinedRoom;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(`Failed to join room: ${JSON.stringify(err)}`);
-      setError(error);
-      throw error;
+      console.error(`Join room error: ${JSON.stringify(err)}`);
+      setError(err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -117,9 +117,9 @@ export function useRoom(roomId?: string): UseRoomReturn {
       const updatedRoom = await roomsService.updateSettings(room.id, settings);
       setRoom(updatedRoom);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to update settings');
-      setError(error);
-      throw error;
+      console.error(`update settings: ${JSON.stringify(err)}`);
+      setError(err);
+      throw err;
     }
   };
 
