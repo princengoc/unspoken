@@ -197,7 +197,7 @@ export const gameStatesService = {
         { 
           event: '*', 
           schema: 'public', 
-          table: 'game_sessions',
+          table: 'game_states',
           filter: `id=eq.${sessionId}`
         }, 
         async (payload) => {
