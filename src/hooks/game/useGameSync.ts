@@ -3,8 +3,6 @@ import { exchangesService, gameStatesService } from '@/services/supabase/gameSta
 import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
 
-
-
 export function useGameSync(sessionId: string | null) {
   const stateMachine = useGameState();
 

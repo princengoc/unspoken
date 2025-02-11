@@ -73,16 +73,6 @@ export const roomMembersService = {
     return data || [];
   },
 
-  async getJoinRequestsForUser(userId: string): Promise<JoinroomRequest[]> {
-    const { data, error } = await supabase
-      .from('joinroom_requests')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-    return data || [];
-  },
-
   async checkJoinRequest(roomId: string, userId: string): Promise<JoinroomRequest | null> {
     const { data, error } = await supabase
       .from('joinroom_requests')
