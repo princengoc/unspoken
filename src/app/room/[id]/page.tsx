@@ -2,21 +2,19 @@
 
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Container,
-  Group,
-  Button,
-  Loader,
-  Avatar,
-  Indicator, 
-  Box
-} from '@mantine/core';
+import { Container, Box, Button, Loader, Avatar, Indicator } from '@mantine/core';
 import {
   IconDoorExit,
   IconSettings,
-  IconLayoutGrid,
-  IconTrash,
-  IconReload
+  IconCards,
+  IconReload,
+  IconDog,
+  IconCat,
+  IconHorse,
+  IconBug,
+  IconFish,
+  IconButterflyFilled,
+  IconPaw,
 } from '@tabler/icons-react';
 import { useRoom } from '@/hooks/room/useRoom';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
@@ -29,6 +27,45 @@ interface RoomPageProps {
   params: Promise<{ id: string }>;
 }
 
+// ----- Simple Hash Function & Avatar Selection -----
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+const animalIcons = [
+  IconDog,
+  IconCat,
+  IconHorse,
+  IconBug,
+  IconFish,
+  IconButterflyFilled,
+  IconPaw
+];
+
+const avatarColors = [
+  'blue',
+  'red',
+  'green',
+  'yellow',
+  'orange',
+  'violet',
+  'pink'
+];
+
+function getAvatarProps(playerId: string) {
+  const hash = hashString(playerId);
+  const iconIndex = hash % animalIcons.length;
+  const colorIndex = hash % avatarColors.length;
+  return {
+    Icon: animalIcons[iconIndex],
+    color: avatarColors[colorIndex]
+  };
+}
+
 export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
   const router = useRouter();
@@ -38,34 +75,26 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [loading, setLoading] = useState(true);
   const [gameState, setGameState] = useState<any>(null);
 
-  // Initialize or join game session
+  // Initialize or join game session.
   useEffect(() => {
     if (!user || !room || sessionId) return;
-  
-    const setupSession = async () => {
+    async function setupSession() {
       try {
         setLoading(true);
-  
         if (room.current_session_id) {
-          // Join existing session
           const state = await gameStatesService.get(room.current_session_id);
-  
-          // If player already exists in state, just restore their session
           const existingPlayer = state.players.find((p: any) => p.id === user.id);
-  
           if (!existingPlayer) {
-            // Only add the player if they don't exist
             await gameStatesService.update(room.current_session_id, {
               players: [
                 ...state.players,
                 { id: user.id, username: user.username || null, isOnline: true, hasSelected: false }
               ]
             });
-          } 
+          }
           setSessionId(room.current_session_id);
           setGameState(state);
         } else {
-          // Create a new game state
           const state = await gameStatesService.create({
             activePlayerId: user.id,
             room_id: room.id,
@@ -95,12 +124,10 @@ export default function RoomPage({ params }: RoomPageProps) {
       } finally {
         setLoading(false);
       }
-    };
-  
+    }
     setupSession();
   }, [user, room, sessionId]);
 
-  // Handle any room errors (unchanged)
   useEffect(() => {
     if (error) {
       notifications.show({
@@ -128,10 +155,10 @@ export default function RoomPage({ params }: RoomPageProps) {
   if (roomLoading || loading) {
     return (
       <Container py="xl">
-        <Group direction="column" align="center" spacing="md">
-          <Loader size="lg" />
+        <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <Loader size={40} />
           <div>Setting up game session...</div>
-        </Group>
+        </Box>
       </Container>
     );
   }
@@ -139,10 +166,10 @@ export default function RoomPage({ params }: RoomPageProps) {
   if (!room || !user) {
     return (
       <Container py="xl">
-        <Group direction="column" align="center" spacing="md">
+        <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <div>Room not found</div>
           <Button onClick={() => router.push('/')}>Return Home</Button>
-        </Group>
+        </Box>
       </Container>
     );
   }
@@ -151,63 +178,78 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   return (
     <Container py="xl">
-      {/* Top Bar */}
-      <Group position="apart" align="center" mb="md" style={{ width: '100%' }}>
-        {/* Left: Player Avatars */}
-        <Group spacing="md">
-          {room.players.map((p: any) => (
-            <Avatar
-              key={p.id}
-              radius="xl"
-              size="lg"
-              // Highlight the current user's avatar with a border
-              sx={(theme) => ({
-                border: p.id === user.id ? `2px solid ${theme.colors.green[6]}` : undefined,
-              })}
-            >
-              {p.username ? p.username.charAt(0).toUpperCase() : 'U'}
-            </Avatar>
-          ))}
-        </Group>
-
-        {/* Middle: Game State Indicators */}
-        <Group spacing="md">
-          {gameState && (
-            <>
-              <Indicator label={gameState.cardsInPlay?.length || 0} size={20} color="blue">
-                <IconLayoutGrid size={24} />
-              </Indicator>
-              <Indicator label={gameState.discardPile?.length || 0} size={20} color="red">
-                <IconTrash size={24} />
-              </Indicator>
-              {typeof gameState.round !== 'undefined' && (
-                <Indicator label={gameState.round} size={20} color="green">
-                  <IconReload size={24} />
+      {/* Top horizontal bar */}
+      <Box
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid #e0e0e0',
+          padding: '8px 0',
+          marginBottom: '16px'
+        }}
+      >
+        {/* Left side: Avatars and game status */}
+        <Box style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Avatars */}
+          <Box style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {room.players.map((p: any) => {
+              const { Icon, color } = getAvatarProps(p.id);
+              return (
+                <Avatar
+                  key={p.id}
+                  radius="xl"
+                  size={32}
+                  color={color}
+                  // Using standard "style" instead of sx
+                  style={{
+                    border: p.id === user.id ? '2px solid #28a745' : undefined
+                  }}
+                >
+                  <Icon size={18} />
+                </Avatar>
+              );
+            })}
+          </Box>
+          {/* Game status indicators */}
+          <Box style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {gameState && (
+              <>
+                <Indicator label={gameState.discardPile?.length || 0} size={12} color="blue">
+                  <IconCards size={20} />
                 </Indicator>
-              )}
-            </>
-          )}
-        </Group>
-
-        {/* Right: Settings & Exit */}
-        <Group spacing="md">
+                  <Indicator label={gameState.round} size={16} color="green">
+                    Round {gameState.round} of 3
+                  </Indicator>
+              </>
+            )}
+          </Box>
+        </Box>
+        {/* Right side: Settings and exit buttons */}
+        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isCreator && (
-            <Button variant="subtle" size="lg" onClick={() => { /* Open settings modal */ }}>
-              <IconSettings size={24} />
+            <Button
+              variant="subtle"
+              size="xs"
+              onClick={() => {
+                /* Open settings modal */
+              }}
+            >
+              <IconSettings size={18} />
             </Button>
           )}
-          <Button variant="subtle" size="lg" color="red" onClick={handleLeaveRoom}>
-            <IconDoorExit size={24} />
+          <Button variant="subtle" size="xs" color="red" onClick={handleLeaveRoom}>
+            <IconDoorExit size={18} />
           </Button>
-        </Group>
-      </Group>
+        </Box>
+      </Box>
 
-      {/* Show Join Requests only to room creator */}
-      {room && user && room.created_by === user.id && (
-        <Box mb="xl">
+      {/* Join Requests for the room creator */}
+      {isCreator && (
+        <Box style={{ marginBottom: '16px' }}>
           <JoinRequests roomId={room.id} />
         </Box>
-      )}      
+      )}
 
       {/* Main Game Board */}
       {sessionId && <GameBoard room={room} sessionId={sessionId} />}
