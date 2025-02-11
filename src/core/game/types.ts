@@ -1,25 +1,40 @@
 // Core game types
-export type GamePhase = 'setup' | 'speaking' | 'listening';
-
+export type GamePhase = 'setup' | 'speaking';
+export type PlayerStatus = 'choosing' | 'browsing' | 'speaking' | 'listening';
 export type Player = {
   id: string;
   username: string | null;
   isOnline: boolean;
-  hasSelected?: boolean;
+  status: PlayerStatus;
+  selectedCard?: string; // ID of their chosen card
+  hasSpoken: boolean;    // for current round
+  speakOrder?: number;   // order in speaking queue
+};
+
+export type CardHistory = {
+  id: string;
+  userId: string;
+  cardId: string;
+  gameSessionId: string;
+  roundNumber: number;
+  answeredAt: string;
 };
 
 export type GameState = {
   id: string;
   room_id: string;
   phase: GamePhase;
-  activePlayerId: string | null;
   players: Player[];
-  cardsInPlay: Card[];
-  discardPile: Card[];
-  round: number;
-  isSpeakerSharing: boolean;
-  pendingExchanges: Exchange[];
+  cardsInPlay: Card[];             // Cards chosen during setup
+  discardPile: Card[];             // Cards discarded during setup
+  currentRound: number;            // Current round number
+  totalRounds: number;             // Total rounds to play
+  activePlayerId: string | null;   // Current speaker
+  isSpeakerSharing: boolean;       // Whether speaker is actively sharing
   playerHands: Record<string, Card[]>;
+  // old fields to remove
+  // round: number;
+  // pendingExchanges: Exchange[];
 };
 
 export type Exchange = {
@@ -100,3 +115,7 @@ export const mergeCardsWithDeduplication = (existingCards: Card[], newCards: Car
   );
   return Array.from(uniqueCards.values());
 };
+
+export function hasSelected(player: Player): boolean {
+  return player.status !== 'choosing' && player.selectedCard != null;
+}

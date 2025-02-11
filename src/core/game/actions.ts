@@ -1,21 +1,22 @@
-import { GamePhase, Card, Exchange } from './types';
+// src/core/game/actions.ts
 
-// Action creators
+import { GamePhase, Card, PlayerStatus } from './types';
+
 export const gameActions = {
+  // Phase changes
   phaseChanged: (phase: GamePhase) => ({
     type: 'PHASE_CHANGED' as const,
     phase
   }),
 
-  activePlayerChanged: (playerId: string | null) => ({
-    type: 'ACTIVE_PLAYER_CHANGED' as const,
-    playerId
+  // Player status changes
+  playerStatusChanged: (playerId: string, status: PlayerStatus) => ({
+    type: 'PLAYER_STATUS_CHANGED' as const,
+    playerId,
+    status
   }),
 
-  startGame: () => ({
-    type: 'START_GAME' as const
-  }),
-
+  // Card management
   dealCards: () => ({
     type: 'DEAL_CARDS' as const
   }),
@@ -37,23 +38,48 @@ export const gameActions = {
     cards
   }),
 
-  startSharing: () => ({
-    type: 'START_SHARING' as const
+  // Setup completion
+  completeSetup: (playerId: string, speakOrder: number) => ({
+    type: 'COMPLETE_SETUP' as const,
+    playerId,
+    speakOrder
   }),
 
-  endSharing: () => ({
-    type: 'END_SHARING' as const
+  // Speaking management
+  startSpeaking: (playerId: string) => ({
+    type: 'START_SPEAKING' as const,
+    playerId
   }),
 
-  proposeExchange: (exchange: Omit<Exchange, 'status'>) => ({
-    type: 'EXCHANGE_PROPOSED' as const,
-    exchange
+  finishSpeaking: (playerId: string) => ({
+    type: 'FINISH_SPEAKING' as const,
+    playerId
   }),
 
-  respondToExchange: (exchangeId: string, accepted: boolean) => ({
-    type: 'EXCHANGE_RESPONDED' as const,
-    exchangeId,
-    accepted
+  // Round management
+  completeRound: () => ({
+    type: 'COMPLETE_ROUND' as const
+  }),
+
+  startNewRound: () => ({
+    type: 'START_NEW_ROUND' as const
+  }),
+
+  // Player tracking
+  updateSpeakOrder: (speakOrder: Record<string, number>) => ({
+    type: 'UPDATE_SPEAK_ORDER' as const,
+    speakOrder
+  }),
+
+  setActivePlayer: (playerId: string | null) => ({
+    type: 'SET_ACTIVE_PLAYER' as const,
+    playerId
+  }),
+
+  // Discard pile management
+  moveToDiscardPile: (cardIds: string[]) => ({
+    type: 'MOVE_TO_DISCARD_PILE' as const,
+    cardIds
   })
 };
 

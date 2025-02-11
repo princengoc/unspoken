@@ -1,6 +1,7 @@
 import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
 import { supabase } from './client';
-import { GameState, Card, Exchange } from '@/core/game/types';
+import { GameState, Card, Exchange, Player } from '@/core/game/types';
+import { PLAYER_STATUS, DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
 
 // Helper functions for database conversion
 const toCardIds = (cards: Card[]): string[] => {
@@ -20,12 +21,14 @@ export async function fetchCardsByIds(cardIds: string[]): Promise<Card[]> {
 }
 
 const fromDatabaseState = async (dbState: any): Promise<GameState> => {
+  // Collect all card IDs from various state properties
   const allCardIds = [
     ...(dbState.cardsInPlay || []),
     ...(dbState.discardPile || []),
     ...Object.values(dbState.playerHands || {}).flat()
   ];
 
+  // Fetch all cards in one go
   let cards: Card[] = [];
   if (allCardIds.length > 0) {
     const { data, error } = await supabase
@@ -59,13 +62,14 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     id: dbState.id,
     room_id: dbState.room_id,
     phase: dbState.phase,
+    currentRound: dbState.current_round,
+    totalRounds: dbState.total_rounds,
     activePlayerId: dbState.activePlayerId,
     players: dbState.players,
     cardsInPlay,
     discardPile,
     playerHands,
-    isSpeakerSharing: dbState.isSpeakerSharing || false,
-    pendingExchanges: []
+    isSpeakerSharing: dbState.isSpeakerSharing || false
   };
 };
 
@@ -80,14 +84,24 @@ export const gameStatesService = {
         throw new Error('At least one player is required');
       }
 
+      // Initialize player states
+      const initializedPlayers = initialState.players.map(player => ({
+        ...player,
+        status: PLAYER_STATUS.CHOOSING,
+        hasSpoken: false,
+      }));      
+
       // Convert Card objects to IDs for database storage
       const dbState = {
         ...initialState,
-        cardsInPlay: initialState.cardsInPlay.map(card => card.id),
-        discardPile: initialState.discardPile.map(card => card.id),
+        players: initializedPlayers,
+        current_round: 1,
+        total_rounds: DEFAULT_TOTAL_ROUNDS,
+        cardsInPlay: toCardIds(initialState.cardsInPlay),
+        discardPile: toCardIds(initialState.discardPile),
         playerHands: Object.fromEntries(
           Object.entries(initialState.playerHands)
-            .map(([playerId, cards]) => [playerId, cards.map(card => card.id)])
+            .map(([playerId, cards]) => [playerId, toCardIds(cards)])
         )
       };
       
@@ -131,20 +145,22 @@ export const gameStatesService = {
   },
 
   async update(stateId: string, updates: Partial<GameState>): Promise<GameState> {
-    if (updates.cardsInPlay && !updates.cardsInPlay.every(card => typeof card === 'object' && 'id' in card)) {
-      throw new Error(`Invalid cardsInPlay: expected array of Card objects. See: ${JSON.stringify(updates.cardsInPlay)}`);
-    }
-
     // Convert Card objects to IDs for database update
-    const dbUpdates = {
-      ...updates,
-      cardsInPlay: updates.cardsInPlay?.map(card => card.id),
-      discardPile: updates.discardPile?.map(card => card.id),
-      playerHands: updates.playerHands && Object.fromEntries(
+    const dbUpdates: any = { ...updates };
+
+    // Convert Card arrays to ID arrays
+    if (updates.cardsInPlay) {
+      dbUpdates.cardsInPlay = toCardIds(updates.cardsInPlay);
+    }
+    if (updates.discardPile) {
+      dbUpdates.discardPile = toCardIds(updates.discardPile);
+    }
+    if (updates.playerHands) {
+      dbUpdates.playerHands = Object.fromEntries(
         Object.entries(updates.playerHands)
-          .map(([playerId, cards]) => [playerId, cards.map(card => card.id)])
-      )
-    };
+          .map(([playerId, cards]) => [playerId, toCardIds(cards)])
+      );
+    }
 
     const { data, error } = await supabase
       .from('game_states')
@@ -158,6 +174,25 @@ export const gameStatesService = {
     
     return await fromDatabaseState(data);
   },
+
+  async updatePlayerState(
+    stateId: string,
+    playerId: string,
+    updates: Partial<Player>
+  ): Promise<GameState> {
+    const currentState = await this.get(stateId);
+    
+    const updatedPlayers = currentState.players.map(player =>
+      player.id === playerId
+        ? {
+            ...player,
+            ...updates
+          }
+        : player
+    );
+
+    return await this.update(stateId, { players: updatedPlayers });
+  },  
 
   async dealCards(sessionId: string, userId: string): Promise<Card[]> {
     const session = await this.get(sessionId);
@@ -184,6 +219,10 @@ export const gameStatesService = {
       ...session.playerHands,
       [userId]: newCards
     };
+
+    await this.updatePlayerState(sessionId, userId, {
+      status: PLAYER_STATUS.CHOOSING
+    });
 
     await this.update(sessionId, { playerHands: updatedHands });
   

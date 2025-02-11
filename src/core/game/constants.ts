@@ -2,12 +2,19 @@ export const DEFAULT_GAME_CONFIG = {
   allowExchanges: true,
   allowRipples: true,
   roundsPerPlayer: 3,
-  cardSelectionTime: 30, // seconds
-  baseSharingTime: 120   // seconds
-};
+  cardSelectionTime: 120, // seconds
+  baseSharingTime: 300   // seconds
+} as const;
 
+export const DEFAULT_TOTAL_ROUNDS = 3;
 export const INITIAL_CARDS_PER_PLAYER = 3;
-export const WILD_CARDS_COUNT = 2;
+
+export const PLAYER_STATUS = {
+  CHOOSING: 'choosing',
+  BROWSING: 'browsing',
+  SPEAKING: 'speaking',
+  LISTENING: 'listening'
+} as const;
 
 export type ReactionIcon = 'sparkles' | 'heart' | 'bulb';
 
@@ -17,15 +24,11 @@ export const REACTIONS = [
   { id: 'metoo', label: 'Me too', icon: 'bulb' as ReactionIcon }
 ] as const;
 
-export const SHARING_STATES = {
-  NOT_STARTED: 'not_started',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed'
-} as const;
-
 export const ERRORS = {
   INVALID_PHASE: 'Invalid game phase transition',
   INVALID_PLAYER: 'Invalid player action',
   INVALID_CARD: 'Invalid card operation',
-  INVALID_EXCHANGE: 'Invalid exchange operation'
+  INVALID_STATUS: 'Invalid player status transition',
+  ROUND_ERROR: 'Invalid round operation',
+  SPEAK_ORDER_ERROR: 'Invalid speaking order operation'
 } as const;

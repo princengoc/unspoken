@@ -1,78 +1,164 @@
+// src/hooks/game/useTurnManagement.ts
+
+import { useState } from 'react';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
+import { useAuth } from '@/context/AuthProvider';
 import { gameActions } from '@/core/game/actions';
-import { Player } from '@/core/game/types';
+import { GamePhase, Player } from '@/core/game/types';
+import { PLAYER_STATUS } from '@/core/game/constants';
 
-export function useTurnManagement(sessionId: string | null, players: Player[]) {
+interface UseTurnManagementReturn {
+  activePlayerId: string | null;
+  isLoading: boolean;
+  isActiveSpeaker: boolean;
+  currentSpeaker: Player | null;
+  nextSpeaker: Player | null;
+  speakingOrder: Player[];
+  canStartSpeaking: boolean;
+  startSpeaking: () => Promise<void>;
+  finishSpeaking: () => Promise<void>;
+}
+
+export function useTurnManagement(sessionId: string | null): UseTurnManagementReturn {
+  const { user } = useAuth();
   const stateMachine = useGameState();
-  const state = stateMachine.getState();
-  
-  const startTurn = async (playerId: string) => {
-    if (!sessionId) return;
-    
-    try {
-      // Update state machine first
-      stateMachine.dispatch(gameActions.activePlayerChanged(playerId));
-      
-      // Then sync with Supabase
-      await gameStatesService.update(sessionId, {
-        activePlayerId: playerId,
-        isSpeakerSharing: false
-      });
-    } catch (error) {
-      console.error('Failed to start turn:', error);
-      throw error;
-    }
-  };
+  const [isLoading, setIsLoading] = useState(false);
 
-  const startSharing = async () => {
-    if (!sessionId) return;
+  // Get current state values
+  const state = stateMachine.getState();
+  const activePlayerId = state.activePlayerId;
+  const isActiveSpeaker = user?.id === activePlayerId;
+
+  // Get ordered list of players by speakOrder
+  const speakingOrder = [...state.players]
+    .filter(p => p.speakOrder !== undefined)
+    .sort((a, b) => (a.speakOrder || 0) - (b.speakOrder || 0));
+
+  // Find current and next speakers
+  const currentSpeaker = state.players.find(p => p.id === activePlayerId) || null;
+  const currentSpeakerIndex = speakingOrder.findIndex(p => p.id === activePlayerId);
+  const nextSpeaker = currentSpeakerIndex < speakingOrder.length - 1 ?
+    speakingOrder[currentSpeakerIndex + 1] :
+    null;
+
+  // Determine if current player can start speaking
+  const canStartSpeaking = isActiveSpeaker && 
+    currentSpeaker?.status === PLAYER_STATUS.BROWSING &&
+    state.phase === 'speaking';
+
+  const startSpeaking = async () => {
+    if (!sessionId || !user || !isActiveSpeaker) return;
     
     try {
-      // Update state machine
-      stateMachine.dispatch(gameActions.startSharing());
-      
-      // Sync with Supabase
+      setIsLoading(true);
+
+      // Update local state first
+      stateMachine.dispatch(gameActions.playerStatusChanged(
+        user.id,
+        PLAYER_STATUS.SPEAKING
+      ));
+
+      // Update other players to listening state
+      const updatedPlayers = state.players.map(player => ({
+        ...player,
+        status: player.id === user.id ? 
+          PLAYER_STATUS.SPEAKING : 
+          PLAYER_STATUS.LISTENING
+      }));
+
+      // Sync with server
       await gameStatesService.update(sessionId, {
-        phase: 'listening',
+        players: updatedPlayers,
         isSpeakerSharing: true
       });
+
     } catch (error) {
-      console.error('Failed to start sharing:', error);
+      console.error('Failed to start speaking:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const endSharing = async () => {
-    if (!sessionId || !state.activePlayerId) return;
+  const finishSpeaking = async () => {
+    if (!sessionId || !user || !isActiveSpeaker) return;
     
     try {
-      // Find next player in rotation
-      const currentIndex = players.findIndex(p => p.id === state.activePlayerId);
-      const nextIndex = (currentIndex + 1) % players.length;
-      const nextPlayerId = players[nextIndex].id;
+      setIsLoading(true);
+
+      // Find next speaker who hasn't spoken yet
+      const nextUnspokenSpeaker = speakingOrder
+        .find(p => !p.hasSpoken && p.id !== user.id);
+
+      // Update current speaker's state
+      const updatedPlayers = state.players.map(player => {
+        if (player.id === user.id) {
+          return {
+            ...player,
+            hasSpoken: true,
+            status: PLAYER_STATUS.LISTENING
+          };
+        }
+        // Update next speaker's status if exists
+        if (nextUnspokenSpeaker && player.id === nextUnspokenSpeaker.id) {
+          return {
+            ...player,
+            status: PLAYER_STATUS.BROWSING
+          };
+        }
+        return player;
+      });
+
+      // Move current card to discard pile
+      const currentCardId = currentSpeaker?.selectedCard;
+      const updatedCardsInPlay = currentCardId ?
+        state.cardsInPlay.filter(card => card.id !== currentCardId) :
+        state.cardsInPlay;
+      const updatedDiscardPile = currentCardId ?
+        [...state.discardPile, ...state.cardsInPlay.filter(card => card.id === currentCardId)] :
+        state.discardPile;
+
+      // Determine if round is complete
+      const allSpoken = updatedPlayers.every(p => p.hasSpoken);
+      const updates = {
+        players: updatedPlayers,
+        cardsInPlay: updatedCardsInPlay,
+        discardPile: updatedDiscardPile,
+        isSpeakerSharing: false,
+        activePlayerId: nextUnspokenSpeaker?.id || null,
+        ...(allSpoken && {
+          phase: 'setup' as GamePhase,
+          currentRound: state.currentRound + 1
+        })
+      };
 
       // Update state machine
-      stateMachine.dispatch(gameActions.endSharing());
-      
-      // Start next turn
-      await startTurn(nextPlayerId);
-    } catch (error) {
-      console.error('Failed to end sharing:', error);
-      throw error;
-    }
-  };
+      if (allSpoken) {
+        stateMachine.dispatch(gameActions.completeRound());
+      }
+      stateMachine.dispatch(gameActions.setActivePlayer(updates.activePlayerId));
 
-  const isActiveSpeaker = (userId: string): boolean => {
-    return userId === state.activePlayerId;
+      // Sync with server
+      await gameStatesService.update(sessionId, updates);
+
+    } catch (error) {
+      console.error('Failed to finish speaking:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
-    activePlayerId: state.activePlayerId,
-    isSpeakerSharing: state.isSpeakerSharing,
+    activePlayerId,
+    isLoading,
     isActiveSpeaker,
-    startTurn,
-    startSharing,
-    endSharing
+    currentSpeaker,
+    nextSpeaker,
+    speakingOrder,
+    canStartSpeaking,
+    startSpeaking,
+    finishSpeaking, 
   };
 }

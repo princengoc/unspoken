@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { gameStatesService } from '@/services/supabase/gameStates';
-import { WILD_CARDS_COUNT } from '@/core/game/constants';
 import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
-import { supabase } from '@/services/supabase/client';
-import { Card } from '@/core/game/types';
+import { hasSelected } from '@/core/game/types';
 
 export function useCardManagement(sessionId: string | null, userId: string | null) {
   const stateMachine = useGameState();
@@ -53,10 +51,10 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
       });
   
       // Check if all players have selected
-      const allPlayersSelected = updatedState.players.every(p => p.hasSelected);
+      const allPlayersSelected = updatedState.players.every(hasSelected);
       if (allPlayersSelected) {
         // Move to next phase
-        stateMachine.dispatch(gameActions.startGame());
+        stateMachine.dispatch(gameActions.startNewRound());
         
         // Update game phase in database
         await gameStatesService.update(sessionId, {
@@ -71,56 +69,14 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
     }
   };
   
-  const addWildCards = async () => {
-    if (!sessionId) return;
-    
-    try {
-      setLoading(true);
-      const state = stateMachine.getState();
-      
-      // Get current cards in play
-      const currentCardIds = state.cardsInPlay.map(card => card.id);
-      
-      // Get random wild cards
-      // this supabase function returns entries of cards table, which can be directly casted
-      const { data: wildCards, error: wildCardsError } = await supabase.rpc(
-        'get_random_cards',
-        {
-          limit_count: WILD_CARDS_COUNT,
-          exclude_ids: currentCardIds,
-        }
-      );
-  
-      if (wildCardsError) throw wildCardsError;
-      if (!wildCards) throw new Error('Failed to get wild cards');
-
-      const wildCardsCasted = wildCards as Card[];
-
-      // First dispatch to state machine - it will handle deduplication
-      stateMachine.dispatch(gameActions.cardsSelected(wildCardsCasted));
-
-      // Then update Supabase with the deduplicated state
-      const updatedState = stateMachine.getState();
-      await gameStatesService.update(sessionId, {
-        cardsInPlay: updatedState.cardsInPlay
-      });
-      
-    } catch (error) {
-      console.error('Failed to add wild cards:', error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Get current state values
   const state = stateMachine.getState();
   const playerHands = state.playerHands;
   const cardsInPlay = state.cardsInPlay;
   const selectedCards = state.players.reduce((acc, player) => ({
     ...acc,
-    [player.id]: player.hasSelected
-  }), {});
+    [player.id]: hasSelected(player)
+  }), {});  
 
   return {
     playerHands,
@@ -129,6 +85,5 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
     loading,
     dealInitialCards,
     selectCardForPool,
-    addWildCards
   };
 }

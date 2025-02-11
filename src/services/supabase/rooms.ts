@@ -1,9 +1,18 @@
 import { supabase } from './client';
 import type { Room, Player, RoomSettings } from '@/core/game/types';
+import { PLAYER_STATUS } from '@/core/game/constants';
 
 export const roomsService = {
   async create(name: string, createdBy: string, settings?: Partial<RoomSettings>): Promise<Room> {
     const passcode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const initialPlayer: Player = {
+      id: createdBy,
+      username: null,
+      isOnline: true,
+      status: PLAYER_STATUS.CHOOSING,
+      hasSpoken: false
+    };
     
     const roomData = {
       name,
@@ -11,9 +20,7 @@ export const roomsService = {
       passcode,
       game_mode: 'irl',
       is_active: true,
-      players: [
-        { id: createdBy, username: null, isOnline: true }
-      ],
+      players: [initialPlayer],
       settings: {
         allow_card_exchanges: true,
         allow_ripple_effects: true,
@@ -35,7 +42,7 @@ export const roomsService = {
   },
 
   async join(roomId: string, player: Player): Promise<Room> {
-    const { data: room, error: findError } = await supabase
+    const { data: dataRoom, error: findError } = await supabase
       .from('rooms')
       .select()
       .eq('id', roomId)
@@ -43,21 +50,82 @@ export const roomsService = {
       .single();
     
     if (findError) throw findError;
-    if (!room) throw new Error('Room not found');
+    if (!dataRoom) throw new Error('Room not found');
+
+    const room = dataRoom as Room;
 
     // Check if player already exists in the room
     const existingPlayer = room.players.find(p => p.id === player.id);
     
     if (existingPlayer) {
-      // If player exists, return room without modifying players array
-      return room as Room;
+      // Update existing player's status
+      const updatedPlayer = {
+        ...existingPlayer,
+        isOnline: true
+      };
+
+      const { data, error } = await supabase.rpc(
+        'update_player_status',
+        {
+          room_id: roomId,
+          player_id: player.id,
+          new_status: updatedPlayer
+        }
+      );
+
+      if (error) throw error;
+      return data as Room;
     }
 
-    // Only add player if they're completely new to the room
+    // Add new player with initial state
+    const newPlayer = {
+      ...player,
+      status: PLAYER_STATUS.CHOOSING,
+      hasSpoken: false
+    };
+
     const { data, error } = await supabase
       .from('rooms')
-      .update({ players: [...room.players, player] })
+      .update({ 
+        players: [...room.players, newPlayer] 
+      })
       .eq('id', room.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Room;
+  },
+
+  async updatePlayerState(
+    roomId: string, 
+    playerId: string, 
+    updates: Partial<Player>
+  ): Promise<Room> {
+    const { data: dataRoom, error: findError } = await supabase
+      .from('rooms')
+      .select()
+      .eq('id', roomId)
+      .single();
+    
+    if (findError) throw findError;
+    if (!dataRoom) throw new Error('Room not found');
+
+    const room = dataRoom as Room;
+
+    const updatedPlayers = room.players.map(player => 
+      player.id === playerId
+        ? {
+            ...player,
+            ...updates,
+          }
+        : player
+    );
+
+    const { data, error } = await supabase
+      .from('rooms')
+      .update({ players: updatedPlayers })
+      .eq('id', roomId)
       .select()
       .single();
     

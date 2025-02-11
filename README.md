@@ -1,5 +1,5 @@
 # TODO
-* [ ] 
+* [ ] remove wild card logic
 
 # Minor UIs
 * [ ] pasword field too small

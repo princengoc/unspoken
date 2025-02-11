@@ -1,14 +1,51 @@
+// src/components/game/GameBoard.tsx
 import { useEffect } from 'react';
-import { Container, Stack, Button, Text, Loader } from '@mantine/core';
+import { Container, Stack, Text, Button, Group, Avatar, Tooltip } from '@mantine/core';
+import { IconPlayerPause, IconPlayerPlay } from '@tabler/icons-react';
 import { Setup } from './GamePhases/Setup';
-import { Speaking } from './GamePhases/Speaking';
-import { Listening } from './GamePhases/Listening';
 import { useGamePhase } from '@/hooks/game/useGamePhase';
 import { useCardManagement } from '@/hooks/game/useCardManagement';
 import { useTurnManagement } from '@/hooks/game/useTurnManagement';
 import { useAuth } from '@/context/AuthProvider';
-import { Room } from '@/core/game/types';
+import { Room, Player } from '@/core/game/types';
 import { GameStateProvider } from '@/context/GameStateProvider';
+import { PLAYER_STATUS } from '@/core/game/constants';
+import { ListenerReactions } from './ListenerReactions';
+import { Card } from './Card';
+
+interface PlayerStatusProps {
+  player: Player;
+  isActive: boolean;
+}
+
+function PlayerStatus({ player, isActive }: PlayerStatusProps) {
+  let statusColor = 'gray';
+  let statusIcon = null;
+
+  switch (player.status) {
+    case PLAYER_STATUS.SPEAKING:
+      statusColor = 'green';
+      statusIcon = <IconPlayerPlay size={14} />;
+      break;
+    case PLAYER_STATUS.LISTENING:
+      statusColor = 'blue';
+      statusIcon = <IconPlayerPause size={14} />;
+      break;
+  }
+
+  return (
+    <Tooltip label={`${player.username || 'Player'} - ${player.status}`}>
+      <Avatar
+        radius="xl"
+        size="md"
+        color={isActive ? statusColor : 'gray'}
+        sx={{ border: isActive ? '2px solid currentColor' : undefined }}
+      >
+        {statusIcon || player.username?.[0].toUpperCase() || 'P'}
+      </Avatar>
+    </Tooltip>
+  );
+}
 
 interface GameBoardProps {
   room: Room;
@@ -35,35 +72,43 @@ export function GameBoard({ room, sessionId }: GameBoardProps) {
   );
 }
 
-export function GameBoardContent({ room, sessionId }: GameBoardProps) {
+function GameBoardContent({ room, sessionId }: GameBoardProps) {
   const { user } = useAuth();
-  const { phase, startGame, initializeGame } = useGamePhase(sessionId);
+  const { 
+    phase,
+    playerStatus,
+    currentRound,
+    totalRounds,
+    isSetupComplete,
+    initializeGame,
+    startGame 
+  } = useGamePhase(sessionId);
+
   const { 
     playerHands, 
     cardsInPlay, 
+    discardPile,
     selectedCards, 
     loading: cardsLoading, 
     dealInitialCards,
-    selectCardForPool,
-    addWildCards 
+    selectCardForPool
   } = useCardManagement(sessionId, user?.id ?? null);
-  const { 
-    activePlayerId, 
-    isSpeakerSharing, 
-    isActiveSpeaker, 
-    startSharing, 
-    endSharing 
-  } = useTurnManagement(sessionId, room.players);
+
+  const {
+    activePlayerId,
+    isActiveSpeaker,
+    currentSpeaker,
+    speakingOrder,
+    canStartSpeaking,
+    startSpeaking,
+    finishSpeaking
+  } = useTurnManagement(sessionId);
 
   useEffect(() => {
     if (sessionId) {
-      if (phase === null) {
-        startGame();
-      } else {
-        initializeGame();
-      }
+      initializeGame();
     }
-  }, [sessionId, phase, startGame, initializeGame]);
+  }, [sessionId, initializeGame]);
 
   if (!user || !room) {
     return (
@@ -75,65 +120,85 @@ export function GameBoardContent({ room, sessionId }: GameBoardProps) {
     );
   }
 
-  if (cardsLoading) {
-    return (
-      <Container size="sm">
-        <Stack align="center" gap="md">
-          <Loader size="lg" />
-          <Text ta="center" c="dimmed">
-            Setting up game...
-          </Text>
-        </Stack>
-      </Container>
-    );
-  }
-
-  const handleDone = async () => {
-    if (isActiveSpeaker(user.id)) {
-      await endSharing();
-    }
-  };
-
-  const renderGamePhase = () => {
+  const renderPhase = () => {
     switch (phase) {
       case 'setup':
         return (
           <Setup
             playerHands={playerHands}
             selectedCards={selectedCards}
+            discardPile={discardPile}
             onDealCards={dealInitialCards}
-            onSelectCard={selectCardForPool}
-            onAddWildCards={addWildCards}
-            onStartGame={startGame}
-          />
-        );
-      case 'speaking':
-        return (
-          <Stack gap="lg">
-            <Speaking
-              cardsInPlay={cardsInPlay}
-              isActiveSpeaker={isActiveSpeaker(user.id)}
-              onStartSharing={startSharing}
-            />
-            {isActiveSpeaker(user.id) && isSpeakerSharing && (
-              <Button 
-                color="blue"
-                onClick={handleDone}
-                fullWidth
-              >
-                Done Sharing
-              </Button>
-            )}
-          </Stack>
-        );
-      case 'listening':
-        return (
-          <Listening
-            cardsInPlay={cardsInPlay}
-            isSpeakerSharing={isSpeakerSharing}
+            onSelectCard={(cardId) => selectCardForPool(user.id, cardId)}
+            playerStatus={playerStatus}
             sessionId={sessionId}
           />
         );
+
+      case 'speaking':
+        if (playerStatus === PLAYER_STATUS.BROWSING) {
+          return (
+            <Stack gap="lg">
+              {cardsInPlay.map((card, index) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  index={index}
+                  total={cardsInPlay.length}
+                  showExchange={false}
+                />
+              ))}
+              {canStartSpeaking && (
+                <Button
+                  onClick={startSpeaking}
+                  fullWidth
+                  size="lg"
+                  variant="filled"
+                >
+                  Start Sharing
+                </Button>
+              )}
+            </Stack>
+          );
+        }
+
+        return (
+          <Stack gap="lg">
+            {currentSpeaker && (
+              <>
+                <Group position="apart">
+                  <PlayerStatus player={currentSpeaker} isActive={true} />
+                  <Text size="sm" c="dimmed">
+                    Round {currentRound} of {totalRounds}
+                  </Text>
+                </Group>
+
+                {currentSpeaker.selectedCard && (
+                  <Card
+                    card={cardsInPlay.find(c => c.id === currentSpeaker.selectedCard)!}
+                    index={0}
+                    total={1}
+                  />
+                )}
+
+                {playerStatus === PLAYER_STATUS.SPEAKING ? (
+                  <Button
+                    onClick={finishSpeaking}
+                    fullWidth
+                    size="lg"
+                    variant="filled"
+                    color="green"
+                  >
+                    Finish Sharing
+                  </Button>
+                ) : (
+                  <ListenerReactions sessionId={sessionId} />
+                )}
+              </>
+            )}
+          </Stack>
+        );
+
       default:
         return (
           <Text ta="center" c="dimmed">
@@ -146,7 +211,24 @@ export function GameBoardContent({ room, sessionId }: GameBoardProps) {
   return (
     <Container size="sm">
       <Stack gap="xl">
-        {renderGamePhase()}
+        {/* Player Status Bar */}
+        <Group position="apart">
+          <Group spacing="xs">
+            {room.players.map((player) => (
+              <PlayerStatus
+                key={player.id}
+                player={player}
+                isActive={player.id === activePlayerId}
+              />
+            ))}
+          </Group>
+          <Text size="sm" fw={500}>
+            Round {currentRound}/{totalRounds}
+          </Text>
+        </Group>
+
+        {/* Main Game Area */}
+        {renderPhase()}
       </Stack>
     </Container>
   );
