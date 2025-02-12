@@ -49,9 +49,9 @@ export function PlayerAvatar({
     >
       {getStatusIcon() || player.username?.[0].toUpperCase() || 'P'}
       {showReadyBadge && player.status === PLAYER_STATUS.BROWSING && (
-        <Avatar.Badge>
+        <Indicator inline size={10} position="bottom-end" color="green">
           <IconCheck size={8} />
-        </Avatar.Badge>
+        </Indicator>
       )}
     </Avatar>
   );
