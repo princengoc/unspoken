@@ -127,7 +127,7 @@ export function Setup({
       </FadeIn>
 
       {/* Show "Draw Cards" if the player hasn't received any cards */}
-      {userHand.length === 0 && (
+      {userHand.length === 0 && playerStatus === PLAYER_STATUS.CHOOSING && (
         <SlideIn>
           <Button onClick={onDealCards} fullWidth size="lg" variant="filled">
             Draw Cards
@@ -147,7 +147,7 @@ export function Setup({
         </>
       )}
 
-      {userHand.length > 0 && playerStatus === PLAYER_STATUS.BROWSING && (
+      {playerStatus === PLAYER_STATUS.BROWSING && (
         <Stack gap="lg">
           <ReadyStatus players={players} totalPlayers={players.length} />
 

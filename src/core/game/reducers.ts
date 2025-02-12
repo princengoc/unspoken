@@ -26,7 +26,7 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
 
       // Define valid transitions
       const validTransitions: Record<string, PlayerStatus[]> = {
-        [PLAYER_STATUS.CHOOSING]: [PLAYER_STATUS.BROWSING],
+        [PLAYER_STATUS.CHOOSING]: [PLAYER_STATUS.BROWSING, PLAYER_STATUS.CHOOSING],
         [PLAYER_STATUS.BROWSING]: [PLAYER_STATUS.SPEAKING, PLAYER_STATUS.LISTENING],
         [PLAYER_STATUS.SPEAKING]: [PLAYER_STATUS.LISTENING],
         [PLAYER_STATUS.LISTENING]: [PLAYER_STATUS.SPEAKING],
@@ -34,6 +34,10 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
 
       const validNextStates = validTransitions[player.status];
       if (!validNextStates?.includes(event.status)) {
+        console.log(`player.status: ${JSON.stringify(player.status)}`);
+        console.log(`event.status: ${JSON.stringify(event.status)}`);
+        console.log(`event: ${JSON.stringify(event)}`);
+        console.log(`player: ${JSON.stringify(player)}`);
         throw new Error(ERRORS.INVALID_STATUS);
       }
 
