@@ -2,6 +2,7 @@ import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
 import { supabase } from './client';
 import { GameState, Card, Exchange, Player } from '@/core/game/types';
 import { PLAYER_STATUS, DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
+import { reactionsService } from './reactions';
 
 // Helper functions for database conversion
 const toCardIds = (cards: Card[]): string[] => {
@@ -203,7 +204,7 @@ export const gameStatesService = {
     ];
     
     // Get random cards
-    const { data: newCards, error: cardsError } = await supabase.rpc(
+    const { data: randomCardsData, error: cardsError } = await supabase.rpc(
       'get_random_cards',
       {
         limit_count: INITIAL_CARDS_PER_PLAYER,
@@ -212,8 +213,13 @@ export const gameStatesService = {
     );
   
     if (cardsError) throw cardsError;
-    if (!newCards) throw new Error('No cards available to deal');
+    if (!randomCardsData) throw new Error('No cards available to deal');
+    const randomCards = randomCardsData as Card[];
   
+    // get rippled cards
+    const rippledCards = await reactionsService.getRippledCards(sessionId, userId);    
+    const newCards = [...randomCards, ...rippledCards];
+
     // Update session with the dealt cards
     const updatedHands = {
       ...session.playerHands,

@@ -192,7 +192,11 @@ function GameBoardContent({ room, sessionId }: GameBoardProps) {
                     Finish Sharing
                   </Button>
                 ) : (
-                  <ListenerReactions sessionId={sessionId} />
+                  <ListenerReactions 
+                    roomId={sessionId}
+                    speakerId={currentSpeaker.id}
+                    cardId={currentSpeaker.selectedCard!}
+                  />
                 )}
               </>
             )}

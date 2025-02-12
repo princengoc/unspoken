@@ -1,167 +1,81 @@
 // src/components/game/ListenerReactions.tsx
 
-import { useState, useEffect } from 'react';
 import { Group, ActionIcon, Tooltip, Paper, Stack, Avatar } from '@mantine/core';
 import { IconSparkles, IconHeart, IconBulb, IconRipple } from '@tabler/icons-react';
 import { useAuth } from '@/context/AuthProvider';
-import { gameStatesService } from '@/services/supabase/gameStates';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Reaction {
-  id: string;
-  type: string;
-  userId: string;
-  timestamp: string;
-}
-
-interface ReactionsState {
-  activeReactions: Reaction[];
-  rippleMarked: boolean;
-}
+import { useReactions } from '@/hooks/game/useReactions';
+import type { ReactionType } from '@/services/supabase/reactions';
 
 const REACTIONS = [
-  { id: 'inspiring', icon: IconSparkles, label: 'Inspiring' },
-  { id: 'resonates', icon: IconHeart, label: 'Resonates' },
-  { id: 'metoo', icon: IconBulb, label: 'Me too!' }
+  { id: 'inspiring' as ReactionType, icon: IconSparkles, label: 'Inspiring' },
+  { id: 'resonates' as ReactionType, icon: IconHeart, label: 'Resonates' },
+  { id: 'metoo' as ReactionType, icon: IconBulb, label: 'Me too!' }
 ] as const;
 
 interface ListenerReactionsProps {
-  sessionId: string;
+  roomId: string;
+  speakerId: string;
+  cardId: string;
 }
 
-export function ListenerReactions({ sessionId }: ListenerReactionsProps) {
+export function ListenerReactions({ 
+  roomId, 
+  speakerId,
+  cardId 
+}: ListenerReactionsProps) {
   const { user } = useAuth();
-  const [reactionState, setReactionState] = useState<ReactionsState>({
-    activeReactions: [],
-    rippleMarked: false
+  if (!user) return null;
+
+  const { 
+    reactions,
+    loading,
+    toggleReaction,
+    toggleRipple,
+    hasReaction,
+    isRippled
+  } = useReactions({
+    roomId,
+    speakerId,
+    listenerId: user.id,
+    cardId
   });
 
-  // Sync reactions with server
-  useEffect(() => {
-    if (!sessionId) return;
-
-    const loadReactions = async () => {
-      try {
-        const state = await gameStatesService.get(sessionId);
-        if (state.reactions) {
-          setReactionState(state.reactions);
-        }
-      } catch (error) {
-        console.error('Failed to load reactions:', error);
-      }
-    };
-
-    loadReactions();
-
-    // Subscribe to reaction changes
-    const subscription = gameStatesService.subscribeToChanges(sessionId, (state) => {
-      if (state.reactions) {
-        setReactionState(state.reactions);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [sessionId]);
-
-  const toggleReaction = async (reactionId: string) => {
-    if (!user || !sessionId) return;
-
-    try {
-      const newReaction: Reaction = {
-        id: reactionId,
-        type: reactionId,
-        userId: user.id,
-        timestamp: new Date().toISOString()
-      };
-
-      // Check if user already has this reaction
-      const hasReaction = reactionState.activeReactions.some(
-        r => r.id === reactionId && r.userId === user.id
-      );
-
-      let updatedReactions;
-      if (hasReaction) {
-        // Remove reaction
-        updatedReactions = reactionState.activeReactions.filter(
-          r => !(r.id === reactionId && r.userId === user.id)
-        );
-      } else {
-        // Add reaction
-        updatedReactions = [...reactionState.activeReactions, newReaction];
-      }
-
-      // Update local state
-      setReactionState(prev => ({
-        ...prev,
-        activeReactions: updatedReactions
-      }));
-
-      // Sync with server
-      await gameStatesService.update(sessionId, {
-        reactions: {
-          ...reactionState,
-          activeReactions: updatedReactions
-        }
-      });
-    } catch (error) {
-      console.error('Failed to toggle reaction:', error);
+  // Group reactions by user for display
+  const reactionsByUser = reactions.reduce((acc, reaction) => {
+    if (!acc[reaction.listenerId]) {
+      acc[reaction.listenerId] = [];
     }
-  };
-
-  const toggleRipple = async () => {
-    if (!user || !sessionId) return;
-
-    try {
-      const newState = {
-        ...reactionState,
-        rippleMarked: !reactionState.rippleMarked
-      };
-
-      // Update local state
-      setReactionState(newState);
-
-      // Sync with server
-      await gameStatesService.update(sessionId, {
-        reactions: newState
-      });
-    } catch (error) {
-      console.error('Failed to toggle ripple:', error);
-    }
-  };
-
-  // Group reactions by user
-  const reactionsByUser = reactionState.activeReactions.reduce((acc, reaction) => {
-    if (!acc[reaction.userId]) {
-      acc[reaction.userId] = [];
-    }
-    acc[reaction.userId].push(reaction);
+    acc[reaction.listenerId].push(reaction);
     return acc;
-  }, {} as Record<string, Reaction[]>);
+  }, {} as Record<string, typeof reactions>);
 
   return (
     <Stack spacing="md">
       {/* Active Reactions Display */}
       <AnimatePresence>
-        {Object.entries(reactionsByUser).map(([userId, reactions]) => (
+        {Object.entries(reactionsByUser).map(([userId, userReactions]) => (
           <motion.div
             key={userId}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
           >
             <Group spacing="xs" align="center">
               <Avatar size="sm" radius="xl">
                 {userId.charAt(0).toUpperCase()}
               </Avatar>
               <Group spacing={4}>
-                {reactions.map((reaction) => {
+                {userReactions.map((reaction) => {
                   const ReactionIcon = REACTIONS.find(r => r.id === reaction.type)?.icon;
                   return ReactionIcon ? (
                     <motion.div
-                      key={`${reaction.userId}-${reaction.id}`}
+                      key={reaction.id}
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 25 }}
                     >
                       <ReactionIcon size={16} />
                     </motion.div>
@@ -185,10 +99,9 @@ export function ListenerReactions({ sessionId }: ListenerReactionsProps) {
         }}
       >
         <Group spacing="xs">
+          {/* Emotional Reactions */}
           {REACTIONS.map(({ id, icon: Icon, label }) => {
-            const isActive = reactionState.activeReactions.some(
-              r => r.id === id && r.userId === user?.id
-            );
+            const isActive = hasReaction(id);
             
             return (
               <Tooltip key={id} label={label}>
@@ -198,6 +111,7 @@ export function ListenerReactions({ sessionId }: ListenerReactionsProps) {
                   onClick={() => toggleReaction(id)}
                   radius="xl"
                   size="lg"
+                  loading={loading}
                 >
                   <Icon size={18} />
                 </ActionIcon>
@@ -205,13 +119,15 @@ export function ListenerReactions({ sessionId }: ListenerReactionsProps) {
             );
           })}
 
+          {/* Ripple Control */}
           <Tooltip label="Save for later (Ripple)">
             <ActionIcon
-              variant={reactionState.rippleMarked ? "filled" : "subtle"}
+              variant={isRippled() ? "filled" : "subtle"}
               color="violet"
               onClick={toggleRipple}
               radius="xl"
               size="lg"
+              loading={loading}
             >
               <IconRipple size={18} />
             </ActionIcon>
