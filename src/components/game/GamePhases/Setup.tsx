@@ -1,13 +1,13 @@
-// Setup.tsx
-import { useState } from 'react';
 import { Stack, Text, Group, Button, Paper, Avatar, Transition } from '@mantine/core';
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
-import { useAuth } from '@/context/AuthProvider';
-import { Card as CardType, PlayerStatus, Player } from '@/core/game/types';
+import { useGameState } from '@/context/GameStateProvider';
+import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { useRoom } from '@/context/RoomProvider';
 import { CardDeck } from '../CardDeck';
 import { Card } from '../Card';
 import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
+import { Player } from '@/core/game/types';
 
 interface ReadyStatusProps {
   players: Player[];
@@ -50,68 +50,17 @@ function ReadyStatus({ players, totalPlayers }: ReadyStatusProps) {
   );
 }
 
-interface CreatorControlsProps {
-  isEveryoneReady: boolean;
-  onStartGame: () => void;
-  loading: boolean;
-}
+export function Setup() {
+  const { discardPile } = useGameState();
+  const { members, currentMember } = useRoomMembers();
+  const { 
+    handleCardSelection, 
+    initiateSpeakingPhase,
+    isSetupComplete 
+  } = useRoom();
 
-function CreatorControls({ isEveryoneReady, onStartGame, loading }: CreatorControlsProps) {
-  return (
-    <Transition mounted={isEveryoneReady} transition="slide-up">
-      {(styles) => (
-        <Button
-          style={styles}
-          fullWidth
-          size="lg"
-          onClick={onStartGame}
-          loading={loading}
-          leftSection={<IconCheck size={18} />}
-        >
-          Start Game
-        </Button>
-      )}
-    </Transition>
-  );
-}
-
-interface SetupProps {
-  playerHands: Record<string, CardType[]>;
-  onDealCards: () => Promise<void>;
-  onSelectCard: (cardId: string) => void;
-  onStartGame?: () => Promise<void>; // Triggered by game creator
-  playerStatus: PlayerStatus;
-  players: Player[];
-  discardPile: CardType[];
-  isCreator?: boolean;
-}
-
-export function Setup({
-  playerHands,
-  onDealCards,
-  onSelectCard,
-  onStartGame,
-  playerStatus,
-  players,
-  discardPile,
-  isCreator = false,
-}: SetupProps) {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  if (!user) return null;
-
-  const userHand = playerHands[user.id] || [];
-  const isEveryoneReady = players.every((p) => p.status === PLAYER_STATUS.BROWSING);
-
-  const handleStartGame = async () => {
-    if (!onStartGame) return;
-    setLoading(true);
-    try {
-      await onStartGame();
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Check if current user is the room creator
+  const isCreator = currentMember?.id === room.created_by;
 
   return (
     <Stack gap="xl">
@@ -121,24 +70,24 @@ export function Setup({
             Round Setup
           </Text>
           <Text size="sm" c="dimmed">
-            {players.filter((p) => p.status === PLAYER_STATUS.BROWSING).length} / {players.length} ready
+            {members.filter((p) => p.status === PLAYER_STATUS.BROWSING).length} / {members.length} ready
           </Text>
         </Group>
       </FadeIn>
 
       {/* Show "Draw Cards" if the player hasn't received any cards */}
-      {userHand.length === 0 && playerStatus === PLAYER_STATUS.CHOOSING && (
+      {currentMember?.playerHand?.length === 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
         <SlideIn>
-          <Button onClick={onDealCards} fullWidth size="lg" variant="filled">
+          <Button onClick={dealInitialCards} fullWidth size="lg" variant="filled">
             Draw Cards
           </Button>
         </SlideIn>
       )}
 
       {/* When cards are available: either allow selection or wait */}
-      {userHand.length > 0 && playerStatus === PLAYER_STATUS.CHOOSING && (
+      {currentMember?.playerHand?.length > 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
         <>
-          <CardDeck cards={userHand} onSelect={(card) => onSelectCard(card.id)} />
+          <CardDeck cards={currentMember.playerHand} onSelect={handleCardSelection} />
           <SlideIn direction="up">
             <Text size="sm" c="dimmed" ta="center">
               Select one card to share when it&apos;s your turn
@@ -147,18 +96,30 @@ export function Setup({
         </>
       )}
 
-      {playerStatus === PLAYER_STATUS.BROWSING && (
+      {currentMember?.status === PLAYER_STATUS.BROWSING && (
         <Stack gap="lg">
-          <ReadyStatus players={players} totalPlayers={players.length} />
+          <ReadyStatus players={members} totalPlayers={members.length} />
 
           {isCreator ? (
-            <CreatorControls isEveryoneReady={isEveryoneReady} onStartGame={handleStartGame} loading={loading} />
+            <Transition mounted={isSetupComplete} transition="slide-up">
+              {(styles) => (
+                <Button
+                  style={styles}
+                  fullWidth
+                  size="lg"
+                  onClick={initiateSpeakingPhase}
+                  leftSection={<IconCheck size={18} />}
+                >
+                  Start Game
+                </Button>
+              )}
+            </Transition>
           ) : (
             <Paper p="md" radius="md" withBorder>
               <Group align="center" gap="sm">
                 <IconHourglass size={18} />
                 <Text size="sm">
-                  {isEveryoneReady
+                  {isSetupComplete
                     ? "Everyone's ready! Waiting for the room creator to start the game..."
                     : "Waiting for other players to choose their cards..."}
                 </Text>

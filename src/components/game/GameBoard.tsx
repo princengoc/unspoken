@@ -1,25 +1,13 @@
-// src/components/game/GameBoard.tsx
-import { useEffect } from 'react';
-import {
-  Container,
-  Stack,
-  Text,
-  Button,
-  Group,
-  Avatar,
-  Tooltip,
-} from '@mantine/core';
+import { Container, Stack, Text, Button, Group, Avatar, Tooltip } from '@mantine/core';
 import { IconPlayerPause, IconPlayerPlay } from '@tabler/icons-react';
 import { Setup } from './GamePhases/Setup';
-import { useGamePhase } from '@/hooks/game/useGamePhase';
-import { useCardManagement } from '@/hooks/game/useCardManagement';
-import { useTurnManagement } from '@/hooks/game/useTurnManagement';
-import { useAuth } from '@/context/AuthProvider';
-import { Room, Player } from '@/core/game/types';
-import { GameStateProvider } from '@/context/GameStateProvider';
-import { PLAYER_STATUS } from '@/core/game/constants';
+import { useGameState } from '@/context/GameStateProvider';
+import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { useRoom } from '@/context/RoomProvider';
+import type { Player, Room } from '@/core/game/types';
 import { ListenerReactions } from './ListenerReactions';
 import { Card } from './Card';
+import { PLAYER_STATUS } from '@/core/game/constants';
 
 interface PlayerStatusProps {
   player: Player;
@@ -57,102 +45,36 @@ function PlayerStatus({ player, isActive }: PlayerStatusProps) {
 
 interface GameBoardProps {
   room: Room;
-  gameStateId: string;
 }
 
-export function GameBoard({ room, gameStateId }: GameBoardProps) {
-  const { user } = useAuth();
-
-  if (!user || !room) {
-    return (
-      <Container size="sm">
-        <Text ta="center" c="dimmed">
-          Waiting for game...
-        </Text>
-      </Container>
-    );
-  }
-
-  return (
-    <GameStateProvider players={room.players}>
-      <GameBoardContent room={room} gameStateId={gameStateId} />
-    </GameStateProvider>
-  );
-}
-
-function GameBoardContent({ room, gameStateId }: GameBoardProps) {
-  const { user } = useAuth();
-
-  // Game phase and setup-related logic
-  const {
+export function GameBoard({ room }: GameBoardProps) {
+  const { 
     phase,
-    playerStatus,
+    activePlayerId,
     currentRound,
     totalRounds,
-    initializeGame,
-    handleAllPlayersSetupComplete,
-  } = useGamePhase(gameStateId);
+    cardsInPlay
+  } = useGameState();
 
-  // Card management hook: deals cards and allows card selection
   const {
-    playerHands,
-    cardsInPlay,
-    discardPile,
-    dealInitialCards,
-    selectCardForPool,
-  } = useCardManagement(gameStateId, user?.id ?? null);
+    members,
+    currentMember
+  } = useRoomMembers();
 
-  // Turn management hook: used in the speaking phase
   const {
-    activePlayerId,
     canStartSpeaking,
+    isActiveSpeaker,
     startSpeaking,
-    finishSpeaking,
-    currentSpeaker,
-  } = useTurnManagement(gameStateId);
+    finishSpeaking
+  } = useRoom();
 
-  useEffect(() => {
-    if (gameStateId) {
-      initializeGame();
-    }
-  }, [gameStateId, initializeGame]);
-
-  if (!user || !room) {
-    return (
-      <Container size="sm">
-        <Text ta="center" c="dimmed">
-          Waiting for game...
-        </Text>
-      </Container>
-    );
-  }
-
-  // --- Render Setup Phase ---
-  // In the setup phase, we pass the minimal state and callbacks needed:
-  // • playerHands: the cards the user holds
-  // • onDealCards: to trigger dealing cards
-  // • onSelectCard: to allow the user to select a card for the pool
-  // • onStartGame: (only for the room creator) to trigger the speak phase manually
-  const renderSetupPhase = () => (
-    <Setup
-      playerHands={playerHands}
-      onDealCards={dealInitialCards}
-      onSelectCard={(cardId) => selectCardForPool(user!.id, cardId)}
-      onStartGame={
-        room.created_by === user.id ? handleAllPlayersSetupComplete : undefined
-      }
-      playerStatus={playerStatus}
-      players={room.players}
-      discardPile={discardPile}
-      isCreator={room.created_by === user.id}
-    />
-  );
+  // Find the current speaker from members
+  const currentSpeaker = members.find(m => m.id === activePlayerId);
 
   // --- Render Speaking Phase ---
-  // This phase will be further refactored later. For now, we show a basic separation:
   const renderSpeakingPhase = () => {
     // If the user is still waiting to speak (i.e. browsing), list all cards in play.
-    if (playerStatus === PLAYER_STATUS.BROWSING) {
+    if (currentMember?.status === PLAYER_STATUS.BROWSING) {
       return (
         <Stack gap="lg">
           {cardsInPlay.map((card, index) => (
@@ -173,7 +95,7 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
       );
     }
 
-    // Otherwise, if the user is speaking or listening, show the current speaker’s card and controls.
+    // Otherwise, if the user is speaking or listening, show the current speaker's card and controls.
     return (
       <Stack gap="lg">
         {currentSpeaker && (
@@ -186,14 +108,12 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
             </Group>
             {currentSpeaker.selectedCard && (
               <Card
-                card={
-                  cardsInPlay.find((c) => c.id === currentSpeaker.selectedCard)!
-                }
+                card={cardsInPlay.find((c) => c.id === currentSpeaker.selectedCard)!}
                 index={0}
                 total={1}
               />
             )}
-            {playerStatus === PLAYER_STATUS.SPEAKING ? (
+            {isActiveSpeaker ? (
               <Button
                 onClick={finishSpeaking}
                 fullWidth
@@ -205,7 +125,6 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
               </Button>
             ) : (
               <ListenerReactions
-                gameStateId={gameStateId}
                 speakerId={currentSpeaker.id}
                 cardId={currentSpeaker.selectedCard!}
               />
@@ -216,21 +135,15 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
     );
   };
 
-  // Decide which phase to render based on the game phase state.
-  const renderPhase = () => {
-    switch (phase) {
-      case 'setup':
-        return renderSetupPhase();
-      case 'speaking':
-        return renderSpeakingPhase();
-      default:
-        return (
-          <Text ta="center" c="dimmed">
-            Initializing game...
-          </Text>
-        );
-    }
-  };
+  if (!currentMember || !room) {
+    return (
+      <Container size="sm">
+        <Text ta="center" c="dimmed">
+          Waiting for game...
+        </Text>
+      </Container>
+    );
+  }
 
   return (
     <Container size="sm">
@@ -238,7 +151,7 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
         {/* Player Status Bar */}
         <Group position="apart">
           <Group spacing="xs">
-            {room.players.map((player) => (
+            {members.map((player) => (
               <PlayerStatus
                 key={player.id}
                 player={player}
@@ -252,7 +165,11 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
         </Group>
 
         {/* Main Game Area */}
-        {renderPhase()}
+        {phase === 'setup' ? (
+          <Setup />
+        ) : (
+          renderSpeakingPhase()
+        )}
       </Stack>
     </Container>
   );

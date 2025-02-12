@@ -1,266 +1,53 @@
-'use client';
-
-import { use, useEffect, useState } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Container,
   Box,
   Button,
+  Group,
+  Stack,
+  Text,
   Loader,
-  Avatar,
-  Indicator,
-  Tooltip,
+  Paper,
 } from '@mantine/core';
-import {
-  IconDoorExit,
-  IconHourglass,
-  IconSettings,
-  IconCards,
-  IconMicrophone,
-  IconEar,
-  IconDog,
-  IconCat,
-  IconHorse,
-  IconBug,
-  IconFish,
-  IconButterflyFilled,
-  IconPaw,
-} from '@tabler/icons-react';
+import { IconDoorExit, IconSettings } from '@tabler/icons-react';
 import { useRoom } from '@/hooks/room/useRoom';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
-import { useAuth } from '@/context/AuthProvider';
-import { GameState } from '@/core/game/types';
-import { gameStatesService } from '@/services/supabase/gameStates';
-import { GameBoard } from '@/components/game/GameBoard';
+import { RoomProvider } from '@/context/RoomProvider';
+import { useGameState } from '@/context/GameStateProvider';
+import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { Setup } from '@/components/game/GamePhases/Setup';
+import { Speaking } from '@/components/game/GamePhases/Speaking';
+import { PlayerStatusBar } from '@/components/game/PlayerStatus';
 import { notifications } from '@mantine/notifications';
-import { PLAYER_STATUS } from '@/core/game/constants';
 
-/**
- * Simple hash function to pick an avatar icon and color based on a string.
- */
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-}
-
-const animalIcons = [
-  IconDog,
-  IconCat,
-  IconHorse,
-  IconBug,
-  IconFish,
-  IconButterflyFilled,
-  IconPaw,
-];
-
-const avatarColors = [
-  'blue',
-  'red',
-  'green',
-  'yellow',
-  'orange',
-  'violet',
-  'pink',
-];
-
-/**
- * Returns the Icon component and color based on a player id.
- */
-function getAvatarProps(playerId: string) {
-  const hash = hashString(playerId);
-  const iconIndex = hash % animalIcons.length;
-  const colorIndex = hash % avatarColors.length;
-  return {
-    Icon: animalIcons[iconIndex],
-    color: avatarColors[colorIndex],
-  };
-}
-
-/**
- * A simple wrapper for the status indicator (e.g. green dot).
- * Later you can easily swap out this component for something more dynamic.
- */
-interface StatusIndicatorProps {
-  showStatus: boolean;
-  children: React.ReactNode;
-}
-const StatusIndicator = ({ showStatus, children }: StatusIndicatorProps) => {
-  return showStatus ? (
-    <Indicator size={8} color="green" withBorder position="bottom-end">
-      {children}
-    </Indicator>
-  ) : (
-    <>{children}</>
-  );
-};
-
-/**
- * PlayerAvatar: Shows a player's avatar (with tooltip).
- * Highlights the current player and uses the status indicator if the player
- * has completed their action (e.g. selected a card).
- */
-interface PlayerAvatarProps {
-  player: { id: string; username: string | null; isOnline: boolean; hasSelected?: boolean };
-  isCurrent: boolean;
-  hasSelected: boolean;
-}
-const PlayerAvatar = ({ player, isCurrent, hasSelected }: PlayerAvatarProps) => {
-  const { Icon, color } = getAvatarProps(player.id);
-  // If current player, add a green border.
-  const avatarStyle = isCurrent ? { border: '2px solid #28a745' } : undefined;
-  const tooltipLabel = player.username ? player.username : player.id.slice(0, 3);
+function RoundIndicator({ current, total }: { current: number; total: number }) {
   return (
-    <Tooltip label={tooltipLabel}>
-      <StatusIndicator showStatus={hasSelected}>
-        <Avatar radius="xl" size={32} color={color} style={avatarStyle}>
-          <Icon size={18} />
-        </Avatar>
-      </StatusIndicator>
-    </Tooltip>
+    <Group spacing={4}>
+      {Array.from({ length: total }).map((_, i) => (
+        <Box
+          key={i}
+          sx={theme => ({
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            backgroundColor: i < current ? theme.colors.blue[6] : theme.colors.gray[3],
+          })}
+        />
+      ))}
+    </Group>
   );
-};
-
-/**
- * RoundIndicator: Displays a series of small circles representing round progress.
- * Filled circles represent completed rounds.
- */
-interface RoundIndicatorProps {
-  current: number;
-  total: number;
-}
-const RoundIndicator = ({ current, total }: RoundIndicatorProps) => {
-  const circles = [];
-  for (let i = 1; i <= total; i++) {
-    circles.push(
-      <Box
-        key={i}
-        sx={(theme) => ({
-          width: 10,
-          height: 10,
-          borderRadius: '50%',
-          backgroundColor:
-            i <= current ? theme.colors.green[6] : theme.colors.gray[4],
-        })}
-      />
-    );
-  }
-  return <Box sx={{ display: 'flex', gap: 4 }}>{circles}</Box>;
-};
-
-interface RoomPageProps {
-  params: Promise<{ id: string }>;
 }
 
-export default function RoomPage({ params }: RoomPageProps) {
-  const { id: roomId } = use(params);
+interface RoomPageContentProps {
+  roomId: string;
+}
+
+function RoomPageContent({ roomId }: RoomPageContentProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const { room, loading: roomLoading, error, leaveRoom } = useRoom(roomId);
-  const [gameStateId, setGameStateId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [gameState, setGameState] = useState<any>(null);
-
-  // Determine total rounds from room settings (fallback to 3 if not set)
-  const roundsTotal = room?.settings?.rounds_per_player || 3;
-
-  useEffect(() => {
-    if (!user || !room || gameStateId) return;
-
-    async function setupSession() {
-      
-      if (!room) return ;
-
-      try {
-        setLoading(true);
-        if (room.game_state_id) {
-          const state = await gameStatesService.get(room.game_state_id);
-          const existingPlayer = state.players.find((p: any) => p.id === user.id);
-          if (!existingPlayer) {
-            await gameStatesService.update(room.game_state_id, {
-              players: [
-                ...state.players,
-                {
-                  id: user.id,
-                  username: user.username || null,
-                  isOnline: true, 
-                  status: PLAYER_STATUS.CHOOSING,
-                  hasSpoken: false,
-                },
-              ],
-            });
-          }
-          setGameStateId(room.game_state_id);
-          setGameState(state);
-        } else {
-          const state = await gameStatesService.create({
-            activePlayerId: user.id,
-            room_id: room.id,
-            phase: 'setup',
-            cardsInPlay: [],
-            discardPile: [],
-            playerHands: {},
-            isSpeakerSharing: false,
-            currentRound: 1, 
-            totalRounds: 3,
-            players: room.players.map((p: any) => ({
-              id: p.id,
-              username: p.username,
-              isOnline: p.isOnline,
-              status: p.status, 
-              hasSpoken: p.hasSpoken
-            })),
-          });
-          setGameStateId(state.id);
-          setGameState(state);
-        }
-      } catch (err) {
-        console.error('Failed to initialize game state:', err);
-        notifications.show({
-          title: 'Error',
-          message: 'Failed to initialize game state',
-          color: 'red',
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-    setupSession();
-  }, [user, room, gameStateId]);
-
-  // subscribe to changes
-  useEffect(() => {
-    if (!gameStateId) return;
-  
-    // Subscribe to changes in the game state.
-    const subscription = gameStatesService.subscribeToChanges(gameStateId, (newState: GameState) => {
-      setGameState(newState);
-    });
-  
-    // Cleanup: Unsubscribe when the component unmounts or gameStateId changes.
-    return () => {
-      if (subscription?.unsubscribe) {
-        subscription.unsubscribe();
-      } else if (subscription) {
-        // For some Supabase versions, you might need to use:
-        supabase.removeChannel(subscription);
-      }
-    };
-  }, [gameStateId]);
-  
-  
-  useEffect(() => {
-    if (error) {
-      notifications.show({
-        title: 'Error',
-        message: error.message,
-        color: 'red',
-      });
-      router.push('/');
-    }
-  }, [error, router]);
+  const { phase, currentRound, totalRounds, activePlayerId } = useGameState();
+  const { members, currentMember } = useRoomMembers();
+  const { leaveRoom } = useRoom(roomId);
 
   const handleLeaveRoom = async () => {
     try {
@@ -275,177 +62,112 @@ export default function RoomPage({ params }: RoomPageProps) {
     }
   };
 
-  if (roomLoading || loading) {
+  if (!currentMember) {
     return (
-      <Container py="xl">
-        <Box
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <Loader size={40} />
-          <div>Setting up game...</div>
+      <Container size="sm" py="xl">
+        <Box sx={{ textAlign: 'center' }}>
+          <Loader size="xl" />
+          <Text mt="md">Joining room...</Text>
         </Box>
       </Container>
     );
   }
 
-  if (!room || !user) {
-    return (
-      <Container py="xl">
-        <Box
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <div>Room not found</div>
-          <Button onClick={() => router.push('/')}>Return Home</Button>
-        </Box>
-      </Container>
-    );
-  }
-
-  const isCreator = room.created_by === user.id;
-
-  // For convenience, derive the players from the game state.
-  // For the setup phase, split them into "done" (hasSelected) and "pending".
-  const donePlayers =
-    gameState?.phase === 'setup'
-      ? gameState.players.filter((p: any) => p.hasSelected)
-      : [];
-  const pendingPlayers =
-    gameState?.phase === 'setup'
-      ? gameState.players.filter((p: any) => !p.hasSelected)
-      : [];
+  const isCreator = currentMember.id === room.created_by;
 
   return (
     <Container py="xl">
-      {/* Top horizontal bar */}
-      <Box
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid #e0e0e0',
-          padding: '8px 0',
-          marginBottom: '16px',
-        }}
-      >
-        {/* Left side: Discard pile and game progress */}
-        <Box style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Clickable Discard Pile Icon */}
-          <Box
-            onClick={() =>
-              console.log(
-                `Discard Pile has ${gameState.discardPile?.length || 0} cards`
-              )
-            }
-            style={{ cursor: 'pointer' }}
-          >
-            <Indicator label={gameState.discardPile?.length || 0} size={12} color="blue">
-              <IconCards size={20} />
-            </Indicator>
-          </Box>
-          {/* Game Progress: different layouts depending on phase */}
-          {gameState && gameState.phase === 'setup' ? (
-            <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* Left: Players done */}
-              <Box style={{ display: 'flex', gap: '4px' }}>
-                {donePlayers.map((p: any) => (
-                  <PlayerAvatar
-                    key={p.id}
-                    player={p}
-                    isCurrent={p.id === user.id}
-                    hasSelected={true}
-                  />
-                ))}
-              </Box>
-              {/* Center: Setup phase icon with round indicator */}
-              <Box style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Tooltip label="Setup Phase">
-                  <IconHourglass size={20} />
-                </Tooltip>
-                <RoundIndicator
-                  current={gameState.round}
-                  total={roundsTotal}
-                />
-              </Box>
-              {/* Right: Players still pending */}
-              <Box style={{ display: 'flex', gap: '4px' }}>
-                {pendingPlayers.map((p: any) => (
-                  <PlayerAvatar
-                    key={p.id}
-                    player={p}
-                    isCurrent={p.id === user.id}
-                    hasSelected={false}
-                  />
-                ))}
-              </Box>
-            </Box>
-          ) : (
-            // For speaking/listening phases: show all players then phase icon and round indicator.
-            <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Box style={{ display: 'flex', gap: '4px' }}>
-                {gameState.players.map((p: any) => (
-                  <PlayerAvatar
-                    key={p.id}
-                    player={p}
-                    isCurrent={p.id === user.id}
-                    hasSelected={!!p.hasSelected}
-                  />
-                ))}
-              </Box>
-              <Tooltip
-                label={
-                  gameState.phase === 'speaking'
-                    ? 'Speaking Phase'
-                    : 'Listening Phase'
-                }
+      {/* Top Bar */}
+      <Paper p="md" radius="md" withBorder mb="xl">
+        <Stack spacing="md">
+          {/* Controls */}
+          <Group position="apart">
+            <Group spacing="xs">
+              <PlayerStatusBar members={members} activePlayerId={activePlayerId} />
+              <RoundIndicator current={currentRound} total={totalRounds} />
+            </Group>
+            <Group spacing="xs">
+              {isCreator && (
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => {/* Open settings modal */}}
+                >
+                  <IconSettings size={18} />
+                </Button>
+              )}
+              <Button
+                variant="subtle"
+                size="sm"
+                color="red"
+                onClick={handleLeaveRoom}
               >
-                {gameState.phase === 'speaking' ? (
-                  <IconMicrophone size={20} />
-                ) : (
-                  <IconEar size={20} />
-                )}
-              </Tooltip>
-              <RoundIndicator current={gameState.round} total={roundsTotal} />
-            </Box>
-          )}
-        </Box>
-        {/* Right side: Settings and exit buttons */}
-        <Box style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isCreator && (
-            <Button
-              variant="subtle"
-              size="xs"
-              onClick={() => {
-                /* Open settings modal */
-              }}
-            >
-              <IconSettings size={18} />
-            </Button>
-          )}
-          <Button variant="subtle" size="xs" color="red" onClick={handleLeaveRoom}>
-            <IconDoorExit size={18} />
-          </Button>
-        </Box>
-      </Box>
+                <IconDoorExit size={18} />
+              </Button>
+            </Group>
+          </Group>
 
-      {/* Join Requests for the room creator */}
+          {/* Round Progress */}
+          <Group position="apart">
+            <Text size="sm" fw={500}>
+              Round {currentRound} of {totalRounds}
+            </Text>
+            <Text size="sm" c="dimmed">
+              {phase === 'setup' ? 'Setup Phase' : 'Speaking Phase'}
+            </Text>
+          </Group>
+        </Stack>
+      </Paper>
+
+      {/* Join Requests (for room creator) */}
       {isCreator && (
-        <Box style={{ marginBottom: '16px' }}>
-          <JoinRequests roomId={room.id} />
+        <Box mb="xl">
+          <JoinRequests roomId={roomId} />
         </Box>
       )}
 
-      {/* Main Game Board */}
-      {gameStateId && <GameBoard room={room} gameStateId={gameStateId} />}
+      {/* Game Phases */}
+      <Paper p="xl" radius="md" withBorder>
+        {phase === 'setup' ? <Setup /> : <Speaking />}
+      </Paper>
     </Container>
+  );
+}
+
+interface RoomPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function RoomPage({ params }: RoomPageProps) {
+  const { id: roomId } = use(params);
+  const { room, loading, error } = useRoom(roomId);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (error) {
+      notifications.show({
+        title: 'Error',
+        message: error.message,
+        color: 'red',
+      });
+      router.push('/');
+    }
+  }, [error, router]);
+
+  if (loading || !room) {
+    return (
+      <Container py="xl">
+        <Box sx={{ textAlign: 'center' }}>
+          <Loader size="xl" />
+          <Text mt="md">Loading room...</Text>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <RoomProvider room={room}>
+      <RoomPageContent roomId={roomId} />
+    </RoomProvider>
   );
 }
