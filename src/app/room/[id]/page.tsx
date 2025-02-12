@@ -170,41 +170,47 @@ export default function RoomPage({ params }: RoomPageProps) {
     if (!user || !room || sessionId) return;
 
     async function setupSession() {
+      
+      if (!room) return ;
+
       try {
         setLoading(true);
-        if (room.current_session_id) {
-          const state = await gameStatesService.get(room.current_session_id);
+        if (room.game_state_id) {
+          const state = await gameStatesService.get(room.game_state_id);
           const existingPlayer = state.players.find((p: any) => p.id === user.id);
           if (!existingPlayer) {
-            await gameStatesService.update(room.current_session_id, {
+            await gameStatesService.update(room.game_state_id, {
               players: [
                 ...state.players,
                 {
                   id: user.id,
                   username: user.username || null,
-                  isOnline: true,
-                  hasSelected: false,
+                  isOnline: true, 
+                  status: 'choosing',
+                  hasSpoken: false,
                 },
               ],
             });
           }
-          setSessionId(room.current_session_id);
+          setSessionId(room.game_state_id);
           setGameState(state);
         } else {
           const state = await gameStatesService.create({
             activePlayerId: user.id,
             room_id: room.id,
             phase: 'setup',
-            round: 1,
             cardsInPlay: [],
             discardPile: [],
             playerHands: {},
             isSpeakerSharing: false,
-            pendingExchanges: [],
+            currentRound: 1, 
+            totalRounds: 3,
             players: room.players.map((p: any) => ({
               id: p.id,
               username: p.username,
               isOnline: p.isOnline,
+              status: p.status, 
+              hasSpoken: p.hasSpoken
             })),
           });
           setSessionId(state.id);

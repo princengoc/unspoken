@@ -80,7 +80,7 @@ export type Room = {
   updated_at: string;
   is_active: boolean;
   game_mode: 'irl' | 'remote';
-  current_session_id?: string;
+  game_state_id?: string;
   players: Player[];
   settings?: RoomSettings;
 }

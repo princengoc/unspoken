@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { reactionsService, type ListenerReaction, type ReactionType } from '@/services/supabase/reactions';
 
 interface UseReactionsProps {
-  roomId: string;
+  gameStateId: string;
   speakerId: string;
   listenerId: string;
   cardId: string;
 }
 
 export function useReactions({ 
-  roomId,
+  gameStateId,
   speakerId,
   listenerId,
   cardId 
@@ -21,11 +21,11 @@ export function useReactions({
 
   // Load initial reactions
   useEffect(() => {
-    if (!roomId || !listenerId) return;
+    if (!gameStateId || !listenerId) return;
 
     const loadReactions = async () => {
       try {
-        const data = await reactionsService.getPlayerReactions(roomId, listenerId);
+        const data = await reactionsService.getPlayerReactions(gameStateId, listenerId);
         setReactions(data);
       } catch (error) {
         console.error('Failed to load reactions:', error);
@@ -36,7 +36,7 @@ export function useReactions({
 
     // Subscribe to reaction changes
     const subscription = reactionsService.subscribeToReactions(
-      roomId,
+      gameStateId,
       (updatedReactions) => {
         setReactions(updatedReactions);
       }
@@ -45,15 +45,15 @@ export function useReactions({
     return () => {
       subscription.unsubscribe();
     };
-  }, [roomId, listenerId]);
+  }, [gameStateId, listenerId]);
 
   const toggleReaction = async (type: ReactionType) => {
-    if (!roomId || !speakerId || !listenerId || !cardId) return;
+    if (!gameStateId || !speakerId || !listenerId || !cardId) return;
 
     setLoading(true);
     try {
       await reactionsService.toggleReaction(
-        roomId,
+        gameStateId,
         speakerId,
         listenerId,
         cardId,
@@ -67,12 +67,12 @@ export function useReactions({
   };
 
   const toggleRipple = async () => {
-    if (!roomId || !speakerId || !listenerId || !cardId) return;
+    if (!gameStateId || !speakerId || !listenerId || !cardId) return;
 
     setLoading(true);
     try {
       await reactionsService.toggleRipple(
-        roomId,
+        gameStateId,
         speakerId,
         listenerId,
         cardId

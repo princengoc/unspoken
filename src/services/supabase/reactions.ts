@@ -1,3 +1,5 @@
+// src/services/supabase/reactions.ts
+
 import { supabase } from './client';
 import type { Card } from '@/core/game/types';
 
@@ -5,7 +7,7 @@ export type ReactionType = 'inspiring' | 'resonates' | 'metoo';
 
 export interface ListenerReaction {
   id: string;
-  roomId: string;
+  gameStateId: string;
   speakerId: string;
   listenerId: string;
   cardId: string;
@@ -16,7 +18,7 @@ export interface ListenerReaction {
 
 export const reactionsService = {
   async toggleReaction(
-    roomId: string,
+    gameStateId: string,
     speakerId: string,
     listenerId: string,
     cardId: string,
@@ -28,7 +30,7 @@ export const reactionsService = {
       .from('reactions')
       .select('*')
       .match({
-        room_id: roomId,
+        game_state_id: gameStateId,
         speaker_id: speakerId,
         listener_id: listenerId,
         card_id: cardId,
@@ -42,7 +44,7 @@ export const reactionsService = {
         .from('reactions')
         .delete()
         .match({
-          room_id: roomId,
+          game_state_id: gameStateId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -53,7 +55,7 @@ export const reactionsService = {
       await supabase
         .from('reactions')
         .insert([{
-          room_id: roomId,
+          game_state_id: gameStateId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -64,7 +66,7 @@ export const reactionsService = {
   },
 
   async toggleRipple(
-    roomId: string,
+    gameStateId: string,
     speakerId: string,
     listenerId: string,
     cardId: string
@@ -74,7 +76,7 @@ export const reactionsService = {
       .from('reactions')
       .select('*')
       .match({
-        room_id: roomId,
+        game_state_id: gameStateId,
         speaker_id: speakerId,
         listener_id: listenerId,
         card_id: cardId,
@@ -88,7 +90,7 @@ export const reactionsService = {
         .from('reactions')
         .delete()
         .match({
-          room_id: roomId,
+          game_state_id: gameStateId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -99,7 +101,7 @@ export const reactionsService = {
       await supabase
         .from('reactions')
         .insert([{
-          room_id: roomId,
+          game_state_id: gameStateId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -109,14 +111,14 @@ export const reactionsService = {
   },
 
   async getPlayerReactions(
-    roomId: string,
+    gameStateId: string,
     listenerId: string
   ): Promise<ListenerReaction[]> {
     const { data } = await supabase
       .from('reactions')
       .select('*')
       .match({
-        room_id: roomId,
+        game_state_id: gameStateId,
         listener_id: listenerId
       });
 
@@ -124,14 +126,14 @@ export const reactionsService = {
   },
 
   async getRippledCards(
-    roomId: string,
+    gameStateId: string,
     playerId: string
   ): Promise<Card[]> {
     const { data: reactions } = await supabase
       .from('reactions')
       .select('card_id')
       .match({
-        room_id: roomId,
+        game_state_id: gameStateId,
         listener_id: playerId,
         ripple_marked: true
       });
@@ -149,23 +151,23 @@ export const reactionsService = {
   },
 
   subscribeToReactions(
-    roomId: string,
+    gameStateId: string,
     callback: (reactions: ListenerReaction[]) => void
   ) {
     return supabase
-      .channel(`reactions:${roomId}`)
+      .channel(`reactions:${gameStateId}`)
       .on('postgres_changes', 
         { 
           event: '*', 
           schema: 'public', 
           table: 'reactions',
-          filter: `room_id=eq.${roomId}`
+          filter: `game_state_id=eq.${gameStateId}`
         }, 
         async () => {
           const { data } = await supabase
             .from('reactions')
             .select('*')
-            .eq('room_id', roomId);
+            .eq('game_state_id', gameStateId);
           callback(data || []);
         }
       )

@@ -119,7 +119,7 @@ export const gameStatesService = {
       if (initialState.room_id) {
         const { error: updateError } = await supabase
           .from('rooms')
-          .update({ current_session_id: data.id })
+          .update({ game_state_id: data.id })
           .eq('id', initialState.room_id);
 
         if (updateError) throw updateError;
@@ -132,11 +132,11 @@ export const gameStatesService = {
     }
   },
 
-  async get(stateId: string): Promise<GameState> {
+  async get(gameStateId: string): Promise<GameState> {
     const { data, error } = await supabase
       .from('game_states')
       .select('*')
-      .eq('id', stateId)
+      .eq('id', gameStateId)
       .single();
     
     if (error) throw error;
@@ -145,7 +145,7 @@ export const gameStatesService = {
     return await fromDatabaseState(data);
   },
 
-  async update(stateId: string, updates: Partial<GameState>): Promise<GameState> {
+  async update(gameStateId: string, updates: Partial<GameState>): Promise<GameState> {
     // Convert Card objects to IDs for database update
     const dbUpdates: any = { ...updates };
 
@@ -166,7 +166,7 @@ export const gameStatesService = {
     const { data, error } = await supabase
       .from('game_states')
       .update(dbUpdates)
-      .eq('id', stateId)
+      .eq('id', gameStateId)
       .select()
       .single();
     
@@ -177,11 +177,11 @@ export const gameStatesService = {
   },
 
   async updatePlayerState(
-    stateId: string,
+    gameStateId: string,
     playerId: string,
     updates: Partial<Player>
   ): Promise<GameState> {
-    const currentState = await this.get(stateId);
+    const currentState = await this.get(gameStateId);
     
     const updatedPlayers = currentState.players.map(player =>
       player.id === playerId
@@ -192,11 +192,11 @@ export const gameStatesService = {
         : player
     );
 
-    return await this.update(stateId, { players: updatedPlayers });
+    return await this.update(gameStateId, { players: updatedPlayers });
   },  
 
-  async dealCards(sessionId: string, userId: string): Promise<Card[]> {
-    const session = await this.get(sessionId);
+  async dealCards(gameStateId: string, userId: string): Promise<Card[]> {
+    const session = await this.get(gameStateId);
     
     const cardsToExclude = [
       ...toCardIds(session.cardsInPlay),
@@ -217,7 +217,7 @@ export const gameStatesService = {
     const randomCards = randomCardsData as Card[];
   
     // get rippled cards
-    const rippledCards = await reactionsService.getRippledCards(sessionId, userId);    
+    const rippledCards = await reactionsService.getRippledCards(gameStateId, userId);    
     const newCards = [...randomCards, ...rippledCards];
 
     // Update session with the dealt cards
@@ -226,11 +226,11 @@ export const gameStatesService = {
       [userId]: newCards
     };
 
-    await this.updatePlayerState(sessionId, userId, {
+    await this.updatePlayerState(gameStateId, userId, {
       status: PLAYER_STATUS.CHOOSING
     });
 
-    await this.update(sessionId, { playerHands: updatedHands });
+    await this.update(gameStateId, { playerHands: updatedHands });
   
     return newCards;
   },

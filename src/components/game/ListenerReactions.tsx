@@ -14,13 +14,13 @@ const REACTIONS = [
 ] as const;
 
 interface ListenerReactionsProps {
-  roomId: string;
+  gameStateId: string;
   speakerId: string;
   cardId: string;
 }
 
 export function ListenerReactions({ 
-  roomId, 
+  gameStateId, 
   speakerId,
   cardId 
 }: ListenerReactionsProps) {
@@ -35,7 +35,7 @@ export function ListenerReactions({
     hasReaction,
     isRippled
   } = useReactions({
-    roomId,
+    gameStateId,
     speakerId,
     listenerId: user.id,
     cardId
