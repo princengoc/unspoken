@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Stack, Text, Group, Button, Paper, Transition } from '@mantine/core';
+import { notifications } from "@mantine/notifications";
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useGameState } from '@/context/GameStateProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
@@ -20,6 +22,27 @@ export function Setup() {
     isCreator
   } = useRoom();
 
+  const [isDealing, setIsDealing] = useState(false);
+
+  const handleDrawCards = async () => {
+      if (!currentMember?.id) return;
+      
+      setIsDealing(true);
+      try {
+          await dealCards(currentMember.id);
+      } catch (error) {
+          notifications.show({
+              title: 'Error',
+              message: 'Failed to draw cards. Please try again.',
+              color: 'red'
+          });
+          console.error('Failed to draw cards:', error);
+      } finally {
+          setIsDealing(false);
+          console.log(`Status after dealing: ${JSON.stringify(currentMember)}`);
+      }
+  };
+
   return (
     <Stack gap="xl">
       <FadeIn>
@@ -34,16 +57,22 @@ export function Setup() {
       </FadeIn>
 
       {/* Show "Draw Cards" if the player hasn't received any cards */}
-      {currentMember?.playerHand?.length === 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
+      {currentMember?.status === PLAYER_STATUS.CHOOSING && (!currentMember.playerHand || currentMember.playerHand.length === 0) && (
         <SlideIn>
-          <Button onClick={() => dealCards(currentMember?.id)} fullWidth size="lg" variant="filled">
-            Draw Cards
-          </Button>
+            <Button 
+                onClick={handleDrawCards} 
+                fullWidth 
+                size="lg" 
+                variant="filled"
+                loading={isDealing}
+            >
+                Draw Cards
+            </Button>
         </SlideIn>
       )}
 
       {/* When cards are available: either allow selection or wait */}
-      {currentMember?.playerHand && currentMember.playerHand.length === 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
+      {currentMember?.playerHand && currentMember.playerHand.length > 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
         <>
           <CardDeck cards={currentMember.playerHand} onSelect={handleCardSelection} />
           <SlideIn direction="up">

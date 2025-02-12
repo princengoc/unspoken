@@ -48,6 +48,7 @@ import React, {
       isAllMembersReady,
       updateMemberStatus,
       updateMemberCard,
+      updateMemberHand,
       markMemberAsSpoken,
     } = useRoomMembers();
   
@@ -205,6 +206,19 @@ import React, {
       },
       [currentMemberId, phase, completeSetup]
     );
+
+    // Update the handleDealCards function
+    const handleDealCards = useCallback(async (playerId: string) => {
+      try {
+        const dealtCards = await dealCards(playerId);
+        // Make sure we update the member's hand in state
+        await updateMemberHand(playerId, dealtCards);
+        return dealtCards;
+      } catch (error) {
+        console.error('Failed to deal cards:', error);
+        throw error;
+      }
+    }, [dealCards, updateMemberHand]);    
   
     const value = {
       completeSetup,
@@ -212,7 +226,7 @@ import React, {
       finishSpeaking,
       handleCardSelection,
       initiateSpeakingPhase,
-      dealCards,
+      dealCards: handleDealCards,
       canStartSpeaking,
       isActiveSpeaker,
       isSetupComplete,
