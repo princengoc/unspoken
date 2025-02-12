@@ -9,22 +9,21 @@ interface GameStateContextType {
   currentRound: number;
   totalRounds: number;
   activePlayerId: string | null;
-  isSpeakerSharing: boolean;
 
   // Card states
   cardsInPlay: Card[];
   discardPile: Card[];
-  playerHands: Record<string, Card[]>;
   
   // Phase management
   setPhase: (phase: GamePhase) => Promise<void>;
   setActivePlayer: (playerId: string | null) => Promise<void>;
-  setSpeakerSharing: (isSharing: boolean) => Promise<void>;
   
-  // Card management
-  dealCards: (playerId: string) => Promise<void>;
+  // Global card management
   addCardToPlay: (card: Card) => Promise<void>;
   moveCardToDiscard: (cardId: string) => Promise<void>;
+
+  // Card management that includes roomMembersService update
+  dealCards: (playerId: string) => Promise<Card[]>;
   
   // Round management
   startNewRound: () => Promise<void>;
@@ -48,7 +47,6 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     currentRound: 1,
     totalRounds: DEFAULT_TOTAL_ROUNDS,
     activePlayerId: null,
-    isSpeakerSharing: false,
     cardsInPlay: [],
     discardPile: [],
   });
@@ -115,26 +113,16 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     await updateGameState('activePlayerId', playerId);
   };
 
-  const setSpeakerSharing = async (isSharing: boolean) => {
-    await updateGameState('isSpeakerSharing', isSharing);
-  };
-
   // Card management
   const dealCards = async (playerId: string) => {
-    try {
-      const newCards = await gameStatesService.dealCards(gameStateId, playerId);
-      setGameState(prev => ({
-        ...prev,
-        playerHands: {
-          ...prev.playerHands,
-          [playerId]: newCards
-        }
-      }));
+    try { 
+      return await gameStatesService.dealCards(gameStateId, playerId); 
     } catch (error) {
-      console.error('Failed to deal cards:', error);
-      throw error;
+      console.error(`Failed to deal cards: ${JSON.stringify(error)}`);
+      throw error
     }
-  };
+  }
+
 
   const addCardToPlay = async (card: Card) => {
     const updatedCards = [...gameState.cardsInPlay, card];
@@ -180,7 +168,6 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
         activePlayerId: null,
         cardsInPlay: [],
         discardPile: [],
-        isSpeakerSharing: false,
       };
       
       // Optimistic update
@@ -209,10 +196,9 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     // Actions
     setPhase,
     setActivePlayer,
-    setSpeakerSharing,
-    dealCards,
     addCardToPlay,
     moveCardToDiscard,
+    dealCards,
     startNewRound,
     completeRound,
   };

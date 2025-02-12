@@ -56,11 +56,10 @@ export function Setup() {
   const { 
     handleCardSelection, 
     initiateSpeakingPhase,
-    isSetupComplete 
+    dealCards,
+    isSetupComplete, 
+    isCreator
   } = useRoom();
-
-  // Check if current user is the room creator
-  const isCreator = currentMember?.id === room.created_by;
 
   return (
     <Stack gap="xl">
@@ -78,14 +77,14 @@ export function Setup() {
       {/* Show "Draw Cards" if the player hasn't received any cards */}
       {currentMember?.playerHand?.length === 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
         <SlideIn>
-          <Button onClick={dealInitialCards} fullWidth size="lg" variant="filled">
+          <Button onClick={() => dealCards(currentMember?.id)} fullWidth size="lg" variant="filled">
             Draw Cards
           </Button>
         </SlideIn>
       )}
 
       {/* When cards are available: either allow selection or wait */}
-      {currentMember?.playerHand?.length > 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
+      {currentMember?.playerHand && currentMember.playerHand.length === 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
         <>
           <CardDeck cards={currentMember.playerHand} onSelect={handleCardSelection} />
           <SlideIn direction="up">

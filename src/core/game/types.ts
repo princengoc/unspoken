@@ -12,7 +12,7 @@ export type Player = {
   username: string | null;
   isOnline: boolean;
   status: PlayerStatus;
-  selectedCard?: string;
+  selectedCard?: string | null;
   hasSpoken: boolean;
   speakOrder?: number;
   playerHand?: Card[];  // Added this from PlayerState
@@ -41,12 +41,11 @@ export type GameState = {
   id: string;
   room_id: string;
   phase: GamePhase;
-  cardsInPlay: Card[];
-  discardPile: Card[];
+  cardsInPlay: Card[]; // cards that will be excluded from dealing because it is already in play
+  discardPile: Card[]; // cards discard by players in this game
   currentRound: number;
   totalRounds: number;
   activePlayerId: string | null;
-  isSpeakerSharing: boolean;
 };
 
 // Room without player info

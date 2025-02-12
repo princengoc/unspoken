@@ -23,28 +23,19 @@ export async function fetchCardsByIds(cardIds: string[]): Promise<Card[]> {
 }
 
 const fromDatabaseState = async (dbState: any): Promise<GameState> => {
-  // Collect all card IDs from various state properties
+  // Collect all card IDs from the game state (cardsInPlay and discardPile)
   const allCardIds = [
     ...(dbState.cardsInPlay || []),
-    ...(dbState.discardPile || []),
-    ...Object.values(dbState.playerHands || {}).flat()
+    ...(dbState.discardPile || [])
   ];
 
-  // Fetch all cards in one go
-  let cards: Card[] = [];
-  if (allCardIds.length > 0) {
-    const { data, error } = await supabase
-      .from('cards')
-      .select('*')
-      .in('id', allCardIds);
-    
-    if (error) throw error;
-    cards = data;
-  }
+  // Fetch all cards in one go. 
+  const cards = await fetchCardsByIds(Array.from(new Set(allCardIds))); 
 
+  // Create a map of card ID to Card object.
   const cardMap = new Map(cards.map(card => [card.id, card]));
 
-  // Convert card Ids to Card objects
+  // Convert card IDs to Card objects.
   const cardsInPlay = (dbState.cardsInPlay || [])
     .map((id: string) => cardMap.get(id))
     .filter(Boolean) as Card[];
@@ -52,13 +43,6 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
   const discardPile = (dbState.discardPile || [])
     .map((id: string) => cardMap.get(id))
     .filter(Boolean) as Card[];
-
-  const playerHands: Record<string, Card[]> = {};
-  Object.entries(dbState.playerHands || {}).forEach(([playerId, cardIds]) => {
-    playerHands[playerId] = (cardIds as string[])
-      .map(id => cardMap.get(id))
-      .filter(Boolean) as Card[];
-  });
 
   return {
     id: dbState.id,
@@ -69,7 +53,6 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     activePlayerId: dbState.activePlayerId,
     cardsInPlay,
     discardPile,
-    isSpeakerSharing: dbState.isSpeakerSharing || false
   };
 };
 
@@ -84,7 +67,6 @@ export const gameStatesService = {
         discardPile: toCardIds(initialState.discardPile),
         currentRound: 1,
         totalRounds: DEFAULT_TOTAL_ROUNDS,
-        isSpeakerSharing: false
       };
       
       const { data, error } = await supabase
@@ -135,12 +117,6 @@ export const gameStatesService = {
     }
     if (updates.discardPile) {
       dbUpdates.discardPile = toCardIds(updates.discardPile);
-    }
-    if (updates.playerHands) {
-      dbUpdates.playerHands = Object.fromEntries(
-        Object.entries(updates.playerHands)
-          .map(([playerId, cards]) => [playerId, toCardIds(cards)])
-      );
     }
 
     const { data, error } = await supabase

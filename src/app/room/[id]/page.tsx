@@ -47,7 +47,7 @@ function RoomPageContent({ roomId }: RoomPageContentProps) {
   const router = useRouter();
   const { phase, currentRound, totalRounds, activePlayerId } = useGameState();
   const { members, currentMember } = useRoomMembers();
-  const { leaveRoom } = useRoom(roomId);
+  const { room, leaveRoom } = useRoom(roomId);
 
   const handleLeaveRoom = async () => {
     try {
@@ -73,7 +73,7 @@ function RoomPageContent({ roomId }: RoomPageContentProps) {
     );
   }
 
-  const isCreator = currentMember.id === room.created_by;
+  const isCreator = currentMember.id === room?.created_by;
 
   return (
     <Container py="xl">

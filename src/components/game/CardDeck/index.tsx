@@ -9,7 +9,7 @@ import { CardIndicators } from './CardIndicators';
 
 interface CardDeckProps {
   cards: CardType[];
-  onSelect?: (card: CardType) => void;
+  onSelect?: (cardId: string) => void;
   showIndicators?: boolean;
 }
 
@@ -55,7 +55,7 @@ export function CardDeck({
   const handlePeripheralCardClick = (index: number) => {
     if (currentIndex >= cards.length) {
       setSelectedCardIndex(index);
-      onSelect?.(cards[index]);
+      onSelect?.(cards[index].id);
     }
   };
 

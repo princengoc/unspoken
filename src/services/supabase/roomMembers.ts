@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { Player, JoinRequest } from '@/core/game/types';
+import type { Player, Card, JoinRequest } from '@/core/game/types';
 
 export const roomMembersService = {
   async createJoinRequest(roomId: string, userId: string): Promise<JoinRequest> {
@@ -93,11 +93,11 @@ export const roomMembersService = {
     return data.map(member => ({
       id: member.user_id,
       username: member.username,
-      isOnline: member.is_online,
+      isOnline: member.isOnline,
       status: member.status,
       selectedCard: member.selectedCard,
       hasSpoken: member.hasSpoken,
-      speakOrder: member.speakOrder
+      playerHand: member.playerHand
     }));
   },
 
@@ -136,7 +136,7 @@ export const roomMembersService = {
   async updatePlayerHand(
     roomId: string,
     userId: string,
-    cards: any[]
+    cards: Card[]
   ): Promise<void> {
     const { error } = await supabase
       .from('room_members')

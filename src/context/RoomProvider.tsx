@@ -15,10 +15,12 @@ import React, {
     finishSpeaking: () => Promise<void>;
     handleCardSelection: (cardId: string) => Promise<void>;
     initiateSpeakingPhase: () => Promise<void>;
+    dealCards: (playerId: string) => Promise<Card[]>;
   
     canStartSpeaking: boolean;
     isActiveSpeaker: boolean;
     isSetupComplete: boolean;
+    isCreator: boolean;
   }
   
   const RoomContext = createContext<RoomContextType | null>(null);
@@ -36,7 +38,8 @@ import React, {
       setActivePlayer,
       addCardToPlay,
       moveCardToDiscard,
-      completeRound
+      completeRound, 
+      dealCards
     } = useGameState();
   
     const {
@@ -66,6 +69,8 @@ import React, {
       currentMemberStatus === PLAYER_STATUS.SPEAKING;
   
     const isSetupComplete = isAllMembersReady;
+
+    const isCreator = currentMemberId === room.created_by;
   
     /**
      * Helper: returns a random member who has not yet spoken.
@@ -110,7 +115,7 @@ import React, {
   
     // Only the room creator can initiate the speaking phase.
     const initiateSpeakingPhase = useCallback(async () => {
-      if (!currentMemberId || currentMemberId !== room.created_by) {
+      if (!currentMemberId || !isCreator) {
         console.warn('Only the room creator can start the speaking phase.');
         return;
       }
@@ -207,9 +212,11 @@ import React, {
       finishSpeaking,
       handleCardSelection,
       initiateSpeakingPhase,
+      dealCards,
       canStartSpeaking,
       isActiveSpeaker,
       isSetupComplete,
+      isCreator
     };
   
     return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;
