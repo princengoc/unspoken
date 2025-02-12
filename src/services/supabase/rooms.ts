@@ -31,6 +31,7 @@ export const roomsService = {
     if (error) throw error;
 
     // Add creator to room_members
+    await roomMembersService.addNewMember(data.id, createdBy);
     await roomMembersService.updatePlayerState(data.id, createdBy, DEFAULT_PLAYER);
 
     return data as Room;
