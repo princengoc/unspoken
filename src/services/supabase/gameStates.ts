@@ -158,8 +158,7 @@ export const gameStatesService = {
     const newCards = [...randomCards, ...rippledCards];
 
     // Update player's hand in room_members
-    await roomMembersService.updatePlayerHand(dbState.room_id, userId, newCards);
-  
+    await roomMembersService.updatePlayerHand(dbState.room_id, userId, newCards);  
     return newCards;
   },
   

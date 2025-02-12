@@ -157,19 +157,25 @@ export const roomMembersService = {
     }
   },
 
-  async updatePlayerHand(
-    roomId: string,
-    userId: string,
-    cards: Card[]
-  ): Promise<void> {
+  async updatePlayerHand(roomId: string, userId: string, cards: Card[]): Promise<boolean> {
+    const serializedCards = cards.map(card => ({
+      id: card.id,
+      content: card.content,
+      category: card.category,
+      depth: card.depth,
+      contributor_id: card.contributor_id
+    }));
+  
     const { error } = await supabase
       .from('room_members')
-      .update({ playerHand: cards })
+      .update({ playerHand: serializedCards })
       .eq('room_id', roomId)
       .eq('user_id', userId);
-
+  
     if (error) throw error;
+    return true;
   },
+  
 
   // Subscription for player state changes
   subscribeToRoomMembers(roomId: string, callback: (players: Player[]) => void) {
