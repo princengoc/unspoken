@@ -1,6 +1,5 @@
 import { supabase } from './client';
 import type { Room, Player, RoomSettings } from '@/core/game/types';
-import { PLAYER_STATUS } from '@/core/game/constants';
 import { roomMembersService } from './roomMembers';
 
 export const roomsService = {
@@ -35,7 +34,7 @@ export const roomsService = {
     await roomMembersService.updatePlayerState(data.id, createdBy, {
       status: 'choosing',
       hasSpoken: false,
-      is_online: true,
+      isOnline: true,
       playerHand: []
     });
 
@@ -43,7 +42,8 @@ export const roomsService = {
   },
 
   async join(roomId: string, player: Player): Promise<Room> {
-    const { data: dataRoom, error: findError } = await supabase
+    // First check if room exists and is active
+    const { data: room, error: findError } = await supabase
       .from('rooms')
       .select()
       .eq('id', roomId)
@@ -51,51 +51,23 @@ export const roomsService = {
       .single();
     
     if (findError) throw findError;
-    if (!dataRoom) throw new Error('Room not found');
+    if (!room) throw new Error('Room not found');
 
-    const room = dataRoom as Room;
-
-    // Check if player already exists in the room
-    const existingPlayer = room.players.find(p => p.id === player.id);
+    // Check if player already exists in room_members
+    const memberExists = await roomMembersService.hasRoomMember(roomId, player.id); 
     
-    if (existingPlayer) {
-      // Update existing player's status
-      const updatedPlayer = {
-        ...existingPlayer,
-        isOnline: true
-      };
-
-      const { data, error } = await supabase.rpc(
-        'update_player_status',
-        {
-          room_id: roomId,
-          player_id: player.id,
-          new_status: updatedPlayer
-        }
-      );
-
-      if (error) throw error;
-      return data as Room;
-    }
-
-    // Add new player with initial state
-    const newPlayer = {
-      ...player,
-      status: PLAYER_STATUS.CHOOSING,
-      hasSpoken: false
-    };
-
-    const { data, error } = await supabase
-      .from('rooms')
-      .update({ 
-        players: [...room.players, newPlayer] 
+    if (memberExists) {
+      // Update existing member's status
+      await roomMembersService.updatePlayerState(roomId, player.id, { 
+        isOnline: true,
+        status: 'choosing'
       })
-      .eq('id', room.id)
-      .select()
-      .single();
+    } else {
+      // Add new member
+      await roomMembersService.addNewMember(roomId, player);
+    }
     
-    if (error) throw error;
-    return data as Room;
+    return room;
   },
 
   async get(roomId: string): Promise<Room> {

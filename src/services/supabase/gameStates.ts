@@ -1,7 +1,7 @@
 import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
 import { supabase } from './client';
-import { GameState, Card, Exchange, Player } from '@/core/game/types';
-import { PLAYER_STATUS, DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
+import { GameState, Card} from '@/core/game/types';
+import { DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
 import { reactionsService } from './reactions';
 import { roomMembersService } from './roomMembers';
 
@@ -67,10 +67,8 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     currentRound: dbState.currentRound,
     totalRounds: dbState.totalRounds,
     activePlayerId: dbState.activePlayerId,
-    players: dbState.players,
     cardsInPlay,
     discardPile,
-    playerHands,
     isSpeakerSharing: dbState.isSpeakerSharing || false
   };
 };
@@ -202,52 +200,6 @@ export const gameStatesService = {
         async (payload) => {
           const state = await fromDatabaseState(payload.new);
           callback(state as GameState);
-        }
-      )
-      .subscribe();
-  }
-};
-
-export const exchangesService = {
-  async create(exchange: Omit<Exchange, 'id' | 'status'>): Promise<Exchange> {
-    const { data, error } = await supabase
-      .from('exchanges')
-      .insert([{ ...exchange, status: 'pending' }])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as Exchange;
-  },
-
-  async updateStatus(exchangeId: string, status: Exchange['status']): Promise<Exchange> {
-    const { data, error } = await supabase
-      .from('exchanges')
-      .update({ status })
-      .eq('id', exchangeId)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as Exchange;
-  },
-
-  subscribeToChanges(gameStateId: string, callback: (exchanges: Exchange[]) => void) {
-    return supabase
-      .channel(`exchanges:${gameStateId}`)
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'exchanges',
-          filter: `game_state_id=eq.${gameStateId}`
-        },
-        async () => {
-          const { data } = await supabase
-            .from('exchanges')
-            .select('*')
-            .eq('game_state_id', gameStateId);
-          callback(data as Exchange[]);
         }
       )
       .subscribe();

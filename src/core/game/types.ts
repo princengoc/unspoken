@@ -1,89 +1,55 @@
+// src/core/game/types.ts
 import { PLAYER_STATUS } from "./constants";
 
-// Core game types
 export type GamePhase = 'setup' | 'speaking';
 export type PlayerStatus = (typeof PLAYER_STATUS)[keyof typeof PLAYER_STATUS];
+export type JoinRequestStatus = 'pending' | 'approved' | 'rejected';
+export type GameMode = 'irl' | 'remote';
 
-
+// Core player state
 export type Player = {
   id: string;
   username: string | null;
   isOnline: boolean;
   status: PlayerStatus;
-  selectedCard?: string; // ID of their chosen card
-  hasSpoken: boolean;    // for current round
-  speakOrder?: number;   // order in speaking queue
-};
-
-// TODO: may want to unify the Player and PlayerState type
-// right now PlayerState is used in roomMembers.ts
-export type PlayerState = {
-  status: PlayerStatus;
+  selectedCard?: string;
   hasSpoken: boolean;
   speakOrder?: number;
-  selectedCard?: string;
-  playerHand: any[];
-  is_online: boolean;  
-  username: string | null;
-}
-
-export type CardHistory = {
-  id: string;
-  userId: string;
-  cardId: string;
-  gameSessionId: string;
-  roundNumber: number;
-  answeredAt: string;
+  playerHand?: Card[];  // Added this from PlayerState
 };
 
+// Database schema related types
+export type RoomMember = Omit<Player, 'id'> & {
+  room_id: string;
+  user_id: string;  // This is the id field from Player
+  joined_at: string;
+};
+
+export type JoinRequest = {
+  id: string;
+  room_id: string;
+  user_id: string;
+  status: JoinRequestStatus;
+  created_at: string;
+  updated_at: string;
+  handled_at: string | null;
+  handled_by: string | null;
+};
+
+// Core game state without player info
 export type GameState = {
   id: string;
   room_id: string;
   phase: GamePhase;
-  players: Player[];
-  cardsInPlay: Card[];             // Cards chosen during setup
-  discardPile: Card[];             // Cards discarded during setup
-  currentRound: number;            // Current round number
-  totalRounds: number;             // Total rounds to play
-  activePlayerId: string | null;   // Current speaker
-  isSpeakerSharing: boolean;       // Whether speaker is actively sharing
-  playerHands: Record<string, Card[]>
+  cardsInPlay: Card[];
+  discardPile: Card[];
+  currentRound: number;
+  totalRounds: number;
+  activePlayerId: string | null;
+  isSpeakerSharing: boolean;
 };
 
-export type Exchange = {
-  id: string;
-  game_state_id: string;
-  requester_id: string;
-  recipient_id: string;
-  offered_card_id: string;
-  requested_card_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  created_at: string;
-}
-
-export type GameAction = {
-  type: string;
-  payload?: any;
-};
-
-export type GameConfig = {
-  allowExchanges: boolean;
-  allowRipples: boolean;
-  roundsPerPlayer: number;
-  cardSelectionTime: number;
-  baseSharingTime: number;
-};
-
-
-export type Card = {
-  id: string;
-  content: string;
-  category: string;
-  depth: 1 | 2 | 3;
-  created_at?: string;
-  contributor_id?: string;
-}
-
+// Room without player info
 export type Room = {
   id: string;
   passcode: string;
@@ -92,36 +58,35 @@ export type Room = {
   created_at: string;
   updated_at: string;
   is_active: boolean;
-  game_mode: 'irl' | 'remote';
+  game_mode: GameMode;
   game_state_id?: string;
-  players: Player[];
   settings?: RoomSettings;
-}
+};
 
+// Keep other existing types
 export type RoomSettings = {
   allow_card_exchanges: boolean;
   allow_ripple_effects: boolean;
   rounds_per_player: number;
-  card_selection_time: number;  // in seconds
-  base_sharing_time: number;    // in seconds
-}
+  card_selection_time: number;
+  base_sharing_time: number;
+};
 
-export type RoomInvite = {
+export type Card = {
   id: string;
-  room_id: string;
-  passcode: string;
-  created_at: string;
-  expires_at: string;
-  created_by: string;
-  is_valid: boolean;
-}
+  content: string;
+  category: string;
+  depth: 1 | 2 | 3;
+  created_at?: string;
+  contributor_id?: string;
+};
 
-// some utility types
-export type UniqueCardsById<T extends { id: string }> = Map<string, T>;
+// Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {
   const uniqueCards = new Map(cards.map(card => [card.id, card]));
   return Array.from(uniqueCards.values());
 };
+
 export const mergeCardsWithDeduplication = (existingCards: Card[], newCards: Card[]): Card[] => {
   const uniqueCards = new Map(
     [...existingCards, ...newCards].map(card => [card.id, card])

@@ -1,21 +1,8 @@
 import { supabase } from './client';
-import type { Player, PlayerState } from '@/core/game/types';
-
-// Keep existing JoinRequest types
-interface JoinroomRequest {
-  id: string;
-  room_id: string;
-  user_id: string;
-  status: 'pending' | 'approved' | 'rejected';
-  created_at: string;
-  updated_at: string;
-  handled_at: string | null;
-  handled_by: string | null;
-}
+import type { Player, JoinRequest } from '@/core/game/types';
 
 export const roomMembersService = {
-  // Keep existing join request methods
-  async createJoinRequest(roomId: string, userId: string): Promise<JoinroomRequest> {
+  async createJoinRequest(roomId: string, userId: string): Promise<JoinRequest> {
     const { data, error } = await supabase
       .from('joinroom_requests')
       .insert([{
@@ -34,7 +21,7 @@ export const roomMembersService = {
     requestId: string, 
     status: 'approved' | 'rejected', 
     handledBy: string
-  ): Promise<JoinroomRequest> {
+  ): Promise<JoinRequest> {
     const { data: request, error: requestError } = await supabase
       .from('joinroom_requests')
       .update({
@@ -68,8 +55,24 @@ export const roomMembersService = {
     return request;
   },
 
+  async addNewMember(roomId: string, player: Player): Promise<void> {
+    const { error } = await supabase
+    .from('room_members')
+    .insert([{
+      room_id: roomId,
+      user_id: player.id,
+      username: player.username,
+      is_online: true,
+      status: 'choosing',
+      hasSpoken: false,
+      playerHand: []
+    }]);
+  
+    if (error) throw error;    
+  },
+
   // Keep existing join request subscription methods
-  async getJoinRequestsForRoom(roomId: string): Promise<JoinroomRequest[]> {
+  async getJoinRequestsForRoom(roomId: string): Promise<JoinRequest[]> {
     const { data, error } = await supabase
       .from('joinroom_requests')
       .select('*')
@@ -80,7 +83,6 @@ export const roomMembersService = {
     return data || [];
   },
 
-  // New methods for player state management
   async getRoomMembers(roomId: string): Promise<Player[]> {
     const { data, error } = await supabase
       .from('room_members')
@@ -99,10 +101,28 @@ export const roomMembersService = {
     }));
   },
 
+  async hasRoomMember(roomId: string, playerId: string): Promise<boolean> {
+    const { data: existingMember, error: memberError } = await supabase
+      .from('room_members')
+      .select('room_id, user_id')
+      .eq('room_id', roomId)
+      .eq('user_id', playerId)
+      .single();
+  
+    if (memberError) {
+      if (memberError.code !== 'PGRST116') {
+        throw memberError;
+      }
+      return false; // PGRST116 indicates no record found
+    }
+  
+    return !!existingMember; // Returns true if a member is found
+  },  
+
   async updatePlayerState(
     roomId: string,
     userId: string,
-    updates: Partial<PlayerState>
+    updates: Partial<Player>
   ): Promise<void> {
     const { error } = await supabase
       .from('room_members')
@@ -147,7 +167,7 @@ export const roomMembersService = {
   },
 
   // Keep existing join request subscription
-  subscribeToJoinRequests(roomId: string, callback: (requests: JoinroomRequest[]) => void) {
+  subscribeToJoinRequests(roomId: string, callback: (requests: JoinRequest[]) => void) {
     return supabase
       .channel(`joinroom_requests:${roomId}`)
       .on('postgres_changes', 
