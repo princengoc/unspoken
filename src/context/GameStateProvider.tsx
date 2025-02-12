@@ -11,21 +11,24 @@ interface GameStateContextType {
   activePlayerId: string | null;
   isSpeakerSharing: boolean;
 
-  // Card management
+  // Card states
   cardsInPlay: Card[];
   discardPile: Card[];
+  playerHands: Record<string, Card[]>;
   
-  // Phase actions
+  // Phase management
   setPhase: (phase: GamePhase) => Promise<void>;
   setActivePlayer: (playerId: string | null) => Promise<void>;
+  setSpeakerSharing: (isSharing: boolean) => Promise<void>;
+  
+  // Card management
+  dealCards: (playerId: string) => Promise<void>;
+  addCardToPlay: (card: Card) => Promise<void>;
+  moveCardToDiscard: (cardId: string) => Promise<void>;
   
   // Round management
   startNewRound: () => Promise<void>;
   completeRound: () => Promise<void>;
-  
-  // Card actions
-  addCardToPlay: (card: Card) => Promise<void>;
-  moveCardToDiscard: (cardId: string) => Promise<void>;
 }
 
 const GameStateContext = createContext<GameStateContextType | null>(null);
@@ -37,9 +40,10 @@ interface GameStateProviderProps {
 }
 
 export function GameStateProvider({ roomId, gameStateId, children }: GameStateProviderProps) {
+  // Complete game state
   const [gameState, setGameState] = useState<GameState>({
-    id: gameStateId, 
-    room_id: roomId,
+    room_id: roomId, 
+    id: gameStateId,
     phase: 'setup',
     currentRound: 1,
     totalRounds: DEFAULT_TOTAL_ROUNDS,
@@ -49,57 +53,125 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     discardPile: [],
   });
 
-  // Set up real-time sync
+  // Handle Supabase realtime updates
   useEffect(() => {
+    const handleGameStateUpdate = (newState: GameState) => {
+      setGameState(prev => {
+        // Only update if there are actual changes
+        if (JSON.stringify(prev) === JSON.stringify(newState)) {
+          return prev;
+        }
+        return newState;
+      });
+    };
+
     // Initial fetch
-    const fetchGameState = async () => {
+    const fetchInitialState = async () => {
       try {
-        const initialState = await gameStatesService.get(gameStateId);
-        setGameState(initialState);
+        const state = await gameStatesService.get(gameStateId);
+        handleGameStateUpdate(state);
       } catch (error) {
-        console.error('Failed to fetch game state:', error);
+        console.error('Failed to fetch initial game state:', error);
       }
     };
-    fetchGameState();
+    fetchInitialState();
 
     // Subscribe to changes
     const subscription = gameStatesService.subscribeToChanges(
       gameStateId,
-      (updatedState) => {
-        setGameState(updatedState);
-      }
+      handleGameStateUpdate
     );
 
-    // Cleanup
     return () => {
-      if (subscription?.unsubscribe) {
-        subscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
   }, [gameStateId]);
 
-  // Phase management actions
-  const setPhase = async (phase: GamePhase) => {
+  // State update helpers with optimistic updates
+  const updateGameState = async <K extends keyof GameState>(
+    key: K,
+    value: GameState[K]
+  ) => {
+    // Optimistic update
+    setGameState(prev => ({ ...prev, [key]: value }));
+    
     try {
-      await gameStatesService.update(gameStateId, { phase });
-      setGameState(prev => ({ ...prev, phase }));
+      // Server update
+      await gameStatesService.update(gameStateId, { [key]: value });
     } catch (error) {
-      console.error('Failed to update game phase:', error);
+      // Rollback on error
+      console.error(`Failed to update ${key}:`, error);
+      setGameState(prev => ({ ...prev, [key]: gameState[key] }));
       throw error;
     }
+  };
+
+  // Phase management
+  const setPhase = async (phase: GamePhase) => {
+    await updateGameState('phase', phase);
   };
 
   const setActivePlayer = async (playerId: string | null) => {
+    await updateGameState('activePlayerId', playerId);
+  };
+
+  const setSpeakerSharing = async (isSharing: boolean) => {
+    await updateGameState('isSpeakerSharing', isSharing);
+  };
+
+  // Card management
+  const dealCards = async (playerId: string) => {
     try {
-      await gameStatesService.update(gameStateId, { activePlayerId: playerId });
-      setGameState(prev => ({ ...prev, activePlayerId: playerId }));
+      const newCards = await gameStatesService.dealCards(gameStateId, playerId);
+      setGameState(prev => ({
+        ...prev,
+        playerHands: {
+          ...prev.playerHands,
+          [playerId]: newCards
+        }
+      }));
     } catch (error) {
-      console.error('Failed to set active player:', error);
+      console.error('Failed to deal cards:', error);
       throw error;
     }
   };
 
-  // Round management actions
+  const addCardToPlay = async (card: Card) => {
+    const updatedCards = [...gameState.cardsInPlay, card];
+    await updateGameState('cardsInPlay', updatedCards);
+  };
+
+  const moveCardToDiscard = async (cardId: string) => {
+    const cardToMove = gameState.cardsInPlay.find(c => c.id === cardId);
+    if (!cardToMove) return;
+
+    const updatedCardsInPlay = gameState.cardsInPlay.filter(c => c.id !== cardId);
+    const updatedDiscardPile = [...gameState.discardPile, cardToMove];
+
+    try {
+      setGameState(prev => ({
+        ...prev,
+        cardsInPlay: updatedCardsInPlay,
+        discardPile: updatedDiscardPile,
+      }));
+
+      await gameStatesService.update(gameStateId, {
+        cardsInPlay: updatedCardsInPlay,
+        discardPile: updatedDiscardPile,
+      });
+    } catch (error) {
+      console.error('Failed to move card to discard:', error);
+      // Rollback
+      setGameState(prev => ({
+        ...prev,
+        cardsInPlay: gameState.cardsInPlay,
+        discardPile: gameState.discardPile,
+      }));
+      throw error;
+    }
+  };
+
+  // Round management
   const startNewRound = async () => {
     try {
       const updates = {
@@ -111,8 +183,11 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
         isSpeakerSharing: false,
       };
       
-      await gameStatesService.update(gameStateId, updates);
+      // Optimistic update
       setGameState(prev => ({ ...prev, ...updates }));
+      
+      // Server update
+      await gameStatesService.update(gameStateId, updates);
     } catch (error) {
       console.error('Failed to start new round:', error);
       throw error;
@@ -121,63 +196,25 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
 
   const completeRound = async () => {
     if (gameState.currentRound >= gameState.totalRounds) {
-      // Handle game completion
+      // Handle game completion - could emit an event or update game status
       return;
     }
     await startNewRound();
-  };
-
-  // Card management actions
-  const addCardToPlay = async (card: Card) => {
-    try {
-      const updatedCards = [...gameState.cardsInPlay, card];
-      await gameStatesService.update(gameStateId, { cardsInPlay: updatedCards });
-      setGameState(prev => ({ ...prev, cardsInPlay: updatedCards }));
-    } catch (error) {
-      console.error('Failed to add card to play:', error);
-      throw error;
-    }
-  };
-
-  const moveCardToDiscard = async (cardId: string) => {
-    try {
-      const cardToMove = gameState.cardsInPlay.find(c => c.id === cardId);
-      if (!cardToMove) return;
-
-      const updatedCardsInPlay = gameState.cardsInPlay.filter(c => c.id !== cardId);
-      const updatedDiscardPile = [...gameState.discardPile, cardToMove];
-
-      await gameStatesService.update(gameStateId, {
-        cardsInPlay: updatedCardsInPlay,
-        discardPile: updatedDiscardPile,
-      });
-
-      setGameState(prev => ({
-        ...prev,
-        cardsInPlay: updatedCardsInPlay,
-        discardPile: updatedDiscardPile,
-      }));
-    } catch (error) {
-      console.error('Failed to move card to discard:', error);
-      throw error;
-    }
   };
 
   const value = {
     // State
     ...gameState,
     
-    // Phase actions
+    // Actions
     setPhase,
     setActivePlayer,
-    
-    // Round management
-    startNewRound,
-    completeRound,
-    
-    // Card actions
+    setSpeakerSharing,
+    dealCards,
     addCardToPlay,
     moveCardToDiscard,
+    startNewRound,
+    completeRound,
   };
 
   return (
@@ -187,7 +224,6 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
   );
 }
 
-// Hook for using game state context
 export function useGameState() {
   const context = useContext(GameStateContext);
   if (!context) {
