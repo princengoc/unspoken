@@ -1,6 +1,7 @@
 import { supabase } from './client';
-import { type Room, type RoomSettings, DEFAULT_PLAYER } from '@/core/game/types';
+import { type Room, type RoomSettings, DEFAULT_PLAYER, GamePhase } from '@/core/game/types';
 import { roomMembersService } from './roomMembers';
+import { gameStatesService } from './gameStates';
 
 export const roomsService = {
   async create(name: string, createdBy: string, settings?: Partial<RoomSettings>): Promise<Room> {
@@ -22,7 +23,7 @@ export const roomsService = {
       }
     };
     
-    const { data, error } = await supabase
+    const { data: room, error } = await supabase
       .from('rooms')
       .insert([roomData])
       .select()
@@ -30,11 +31,34 @@ export const roomsService = {
     
     if (error) throw error;
 
-    // Add creator to room_members
-    await roomMembersService.addNewMember(data.id, createdBy);
-    await roomMembersService.updatePlayerState(data.id, createdBy, DEFAULT_PLAYER);
+    // Create initial game state
+    const initialState = {
+      room_id: room.id,
+      phase: 'setup' as GamePhase,
+      activePlayerId: null,
+      cardsInPlay: [],
+      discardPile: [],
+      currentRound: 1,
+      totalRounds: 3
+    };
+    
+    await gameStatesService.create(initialState);
 
-    return data as Room;
+    // Add creator to room_members
+    await roomMembersService.addNewMember(room.id, createdBy);
+    await roomMembersService.updatePlayerState(room.id, createdBy, DEFAULT_PLAYER);
+
+    // Fetch the updated room with game_state_id
+    const { data: updatedRoom, error: fetchError } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', room.id)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    if (!updatedRoom) throw new Error('Failed to fetch updated room');
+
+    return updatedRoom as Room;
   },
 
   async join(roomId: string, playerId: string): Promise<Room> {
