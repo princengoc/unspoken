@@ -13,7 +13,7 @@ export const cardHistoryService = {
       .insert([{
         user_id: userId,
         card_id: cardId,
-        game_session_id: gameSessionId,
+        game_state_id: gameSessionId,
         round_number: roundNumber
       }])
       .select()
@@ -26,7 +26,7 @@ export const cardHistoryService = {
       id: data.id,
       userId: data.user_id,
       cardId: data.card_id,
-      gameSessionId: data.game_session_id,
+      gameSessionId: data.game_state_id,
       roundNumber: data.round_number,
       answeredAt: data.answered_at
     };
@@ -45,7 +45,7 @@ export const cardHistoryService = {
       id: record.id,
       userId: record.user_id,
       cardId: record.card_id,
-      gameSessionId: record.game_session_id,
+      gameSessionId: record.game_state_id,
       roundNumber: record.round_number,
       answeredAt: record.answered_at
     }));
@@ -55,7 +55,7 @@ export const cardHistoryService = {
     const { data, error } = await supabase
       .from('card_history')
       .select('*')
-      .eq('game_session_id', gameSessionId)
+      .eq('game_state_id', gameSessionId)
       .order('answered_at', { ascending: false });
     
     if (error) throw error;
@@ -64,7 +64,7 @@ export const cardHistoryService = {
       id: record.id,
       userId: record.user_id,
       cardId: record.card_id,
-      gameSessionId: record.game_session_id,
+      gameSessionId: record.game_state_id,
       roundNumber: record.round_number,
       answeredAt: record.answered_at
     }));

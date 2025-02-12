@@ -39,7 +39,7 @@ export type GameState = {
 
 export type Exchange = {
   id: string;
-  session_id: string;
+  game_state_id: string;
   requester_id: string;
   recipient_id: string;
   offered_card_id: string;

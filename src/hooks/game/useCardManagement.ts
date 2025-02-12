@@ -4,16 +4,16 @@ import { useGameState } from '@/context/GameStateProvider';
 import { gameActions } from '@/core/game/actions';
 import { hasSelected } from '@/core/game/types';
 
-export function useCardManagement(sessionId: string | null, userId: string | null) {
+export function useCardManagement(gameStateId: string | null, userId: string | null) {
   const stateMachine = useGameState();
   const [loading, setLoading] = useState(false);
 
   const dealInitialCards = async () => {
-    if (!sessionId || !userId) return;
+    if (!gameStateId || !userId) return;
     
     try {
       setLoading(true);
-      const cards = await gameStatesService.dealCards(sessionId, userId);
+      const cards = await gameStatesService.dealCards(gameStateId, userId);
       
       // Update state machine
       stateMachine.dispatch(gameActions.cardsDealt(userId, cards));
@@ -27,7 +27,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
   };
 
   const selectCardForPool = async (playerId: string, cardId: string) => {
-    if (!sessionId) return;
+    if (!gameStateId) return;
   
     try {
       const currentState = stateMachine.getState();
@@ -45,7 +45,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
       const updatedState = stateMachine.getState();
       
       // Sync with Supabase using the deduplicated state
-      await gameStatesService.update(sessionId, {
+      await gameStatesService.update(gameStateId, {
         cardsInPlay: updatedState.cardsInPlay,
         players: updatedState.players
       });
@@ -57,7 +57,7 @@ export function useCardManagement(sessionId: string | null, userId: string | nul
         stateMachine.dispatch(gameActions.startNewRound());
         
         // Update game phase in database
-        await gameStatesService.update(sessionId, {
+        await gameStatesService.update(gameStateId, {
           phase: 'speaking',
           activePlayerId: updatedState.players[0].id
         });

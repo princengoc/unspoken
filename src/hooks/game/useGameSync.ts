@@ -7,16 +7,16 @@ import { useAuth } from '@/context/AuthProvider';
 import { gameActions } from '@/core/game/actions';
 import { GameState } from '@/core/game/types';
 
-export function useGameSync(sessionId: string | null) {
+export function useGameSync(gameStateId: string | null) {
   const { user } = useAuth();
   const stateMachine = useGameState();
 
-  // Restore player state from saved session
+  // Restore player state from saved game state
   const restorePlayerState = useCallback(async () => {
-    if (!sessionId || !user) return;
+    if (!gameStateId || !user) return;
 
     try {
-      const savedState = await gameStatesService.get(sessionId);
+      const savedState = await gameStatesService.get(gameStateId);
       const savedPlayer = savedState.players.find(p => p.id === user.id);
 
       if (savedPlayer) {
@@ -40,14 +40,14 @@ export function useGameSync(sessionId: string | null) {
           ));
         }
 
-        await gameStatesService.updatePlayerState(sessionId, user.id, {
+        await gameStatesService.updatePlayerState(gameStateId, user.id, {
           isOnline: true,
         });
       }
     } catch (error) {
       console.error('Failed to restore player state:', error);
     }
-  }, [sessionId, user, stateMachine]);
+  }, [gameStateId, user, stateMachine]);
 
   // Handle state updates from server
   const handleStateUpdate = useCallback(async (newState: GameState) => {
@@ -123,39 +123,39 @@ export function useGameSync(sessionId: string | null) {
 
   // Set up Supabase sync
   useEffect(() => {
-    if (!sessionId) return;
+    if (!gameStateId) return;
 
     // First restore player state
     restorePlayerState();
 
     // Then subscribe to changes
     const subscription = gameStatesService.subscribeToChanges(
-      sessionId,
+      gameStateId,
       handleStateUpdate
     );
 
     // Cleanup subscription and mark player as offline
     return () => {
       subscription.unsubscribe();
-      if (sessionId && user?.id) {
-        gameStatesService.updatePlayerState(sessionId, user.id, {
+      if (gameStateId && user?.id) {
+        gameStatesService.updatePlayerState(gameStateId, user.id, {
           isOnline: false,
         }).catch(console.error);
       }
     };
-  }, [sessionId, user?.id, restorePlayerState, handleStateUpdate]);
+  }, [gameStateId, user?.id, restorePlayerState, handleStateUpdate]);
 
   // Handle window/tab close
   useEffect(() => {
-    if (!sessionId || !user?.id) return;
+    if (!gameStateId || !user?.id) return;
 
     const handleBeforeUnload = () => {
-      gameStatesService.updatePlayerState(sessionId, user.id, {
+      gameStatesService.updatePlayerState(gameStateId, user.id, {
         isOnline: false,
       }).catch(console.error);
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [sessionId, user?.id]);
+  }, [gameStateId, user?.id]);
 }

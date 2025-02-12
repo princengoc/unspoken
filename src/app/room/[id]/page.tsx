@@ -158,16 +158,15 @@ export default function RoomPage({ params }: RoomPageProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { room, loading: roomLoading, error, leaveRoom } = useRoom(roomId);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [gameStateId, setGameStateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [gameState, setGameState] = useState<any>(null);
 
   // Determine total rounds from room settings (fallback to 3 if not set)
   const roundsTotal = room?.settings?.rounds_per_player || 3;
 
-  // Initialize or join game session.
   useEffect(() => {
-    if (!user || !room || sessionId) return;
+    if (!user || !room || gameStateId) return;
 
     async function setupSession() {
       
@@ -192,7 +191,7 @@ export default function RoomPage({ params }: RoomPageProps) {
               ],
             });
           }
-          setSessionId(room.game_state_id);
+          setGameStateId(room.game_state_id);
           setGameState(state);
         } else {
           const state = await gameStatesService.create({
@@ -213,7 +212,7 @@ export default function RoomPage({ params }: RoomPageProps) {
               hasSpoken: p.hasSpoken
             })),
           });
-          setSessionId(state.id);
+          setGameStateId(state.id);
           setGameState(state);
         }
       } catch (err) {
@@ -228,18 +227,18 @@ export default function RoomPage({ params }: RoomPageProps) {
       }
     }
     setupSession();
-  }, [user, room, sessionId]);
+  }, [user, room, gameStateId]);
 
   // subscribe to changes
   useEffect(() => {
-    if (!sessionId) return;
+    if (!gameStateId) return;
   
     // Subscribe to changes in the game state.
-    const subscription = gameStatesService.subscribeToChanges(sessionId, (newState: GameState) => {
+    const subscription = gameStatesService.subscribeToChanges(gameStateId, (newState: GameState) => {
       setGameState(newState);
     });
   
-    // Cleanup: Unsubscribe when the component unmounts or sessionId changes.
+    // Cleanup: Unsubscribe when the component unmounts or gameStateId changes.
     return () => {
       if (subscription?.unsubscribe) {
         subscription.unsubscribe();
@@ -248,7 +247,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         supabase.removeChannel(subscription);
       }
     };
-  }, [sessionId]);
+  }, [gameStateId]);
   
   
   useEffect(() => {
@@ -287,7 +286,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           }}
         >
           <Loader size={40} />
-          <div>Setting up game session...</div>
+          <div>Setting up game...</div>
         </Box>
       </Container>
     );
@@ -445,7 +444,7 @@ export default function RoomPage({ params }: RoomPageProps) {
       )}
 
       {/* Main Game Board */}
-      {sessionId && <GameBoard room={room} sessionId={sessionId} />}
+      {gameStateId && <GameBoard room={room} gameStateId={gameStateId} />}
     </Container>
   );
 }

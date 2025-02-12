@@ -196,11 +196,11 @@ export const gameStatesService = {
   },  
 
   async dealCards(gameStateId: string, userId: string): Promise<Card[]> {
-    const session = await this.get(gameStateId);
+    const dbState = await this.get(gameStateId);
     
     const cardsToExclude = [
-      ...toCardIds(session.cardsInPlay),
-      ...toCardIds(session.discardPile)
+      ...toCardIds(dbState.cardsInPlay),
+      ...toCardIds(dbState.discardPile)
     ];
     
     // Get random cards
@@ -220,9 +220,9 @@ export const gameStatesService = {
     const rippledCards = await reactionsService.getRippledCards(gameStateId, userId);    
     const newCards = [...randomCards, ...rippledCards];
 
-    // Update session with the dealt cards
+    // Update game state with the dealt cards
     const updatedHands = {
-      ...session.playerHands,
+      ...dbState.playerHands,
       [userId]: newCards
     };
 
@@ -235,15 +235,15 @@ export const gameStatesService = {
     return newCards;
   },
   
-  subscribeToChanges(sessionId: string, callback: (state: GameState) => void) {
+  subscribeToChanges(gameStateId: string, callback: (state: GameState) => void) {
     return supabase
-      .channel(`game_session:${sessionId}`)
+      .channel(`game_states:${gameStateId}`)
       .on('postgres_changes', 
         { 
           event: '*', 
           schema: 'public', 
           table: 'game_states',
-          filter: `id=eq.${sessionId}`
+          filter: `id=eq.${gameStateId}`
         }, 
         async (payload) => {
           const state = await fromDatabaseState(payload.new);
@@ -278,21 +278,21 @@ export const exchangesService = {
     return data as Exchange;
   },
 
-  subscribeToChanges(sessionId: string, callback: (exchanges: Exchange[]) => void) {
+  subscribeToChanges(gameStateId: string, callback: (exchanges: Exchange[]) => void) {
     return supabase
-      .channel(`exchanges:${sessionId}`)
+      .channel(`exchanges:${gameStateId}`)
       .on('postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'exchanges',
-          filter: `session_id=eq.${sessionId}`
+          filter: `game_state_id=eq.${gameStateId}`
         },
         async () => {
           const { data } = await supabase
             .from('exchanges')
             .select('*')
-            .eq('session_id', sessionId);
+            .eq('game_state_id', gameStateId);
           callback(data as Exchange[]);
         }
       )

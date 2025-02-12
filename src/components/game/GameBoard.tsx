@@ -49,17 +49,17 @@ function PlayerStatus({ player, isActive }: PlayerStatusProps) {
 
 interface GameBoardProps {
   room: Room;
-  sessionId: string;
+  gameStateId: string;
 }
 
-export function GameBoard({ room, sessionId }: GameBoardProps) {
+export function GameBoard({ room, gameStateId }: GameBoardProps) {
   const { user } = useAuth();
 
   if (!user || !room) {
     return (
       <Container size="sm">
         <Text ta="center" c="dimmed">
-          Waiting for game session...
+          Waiting for game...
         </Text>
       </Container>
     );
@@ -67,12 +67,12 @@ export function GameBoard({ room, sessionId }: GameBoardProps) {
 
   return (
     <GameStateProvider players={room.players}>
-      <GameBoardContent room={room} sessionId={sessionId} />
+      <GameBoardContent room={room} gameStateId={gameStateId} />
     </GameStateProvider>
   );
 }
 
-function GameBoardContent({ room, sessionId }: GameBoardProps) {
+function GameBoardContent({ room, gameStateId }: GameBoardProps) {
   const { user } = useAuth();
   const { 
     phase,
@@ -82,7 +82,7 @@ function GameBoardContent({ room, sessionId }: GameBoardProps) {
     isSetupComplete,
     initializeGame,
     startGame 
-  } = useGamePhase(sessionId);
+  } = useGamePhase(gameStateId);
 
   const { 
     playerHands, 
@@ -92,7 +92,7 @@ function GameBoardContent({ room, sessionId }: GameBoardProps) {
     loading: cardsLoading, 
     dealInitialCards,
     selectCardForPool
-  } = useCardManagement(sessionId, user?.id ?? null);
+  } = useCardManagement(gameStateId, user?.id ?? null);
 
   const {
     activePlayerId,
@@ -102,19 +102,19 @@ function GameBoardContent({ room, sessionId }: GameBoardProps) {
     canStartSpeaking,
     startSpeaking,
     finishSpeaking
-  } = useTurnManagement(sessionId);
+  } = useTurnManagement(gameStateId);
 
   useEffect(() => {
-    if (sessionId) {
+    if (gameStateId) {
       initializeGame();
     }
-  }, [sessionId, initializeGame]);
+  }, [gameStateId, initializeGame]);
 
   if (!user || !room) {
     return (
       <Container size="sm">
         <Text ta="center" c="dimmed">
-          Waiting for game session...
+          Waiting for game...
         </Text>
       </Container>
     );
@@ -131,7 +131,7 @@ function GameBoardContent({ room, sessionId }: GameBoardProps) {
             onDealCards={dealInitialCards}
             onSelectCard={(cardId) => selectCardForPool(user.id, cardId)}
             playerStatus={playerStatus}
-            sessionId={sessionId}
+            gameStateId={gameStateId}
           />
         );
 
@@ -193,7 +193,7 @@ function GameBoardContent({ room, sessionId }: GameBoardProps) {
                   </Button>
                 ) : (
                   <ListenerReactions 
-                    roomId={sessionId}
+                    roomId={gameStateId}
                     speakerId={currentSpeaker.id}
                     cardId={currentSpeaker.selectedCard!}
                   />

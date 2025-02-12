@@ -22,7 +22,7 @@ interface UseGamePhaseReturn {
   completeRound: () => Promise<void>;
 }
 
-export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
+export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
   const { user } = useAuth();
   const stateMachine = useGameState();
   const [phase, setPhase] = useState<GamePhase>('setup');
@@ -33,7 +33,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
   const [isSetupComplete, setIsSetupComplete] = useState(false);
 
   // Set up Supabase sync
-  useGameSync(sessionId);
+  useGameSync(gameStateId);
 
   // Subscribe to state machine changes
   useEffect(() => {
@@ -54,11 +54,11 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
   }, [stateMachine, user]);
 
   const initializeGame = useCallback(async () => {
-    if (!sessionId) return;
+    if (!gameStateId) return;
     
     try {
       setIsLoading(true);
-      const gameState = await gameStatesService.get(sessionId);
+      const gameState = await gameStatesService.get(gameStateId);
       
       // Restore all game state aspects
       stateMachine.dispatch(gameActions.phaseChanged(gameState.phase));
@@ -87,10 +87,10 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, stateMachine]);
+  }, [gameStateId, stateMachine]);
 
   const startGame = useCallback(async () => {
-    if (!sessionId || !user) return;
+    if (!gameStateId || !user) return;
     
     try {
       setIsLoading(true);
@@ -108,7 +108,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
       stateMachine.dispatch(gameActions.phaseChanged('setup'));
       
       // Sync with server
-      await gameStatesService.update(sessionId, {
+      await gameStatesService.update(gameStateId, {
         phase: 'setup',
         currentRound: 1,
         players: initialPlayers,
@@ -122,10 +122,10 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, user, stateMachine]);
+  }, [gameStateId, user, stateMachine]);
 
   const completeSetup = useCallback(async (cardId: string) => {
-    if (!sessionId || !user) return;
+    if (!gameStateId || !user) return;
 
     try {
       setIsLoading(true);
@@ -144,7 +144,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
       ));
 
       // Sync with server
-      await gameStatesService.updatePlayerState(sessionId, user.id, {
+      await gameStatesService.updatePlayerState(gameStateId, user.id, {
         status: PLAYER_STATUS.BROWSING,
         speakOrder,
         selectedCard: cardId,
@@ -156,7 +156,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
       if (updatedState.players.every(p => p.speakOrder !== undefined)) {
         const firstSpeaker = updatedState.players.find(p => p.speakOrder === 1);
         if (firstSpeaker) {
-          await gameStatesService.update(sessionId, {
+          await gameStatesService.update(gameStateId, {
             phase: 'speaking',
             activePlayerId: firstSpeaker.id
           });
@@ -168,10 +168,10 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, user, stateMachine]);
+  }, [gameStateId, user, stateMachine]);
 
   const startRound = useCallback(async () => {
-    if (!sessionId) return;
+    if (!gameStateId) return;
 
     try {
       setIsLoading(true);
@@ -190,7 +190,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
       stateMachine.dispatch(gameActions.phaseChanged('setup'));
       
       // Sync with server
-      await gameStatesService.update(sessionId, {
+      await gameStatesService.update(gameStateId, {
         phase: 'setup',
         players: updatedPlayers,
         cardsInPlay: [],
@@ -203,10 +203,10 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, stateMachine]);
+  }, [gameStateId, stateMachine]);
 
   const completeRound = useCallback(async () => {
-    if (!sessionId) return;
+    if (!gameStateId) return;
 
     try {
       setIsLoading(true);
@@ -218,7 +218,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
       }
 
       // Update round counter and reset state
-      await gameStatesService.update(sessionId, {
+      await gameStatesService.update(gameStateId, {
         currentRound: state.currentRound + 1,
         phase: 'setup',
         cardsInPlay: [],
@@ -238,7 +238,7 @@ export function useGamePhase(sessionId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, stateMachine]);
+  }, [gameStateId, stateMachine]);
 
   return {
     phase,

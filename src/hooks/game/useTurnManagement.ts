@@ -20,7 +20,7 @@ interface UseTurnManagementReturn {
   finishSpeaking: () => Promise<void>;
 }
 
-export function useTurnManagement(sessionId: string | null): UseTurnManagementReturn {
+export function useTurnManagement(gameStateId: string | null): UseTurnManagementReturn {
   const { user } = useAuth();
   const stateMachine = useGameState();
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +48,7 @@ export function useTurnManagement(sessionId: string | null): UseTurnManagementRe
     state.phase === 'speaking';
 
   const startSpeaking = async () => {
-    if (!sessionId || !user || !isActiveSpeaker) return;
+    if (!gameStateId || !user || !isActiveSpeaker) return;
     
     try {
       setIsLoading(true);
@@ -68,7 +68,7 @@ export function useTurnManagement(sessionId: string | null): UseTurnManagementRe
       }));
 
       // Sync with server
-      await gameStatesService.update(sessionId, {
+      await gameStatesService.update(gameStateId, {
         players: updatedPlayers,
         isSpeakerSharing: true
       });
@@ -82,7 +82,7 @@ export function useTurnManagement(sessionId: string | null): UseTurnManagementRe
   };
 
   const finishSpeaking = async () => {
-    if (!sessionId || !user || !isActiveSpeaker) return;
+    if (!gameStateId || !user || !isActiveSpeaker) return;
     
     try {
       setIsLoading(true);
@@ -140,7 +140,7 @@ export function useTurnManagement(sessionId: string | null): UseTurnManagementRe
       stateMachine.dispatch(gameActions.setActivePlayer(updates.activePlayerId));
 
       // Sync with server
-      await gameStatesService.update(sessionId, updates);
+      await gameStatesService.update(gameStateId, updates);
 
     } catch (error) {
       console.error('Failed to finish speaking:', error);

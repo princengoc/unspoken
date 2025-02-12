@@ -194,7 +194,7 @@ export const roomsService = {
 
   subscribeToRoom(roomId: string, callback: (room: Room) => void) {
     return supabase
-      .channel(`room:${roomId}`)
+      .channel(`rooms:${roomId}`)
       .on('postgres_changes', 
         { 
           event: '*', 

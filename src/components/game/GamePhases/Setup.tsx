@@ -16,7 +16,7 @@ interface SetupProps {
   onDealCards: () => Promise<void>;
   onSelectCard: (cardId: string) => void;
   playerStatus: PlayerStatus;
-  sessionId: string;
+  gameStateId: string;
 }
 
 export function Setup({ 
@@ -26,7 +26,7 @@ export function Setup({
   onDealCards,
   onSelectCard,
   playerStatus,
-  sessionId 
+  gameStateId 
 }: SetupProps) {
   const { user } = useAuth();
   if (!user) return null;
