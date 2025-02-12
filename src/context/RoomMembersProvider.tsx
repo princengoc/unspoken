@@ -40,7 +40,7 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
         const initialMembers = await roomMembersService.getRoomMembers(roomId);
         setMembers(initialMembers);
       } catch (error) {
-        console.error('Failed to fetch room members:', error);
+        console.error(`Failed to fetch room members: ${JSON.stringify(error)}`);
       }
     };
     fetchMembers();
