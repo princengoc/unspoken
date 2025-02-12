@@ -33,6 +33,7 @@ import { GameState } from '@/core/game/types';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import { GameBoard } from '@/components/game/GameBoard';
 import { notifications } from '@mantine/notifications';
+import { PLAYER_STATUS } from '@/core/game/constants';
 
 /**
  * Simple hash function to pick an avatar icon and color based on a string.
@@ -185,7 +186,7 @@ export default function RoomPage({ params }: RoomPageProps) {
                   id: user.id,
                   username: user.username || null,
                   isOnline: true, 
-                  status: 'choosing',
+                  status: PLAYER_STATUS.CHOOSING,
                   hasSpoken: false,
                 },
               ],

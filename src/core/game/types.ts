@@ -1,6 +1,10 @@
+import { PLAYER_STATUS } from "./constants";
+
 // Core game types
 export type GamePhase = 'setup' | 'speaking';
-export type PlayerStatus = 'choosing' | 'browsing' | 'speaking' | 'listening';
+export type PlayerStatus = (typeof PLAYER_STATUS)[keyof typeof PLAYER_STATUS];
+
+
 export type Player = {
   id: string;
   username: string | null;
@@ -114,5 +118,5 @@ export const mergeCardsWithDeduplication = (existingCards: Card[], newCards: Car
 };
 
 export function hasSelected(player: Player): boolean {
-  return player.status !== 'choosing' && player.selectedCard != null;
+  return player.status !== PLAYER_STATUS.CHOOSING && player.selectedCard != null;
 }
