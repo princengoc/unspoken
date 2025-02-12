@@ -1,3 +1,4 @@
+// src/hooks/game/useCardManagement.ts
 import { useState } from 'react';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
@@ -8,6 +9,7 @@ export function useCardManagement(gameStateId: string | null, userId: string | n
   const stateMachine = useGameState();
   const [loading, setLoading] = useState(false);
 
+  // Deals initial cards to the given user.
   const dealInitialCards = async () => {
     if (!gameStateId || !userId) return;
     
@@ -15,9 +17,8 @@ export function useCardManagement(gameStateId: string | null, userId: string | n
       setLoading(true);
       const cards = await gameStatesService.dealCards(gameStateId, userId);
       
-      // Update state machine
+      // Update the state machine with the dealt cards.
       stateMachine.dispatch(gameActions.cardsDealt(userId, cards));
-      
     } catch (error) {
       console.error('Failed to deal cards:', error);
       throw error;
@@ -26,42 +27,32 @@ export function useCardManagement(gameStateId: string | null, userId: string | n
     }
   };
 
+  // Select a card to add to the pool.
+  // Note: Previously, if all players had selected, this would automatically trigger a phase transition.
+  // With the new design, that transition is manually triggered by the room creator.
   const selectCardForPool = async (playerId: string, cardId: string) => {
     if (!gameStateId) return;
   
     try {
       const currentState = stateMachine.getState();
       
-      // Check if card is already in play
+      // Prevent duplicate selection if the card is already in play.
       const isCardAlreadyInPlay = currentState.cardsInPlay.some(card => card.id === cardId);
       if (isCardAlreadyInPlay) {
         return;
       }
   
-      // Update state machine - deduplication happens in reducer
+      // Dispatch the card selection action.
       stateMachine.dispatch(gameActions.selectCard(playerId, cardId));
       
-      // Get the deduplicated state
+      // Get the updated state from the state machine.
       const updatedState = stateMachine.getState();
       
-      // Sync with Supabase using the deduplicated state
+      // Sync the updated state (cards in play and players) with the server.
       await gameStatesService.update(gameStateId, {
         cardsInPlay: updatedState.cardsInPlay,
         players: updatedState.players
       });
-  
-      // Check if all players have selected
-      const allPlayersSelected = updatedState.players.every(hasSelected);
-      if (allPlayersSelected) {
-        // Move to next phase
-        stateMachine.dispatch(gameActions.startNewRound());
-        
-        // Update game phase in database
-        await gameStatesService.update(gameStateId, {
-          phase: 'speaking',
-          activePlayerId: updatedState.players[0].id
-        });
-      }
   
     } catch (error) {
       console.error('Failed to select card:', error);
@@ -69,10 +60,11 @@ export function useCardManagement(gameStateId: string | null, userId: string | n
     }
   };
   
-  // Get current state values
+  // Read current state values.
   const state = stateMachine.getState();
   const playerHands = state.playerHands;
   const cardsInPlay = state.cardsInPlay;
+  const discardPile = state.discardPile;
   const selectedCards = state.players.reduce((acc, player) => ({
     ...acc,
     [player.id]: hasSelected(player)
@@ -81,6 +73,7 @@ export function useCardManagement(gameStateId: string | null, userId: string | n
   return {
     playerHands,
     cardsInPlay,
+    discardPile,
     selectedCards,
     loading,
     dealInitialCards,

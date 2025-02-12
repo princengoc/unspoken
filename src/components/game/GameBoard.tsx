@@ -82,17 +82,18 @@ export function GameBoard({ room, gameStateId }: GameBoardProps) {
 
 function GameBoardContent({ room, gameStateId }: GameBoardProps) {
   const { user } = useAuth();
+
+  // Game phase and setup-related logic
   const {
     phase,
     playerStatus,
     currentRound,
     totalRounds,
     initializeGame,
-    startRound,
-    completeRound,
     handleAllPlayersSetupComplete,
   } = useGamePhase(gameStateId);
 
+  // Card management hook: deals cards and allows card selection
   const {
     playerHands,
     cardsInPlay,
@@ -101,6 +102,7 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
     selectCardForPool,
   } = useCardManagement(gameStateId, user?.id ?? null);
 
+  // Turn management hook: used in the speaking phase
   const {
     activePlayerId,
     canStartSpeaking,
@@ -125,13 +127,20 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
     );
   }
 
-  // Render the Setup phase using our new Setup component.
+  // --- Render Setup Phase ---
+  // In the setup phase, we pass the minimal state and callbacks needed:
+  // • playerHands: the cards the user holds
+  // • onDealCards: to trigger dealing cards
+  // • onSelectCard: to allow the user to select a card for the pool
+  // • onStartGame: (only for the room creator) to trigger the speak phase manually
   const renderSetupPhase = () => (
     <Setup
       playerHands={playerHands}
       onDealCards={dealInitialCards}
       onSelectCard={(cardId) => selectCardForPool(user!.id, cardId)}
-      onStartGame={room.created_by === user.id ? handleAllPlayersSetupComplete : undefined}
+      onStartGame={
+        room.created_by === user.id ? handleAllPlayersSetupComplete : undefined
+      }
       playerStatus={playerStatus}
       players={room.players}
       discardPile={discardPile}
@@ -139,11 +148,10 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
     />
   );
 
-  // Render the Speaking phase.
-  // (You can expand this further to handle different UI for the active speaker versus listeners.)
+  // --- Render Speaking Phase ---
+  // This phase will be further refactored later. For now, we show a basic separation:
   const renderSpeakingPhase = () => {
-    // Example: if the current player is still waiting to speak,
-    // show all cards in play along with a "Start Sharing" button if allowed.
+    // If the user is still waiting to speak (i.e. browsing), list all cards in play.
     if (playerStatus === PLAYER_STATUS.BROWSING) {
       return (
         <Stack gap="lg">
@@ -165,8 +173,7 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
       );
     }
 
-    // Otherwise, if the player is speaking or listening,
-    // show the current speaker’s card and controls.
+    // Otherwise, if the user is speaking or listening, show the current speaker’s card and controls.
     return (
       <Stack gap="lg">
         {currentSpeaker && (
@@ -177,7 +184,6 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
                 Round {currentRound} of {totalRounds}
               </Text>
             </Group>
-
             {currentSpeaker.selectedCard && (
               <Card
                 card={
@@ -187,7 +193,6 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
                 total={1}
               />
             )}
-
             {playerStatus === PLAYER_STATUS.SPEAKING ? (
               <Button
                 onClick={finishSpeaking}
@@ -200,7 +205,7 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
               </Button>
             ) : (
               <ListenerReactions
-                roomId={gameStateId}
+                gameStateId={gameStateId}
                 speakerId={currentSpeaker.id}
                 cardId={currentSpeaker.selectedCard!}
               />
@@ -211,6 +216,7 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
     );
   };
 
+  // Decide which phase to render based on the game phase state.
   const renderPhase = () => {
     switch (phase) {
       case 'setup':

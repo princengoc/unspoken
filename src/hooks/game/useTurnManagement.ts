@@ -1,11 +1,10 @@
 // src/hooks/game/useTurnManagement.ts
-
 import { useState } from 'react';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
 import { useAuth } from '@/context/AuthProvider';
 import { gameActions } from '@/core/game/actions';
-import { GamePhase, Player } from '@/core/game/types';
+import { Player } from '@/core/game/types';
 import { PLAYER_STATUS } from '@/core/game/constants';
 
 interface UseTurnManagementReturn {
@@ -25,54 +24,53 @@ export function useTurnManagement(gameStateId: string | null): UseTurnManagement
   const stateMachine = useGameState();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get current state values
+  // Read current state.
   const state = stateMachine.getState();
   const activePlayerId = state.activePlayerId;
   const isActiveSpeaker = user?.id === activePlayerId;
 
-  // Get ordered list of players by speakOrder
+  // Build an ordered list of players by their speakOrder.
   const speakingOrder = [...state.players]
     .filter(p => p.speakOrder !== undefined)
     .sort((a, b) => (a.speakOrder || 0) - (b.speakOrder || 0));
 
-  // Find current and next speakers
+  // Identify the current speaker and the next speaker.
   const currentSpeaker = state.players.find(p => p.id === activePlayerId) || null;
   const currentSpeakerIndex = speakingOrder.findIndex(p => p.id === activePlayerId);
   const nextSpeaker = currentSpeakerIndex < speakingOrder.length - 1 ?
     speakingOrder[currentSpeakerIndex + 1] :
     null;
 
-  // Determine if current player can start speaking
-  const canStartSpeaking = isActiveSpeaker && 
+  // The current player can start speaking if they are the active speaker,
+  // their status is BROWSING, and the game phase is 'speaking'.
+  const canStartSpeaking = isActiveSpeaker &&
     currentSpeaker?.status === PLAYER_STATUS.BROWSING &&
     state.phase === 'speaking';
 
+  // Called when the active speaker wants to start sharing.
   const startSpeaking = async () => {
     if (!gameStateId || !user || !isActiveSpeaker) return;
     
     try {
       setIsLoading(true);
 
-      // Update local state first
+      // Update the local state: current user becomes SPEAKING.
       stateMachine.dispatch(gameActions.playerStatusChanged(
         user.id,
         PLAYER_STATUS.SPEAKING
       ));
 
-      // Update other players to listening state
+      // Update all players: set current speaker to SPEAKING, and others to LISTENING.
       const updatedPlayers = state.players.map(player => ({
         ...player,
-        status: player.id === user.id ? 
-          PLAYER_STATUS.SPEAKING : 
-          PLAYER_STATUS.LISTENING
+        status: player.id === user.id ? PLAYER_STATUS.SPEAKING : PLAYER_STATUS.LISTENING
       }));
 
-      // Sync with server
+      // Sync these changes with the server.
       await gameStatesService.update(gameStateId, {
         players: updatedPlayers,
         isSpeakerSharing: true
       });
-
     } catch (error) {
       console.error('Failed to start speaking:', error);
       throw error;
@@ -81,67 +79,63 @@ export function useTurnManagement(gameStateId: string | null): UseTurnManagement
     }
   };
 
+  // Called when the active speaker finishes sharing.
   const finishSpeaking = async () => {
     if (!gameStateId || !user || !isActiveSpeaker) return;
     
     try {
       setIsLoading(true);
 
-      // Find next speaker who hasn't spoken yet
-      const nextUnspokenSpeaker = speakingOrder
-        .find(p => !p.hasSpoken && p.id !== user.id);
+      // Find the next speaker who has not yet spoken.
+      const nextUnspokenSpeaker = speakingOrder.find(p => !p.hasSpoken && p.id !== user.id);
 
-      // Update current speaker's state
+      // Update players:
+      // - Mark the current speaker as having spoken.
+      // - Set their status to LISTENING.
+      // - If there is a next speaker, set their status to BROWSING.
       const updatedPlayers = state.players.map(player => {
         if (player.id === user.id) {
-          return {
-            ...player,
-            hasSpoken: true,
-            status: PLAYER_STATUS.LISTENING
-          };
+          return { ...player, hasSpoken: true, status: PLAYER_STATUS.LISTENING };
         }
-        // Update next speaker's status if exists
         if (nextUnspokenSpeaker && player.id === nextUnspokenSpeaker.id) {
-          return {
-            ...player,
-            status: PLAYER_STATUS.BROWSING
-          };
+          return { ...player, status: PLAYER_STATUS.BROWSING };
         }
         return player;
       });
 
-      // Move current card to discard pile
+      // Remove the current speaker's selected card from cardsInPlay
+      // and add it to the discard pile.
       const currentCardId = currentSpeaker?.selectedCard;
-      const updatedCardsInPlay = currentCardId ?
-        state.cardsInPlay.filter(card => card.id !== currentCardId) :
-        state.cardsInPlay;
-      const updatedDiscardPile = currentCardId ?
-        [...state.discardPile, ...state.cardsInPlay.filter(card => card.id === currentCardId)] :
-        state.discardPile;
+      const updatedCardsInPlay = currentCardId
+        ? state.cardsInPlay.filter(card => card.id !== currentCardId)
+        : state.cardsInPlay;
+      const updatedDiscardPile = currentCardId
+        ? [...state.discardPile, ...state.cardsInPlay.filter(card => card.id === currentCardId)]
+        : state.discardPile;
 
-      // Determine if round is complete
+      // Determine whether all players have spoken.
       const allSpoken = updatedPlayers.every(p => p.hasSpoken);
-      const updates = {
+      const updates: Partial<any> = {
         players: updatedPlayers,
         cardsInPlay: updatedCardsInPlay,
         discardPile: updatedDiscardPile,
         isSpeakerSharing: false,
         activePlayerId: nextUnspokenSpeaker?.id || null,
-        ...(allSpoken && {
-          phase: 'setup' as GamePhase,
-          currentRound: state.currentRound + 1
-        })
       };
 
-      // Update state machine
+      // If all players have spoken, transition the phase back to 'setup'
+      // and increment the round counter.
       if (allSpoken) {
+        updates.phase = 'setup';
+        updates.currentRound = state.currentRound + 1;
         stateMachine.dispatch(gameActions.completeRound());
       }
+
+      // Update the active player.
       stateMachine.dispatch(gameActions.setActivePlayer(updates.activePlayerId));
 
-      // Sync with server
+      // Sync all updates with the server.
       await gameStatesService.update(gameStateId, updates);
-
     } catch (error) {
       console.error('Failed to finish speaking:', error);
       throw error;
@@ -159,6 +153,6 @@ export function useTurnManagement(gameStateId: string | null): UseTurnManagement
     speakingOrder,
     canStartSpeaking,
     startSpeaking,
-    finishSpeaking, 
+    finishSpeaking,
   };
 }
