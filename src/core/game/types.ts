@@ -15,6 +15,18 @@ export type Player = {
   speakOrder?: number;   // order in speaking queue
 };
 
+// TODO: may want to unify the Player and PlayerState type
+// right now PlayerState is used in roomMembers.ts
+export type PlayerState = {
+  status: PlayerStatus;
+  hasSpoken: boolean;
+  speakOrder?: number;
+  selectedCard?: string;
+  playerHand: any[];
+  is_online: boolean;  
+  username: string | null;
+}
+
 export type CardHistory = {
   id: string;
   userId: string;

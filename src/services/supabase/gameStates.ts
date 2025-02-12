@@ -3,6 +3,7 @@ import { supabase } from './client';
 import { GameState, Card, Exchange, Player } from '@/core/game/types';
 import { PLAYER_STATUS, DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
 import { reactionsService } from './reactions';
+import { roomMembersService } from './roomMembers';
 
 // Helper functions for database conversion
 const toCardIds = (cards: Card[]): string[] => {
@@ -77,33 +78,15 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
 export const gameStatesService = {
   async create(initialState: Omit<GameState, 'id'>): Promise<GameState> {
     try {
-      if (!initialState.activePlayerId) {
-        throw new Error('activePlayerId is required');
-      }      
-      
-      if (!initialState.players?.length) {
-        throw new Error('At least one player is required');
-      }
-
-      // Initialize player states
-      const initializedPlayers = initialState.players.map(player => ({
-        ...player,
-        status: PLAYER_STATUS.CHOOSING,
-        hasSpoken: false,
-      }));      
-
-      // Convert Card objects to IDs for database storage
       const dbState = {
-        ...initialState,
-        players: initializedPlayers,
-        currentRound: 1,
-        totalRounds: DEFAULT_TOTAL_ROUNDS,
+        room_id: initialState.room_id,
+        phase: initialState.phase,
+        activePlayerId: initialState.activePlayerId,
         cardsInPlay: toCardIds(initialState.cardsInPlay),
         discardPile: toCardIds(initialState.discardPile),
-        playerHands: Object.fromEntries(
-          Object.entries(initialState.playerHands)
-            .map(([playerId, cards]) => [playerId, toCardIds(cards)])
-        )
+        currentRound: 1,
+        totalRounds: DEFAULT_TOTAL_ROUNDS,
+        isSpeakerSharing: false
       };
       
       const { data, error } = await supabase
@@ -113,8 +96,7 @@ export const gameStatesService = {
         .single();
       
       if (error) throw error;
-      if (!data) throw new Error('No data returned from state creation');
-
+      
       // Update room with state ID
       if (initialState.room_id) {
         const { error: updateError } = await supabase
@@ -176,25 +158,6 @@ export const gameStatesService = {
     return await fromDatabaseState(data);
   },
 
-  async updatePlayerState(
-    gameStateId: string,
-    playerId: string,
-    updates: Partial<Player>
-  ): Promise<GameState> {
-    const currentState = await this.get(gameStateId);
-    
-    const updatedPlayers = currentState.players.map(player =>
-      player.id === playerId
-        ? {
-            ...player,
-            ...updates
-          }
-        : player
-    );
-
-    return await this.update(gameStateId, { players: updatedPlayers });
-  },  
-
   async dealCards(gameStateId: string, userId: string): Promise<Card[]> {
     const dbState = await this.get(gameStateId);
     
@@ -220,17 +183,8 @@ export const gameStatesService = {
     const rippledCards = await reactionsService.getRippledCards(gameStateId, userId);    
     const newCards = [...randomCards, ...rippledCards];
 
-    // Update game state with the dealt cards
-    const updatedHands = {
-      ...dbState.playerHands,
-      [userId]: newCards
-    };
-
-    await this.updatePlayerState(gameStateId, userId, {
-      status: PLAYER_STATUS.CHOOSING
-    });
-
-    await this.update(gameStateId, { playerHands: updatedHands });
+    // Update player's hand in room_members
+    await roomMembersService.updatePlayerHand(dbState.room_id, userId, newCards);
   
     return newCards;
   },

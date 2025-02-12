@@ -1,18 +1,11 @@
 import { supabase } from './client';
 import type { Room, Player, RoomSettings } from '@/core/game/types';
 import { PLAYER_STATUS } from '@/core/game/constants';
+import { roomMembersService } from './roomMembers';
 
 export const roomsService = {
   async create(name: string, createdBy: string, settings?: Partial<RoomSettings>): Promise<Room> {
     const passcode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    
-    const initialPlayer: Player = {
-      id: createdBy,
-      username: null,
-      isOnline: true,
-      status: PLAYER_STATUS.CHOOSING,
-      hasSpoken: false
-    };
     
     const roomData = {
       name,
@@ -20,7 +13,6 @@ export const roomsService = {
       passcode,
       game_mode: 'irl',
       is_active: true,
-      players: [initialPlayer],
       settings: {
         allow_card_exchanges: true,
         allow_ripple_effects: true,
@@ -38,6 +30,15 @@ export const roomsService = {
       .single();
     
     if (error) throw error;
+
+    // Add creator to room_members
+    await roomMembersService.updatePlayerState(data.id, createdBy, {
+      status: 'choosing',
+      hasSpoken: false,
+      is_online: true,
+      playerHand: []
+    });
+
     return data as Room;
   },
 
@@ -97,42 +98,6 @@ export const roomsService = {
     return data as Room;
   },
 
-  async updatePlayerState(
-    roomId: string, 
-    playerId: string, 
-    updates: Partial<Player>
-  ): Promise<Room> {
-    const { data: dataRoom, error: findError } = await supabase
-      .from('rooms')
-      .select()
-      .eq('id', roomId)
-      .single();
-    
-    if (findError) throw findError;
-    if (!dataRoom) throw new Error('Room not found');
-
-    const room = dataRoom as Room;
-
-    const updatedPlayers = room.players.map(player => 
-      player.id === playerId
-        ? {
-            ...player,
-            ...updates,
-          }
-        : player
-    );
-
-    const { data, error } = await supabase
-      .from('rooms')
-      .update({ players: updatedPlayers })
-      .eq('id', roomId)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as Room;
-  },
-
   async get(roomId: string): Promise<Room> {
     const { data, error } = await supabase
       .from('rooms')
@@ -144,27 +109,6 @@ export const roomsService = {
     if (!data) throw new Error('Room not found');
 
     return data as Room;
-  },
-
-  async updatePlayerStatus(roomId: string, playerId: string, isActive: boolean): Promise<void> {
-    const room = await this.get(roomId);
-    
-    // Only update if player exists
-    const playerExists = room.players.some(p => p.id === playerId);
-    if (!playerExists) return;
-
-    const updatedPlayers = room.players.map(player => 
-      player.id === playerId
-        ? { ...player, isOnline: isActive }
-        : player
-    );
-
-    const { error } = await supabase
-      .from('rooms')
-      .update({ players: updatedPlayers })
-      .eq('id', roomId);
-
-    if (error) throw error;
   },
 
   async updateSettings(roomId: string, settings: Partial<RoomSettings>): Promise<Room> {

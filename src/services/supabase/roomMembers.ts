@@ -1,5 +1,7 @@
 import { supabase } from './client';
+import type { Player, PlayerState } from '@/core/game/types';
 
+// Keep existing JoinRequest types
 interface JoinroomRequest {
   id: string;
   room_id: string;
@@ -12,6 +14,7 @@ interface JoinroomRequest {
 }
 
 export const roomMembersService = {
+  // Keep existing join request methods
   async createJoinRequest(roomId: string, userId: string): Promise<JoinroomRequest> {
     const { data, error } = await supabase
       .from('joinroom_requests')
@@ -24,7 +27,6 @@ export const roomMembersService = {
 
     if (error) throw error;
     if (!data) throw new Error('Failed to create join request');
-
     return data;
   },
 
@@ -48,12 +50,16 @@ export const roomMembersService = {
     if (!request) throw new Error('Request not found');
 
     if (status === 'approved') {
-      // Add user to room_members
+      // Add user to room_members with initial state
       const { error: memberError } = await supabase
         .from('room_members')
         .insert([{
           room_id: request.room_id,
-          user_id: request.user_id
+          user_id: request.user_id,
+          status: 'choosing',
+          hasSpoken: false,
+          is_online: true,
+          playerHand: []
         }]);
 
       if (memberError) throw memberError;
@@ -62,6 +68,7 @@ export const roomMembersService = {
     return request;
   },
 
+  // Keep existing join request subscription methods
   async getJoinRequestsForRoom(roomId: string): Promise<JoinroomRequest[]> {
     const { data, error } = await supabase
       .from('joinroom_requests')
@@ -73,19 +80,73 @@ export const roomMembersService = {
     return data || [];
   },
 
-  async checkJoinRequest(roomId: string, userId: string): Promise<JoinroomRequest | null> {
+  // New methods for player state management
+  async getRoomMembers(roomId: string): Promise<Player[]> {
     const { data, error } = await supabase
-      .from('joinroom_requests')
+      .from('room_members')
       .select('*')
-      .eq('room_id', roomId)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .single();
+      .eq('room_id', roomId);
 
-    if (error && error.code !== 'PGRST116') throw error; // Ignore not found error
-    return data || null;
+    if (error) throw error;
+    return data.map(member => ({
+      id: member.user_id,
+      username: member.username,
+      isOnline: member.is_online,
+      status: member.status,
+      selectedCard: member.selectedCard,
+      hasSpoken: member.hasSpoken,
+      speakOrder: member.speakOrder
+    }));
   },
 
+  async updatePlayerState(
+    roomId: string,
+    userId: string,
+    updates: Partial<PlayerState>
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('room_members')
+      .update(updates)
+      .eq('room_id', roomId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+  },
+
+  async updatePlayerHand(
+    roomId: string,
+    userId: string,
+    cards: any[]
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('room_members')
+      .update({ playerHand: cards })
+      .eq('room_id', roomId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+  },
+
+  // Subscription for player state changes
+  subscribeToRoomMembers(roomId: string, callback: (players: Player[]) => void) {
+    return supabase
+      .channel(`room_members:${roomId}`)
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'room_members',
+          filter: `room_id=eq.${roomId}`
+        }, 
+        async () => {
+          const players = await this.getRoomMembers(roomId);
+          callback(players);
+        }
+      )
+      .subscribe();
+  },
+
+  // Keep existing join request subscription
   subscribeToJoinRequests(roomId: string, callback: (requests: JoinroomRequest[]) => void) {
     return supabase
       .channel(`joinroom_requests:${roomId}`)
@@ -97,7 +158,6 @@ export const roomMembersService = {
           filter: `room_id=eq.${roomId}`
         }, 
         async () => {
-          // Fetch latest requests on any change
           const { data } = await supabase
             .from('joinroom_requests')
             .select('*')
