@@ -11,7 +11,7 @@ import {
   Paper,
 } from '@mantine/core';
 import { IconDoorExit, IconSettings } from '@tabler/icons-react';
-import { useRoom } from '@/hooks/room/useRoom';
+import { useRoomHook } from '@/hooks/room/useRoomHook';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { RoomProvider } from '@/context/RoomProvider';
 import { useGameState } from '@/context/GameStateProvider';
@@ -41,13 +41,14 @@ function RoundIndicator({ current, total }: { current: number; total: number }) 
 
 interface RoomPageContentProps {
   roomId: string;
+  gameStateId: string
 }
 
-function RoomPageContent({ roomId }: RoomPageContentProps) {
+function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   const router = useRouter();
   const { phase, currentRound, totalRounds, activePlayerId } = useGameState();
   const { members, currentMember } = useRoomMembers();
-  const { room, leaveRoom } = useRoom(roomId);
+  const { room, leaveRoom } = useRoomHook(roomId);
 
   const handleLeaveRoom = async () => {
     try {
@@ -83,7 +84,12 @@ function RoomPageContent({ roomId }: RoomPageContentProps) {
           {/* Controls */}
           <Group position="apart">
             <Group spacing="xs">
-              <PlayerStatusBar members={members} activePlayerId={activePlayerId} />
+              <PlayerStatusBar 
+                members={members} 
+                activePlayerId={activePlayerId}
+                variant="compact"
+                showReadyCount={phase === 'setup'}
+              />
               <RoundIndicator current={currentRound} total={totalRounds} />
             </Group>
             <Group spacing="xs">
@@ -128,7 +134,7 @@ function RoomPageContent({ roomId }: RoomPageContentProps) {
 
       {/* Game Phases */}
       <Paper p="xl" radius="md" withBorder>
-        {phase === 'setup' ? <Setup /> : <Speaking />}
+        {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
       </Paper>
     </Container>
   );
@@ -140,7 +146,7 @@ interface RoomPageProps {
 
 export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
-  const { room, loading, error } = useRoom(roomId);
+  const { room, loading, error } = useRoomHook(roomId);
   const router = useRouter();
 
   useEffect(() => {
@@ -154,7 +160,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     }
   }, [error, router]);
 
-  if (loading || !room) {
+  if (loading || !room || !room?.game_state_id) {
     return (
       <Container py="xl">
         <Box sx={{ textAlign: 'center' }}>
@@ -167,7 +173,7 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   return (
     <RoomProvider room={room}>
-      <RoomPageContent roomId={roomId} />
+      <RoomPageContent roomId={roomId} gameStateId={room.game_state_id} />
     </RoomProvider>
   );
 }

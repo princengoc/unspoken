@@ -4,10 +4,14 @@ import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
 import { Card } from '../Card';
-import { PlayerAvatar } from '../PlayerStatus';
+import { PlayerStatusBar } from '../PlayerStatus';
 import { PLAYER_STATUS } from '@/core/game/constants';
 
-export function Speaking() {
+type SpeakingProps = {
+  gameStateId: string;
+}
+
+export function Speaking({gameStateId}: SpeakingProps) {
   const { 
     activePlayerId,
     currentRound,
@@ -55,7 +59,11 @@ export function Speaking() {
       {currentSpeaker && (
         <>
           <Group position="apart">
-            <PlayerAvatar player={currentSpeaker} isActive={true} />
+            <PlayerStatusBar 
+              members={[currentSpeaker]} 
+              activePlayerId={activePlayerId}
+              variant="full"
+            />
             <Text size="sm" c="dimmed">
               Round {currentRound} of {totalRounds}
             </Text>
@@ -83,6 +91,7 @@ export function Speaking() {
             <ListenerReactions
               speakerId={currentSpeaker.id}
               cardId={currentSpeaker.selectedCard!}
+              gameStateId={gameStateId}
             />
           )}
         </>

@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { Player, Card, JoinRequest } from '@/core/game/types';
+import { type Player, type Card, type JoinRequest, DEFAULT_PLAYER } from '@/core/game/types';
 
 export const roomMembersService = {
   async createJoinRequest(roomId: string, userId: string): Promise<JoinRequest> {
@@ -55,17 +55,13 @@ export const roomMembersService = {
     return request;
   },
 
-  async addNewMember(roomId: string, player: Player): Promise<void> {
+  async addNewMember(roomId: string, playerId: string): Promise<void> {
     const { error } = await supabase
     .from('room_members')
     .insert([{
       room_id: roomId,
-      user_id: player.id,
-      username: player.username,
-      is_online: true,
-      status: 'choosing',
-      hasSpoken: false,
-      playerHand: []
+      user_id: playerId,
+      ...DEFAULT_PLAYER
     }]);
   
     if (error) throw error;    
@@ -86,13 +82,22 @@ export const roomMembersService = {
   async getRoomMembers(roomId: string): Promise<Player[]> {
     const { data, error } = await supabase
       .from('room_members')
-      .select('*')
+      .select(`
+        user_id,
+        isOnline,
+        status,
+        selectedCard,
+        hasSpoken,
+        playerHand,
+        profiles(username)
+      `)
       .eq('room_id', roomId);
-
+  
     if (error) throw error;
+  
     return data.map(member => ({
       id: member.user_id,
-      username: member.username,
+      username: (member as any).profiles?.username || "Unknown", 
       isOnline: member.isOnline,
       status: member.status,
       selectedCard: member.selectedCard,
@@ -100,7 +105,7 @@ export const roomMembersService = {
       playerHand: member.playerHand
     }));
   },
-
+  
   async hasRoomMember(roomId: string, playerId: string): Promise<boolean> {
     const { data: existingMember, error: memberError } = await supabase
       .from('room_members')

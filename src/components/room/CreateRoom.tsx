@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Card, TextInput, Stack, Button, Switch, Group, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconAdjustments } from '@tabler/icons-react';
-import { useRoom } from '@/hooks/room/useRoom';
+import { useRoomHook } from '@/hooks/room/useRoomHook';
 import { RoomPasscode } from './RoomPasscode';
 import type { RoomSettings } from '@/core/game/types';
 
 export function CreateRoom() {
   const router = useRouter();
-  const { createRoom, loading } = useRoom();
+  const { createRoom, loading } = useRoomHook();
   const [name, setName] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<Partial<RoomSettings>>({

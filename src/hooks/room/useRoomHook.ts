@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { roomsService } from '@/services/supabase/rooms';
+import { roomMembersService } from '@/services/supabase/roomMembers';
 import type { Room, RoomSettings } from '@/core/game/types';
 
 interface UseRoomReturn {
@@ -14,20 +15,11 @@ interface UseRoomReturn {
   leaveRoom: () => Promise<void>;
 }
 
-export function useRoom(roomId?: string): UseRoomReturn {
+export function useRoomHook(roomId?: string): UseRoomReturn {
   const { user } = useAuth();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
-  // Update cleanup for proper disconnection
-  useEffect(() => {
-    return () => {
-      if (roomId && user?.id) {
-        roomsService.updatePlayerStatus(roomId, user.id, false).catch(console.error);
-      }
-    };
-  }, [roomId, user?.id]);
 
   useEffect(() => {
     let subscription: ReturnType<typeof roomsService.subscribeToRoom>;
@@ -93,11 +85,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
 
     try {
       setLoading(true);
-      const joinedRoom = await roomsService.join(roomId, {
-        id: user.id,
-        username: null, // Will be populated from profiles
-        isOnline: true, 
-      });
+      const joinedRoom = await roomsService.join(roomId, user.id);
       setRoom(joinedRoom);
       return joinedRoom;
     } catch (err) {
@@ -127,7 +115,7 @@ export function useRoom(roomId?: string): UseRoomReturn {
     if (!room?.id || !user?.id) return;
 
     try {
-      await roomsService.updatePlayerStatus(room.id, user.id, false);
+      await roomMembersService.updatePlayerState(room.id, user.id, {isOnline: false});
       setRoom(null);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to leave room');

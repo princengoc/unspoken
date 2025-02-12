@@ -1,4 +1,4 @@
-import { Stack, Text, Group, Button, Paper, Avatar, Transition } from '@mantine/core';
+import { Stack, Text, Group, Button, Paper, Transition } from '@mantine/core';
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useGameState } from '@/context/GameStateProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
@@ -7,48 +7,7 @@ import { CardDeck } from '../CardDeck';
 import { Card } from '../Card';
 import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
-import { Player } from '@/core/game/types';
-
-interface ReadyStatusProps {
-  players: Player[];
-  totalPlayers: number;
-}
-
-function ReadyStatus({ players, totalPlayers }: ReadyStatusProps) {
-  const readyPlayers = players.filter(p => p.status === PLAYER_STATUS.BROWSING);
-  
-  return (
-    <Paper p="md" radius="md" withBorder>
-      <Stack gap="sm">
-        <Group justify="space-between">
-          <Text size="sm" fw={500}>
-            Players Ready
-          </Text>
-          <Text size="sm" c="dimmed">
-            {readyPlayers.length}/{totalPlayers}
-          </Text>
-        </Group>
-        <Group>
-          {players.map((player) => (
-            <Avatar
-              key={player.id}
-              size="sm"
-              radius="xl"
-              color={player.status === PLAYER_STATUS.BROWSING ? 'green' : 'gray'}
-            >
-              {player.username?.[0].toUpperCase() || 'P'}
-              {player.status === PLAYER_STATUS.BROWSING && (
-                <Avatar.Badge>
-                  <IconCheck size={8} />
-                </Avatar.Badge>
-              )}
-            </Avatar>
-          ))}
-        </Group>
-      </Stack>
-    </Paper>
-  );
-}
+import { PlayerStatusBar } from '../PlayerStatus';
 
 export function Setup() {
   const { discardPile } = useGameState();
@@ -97,7 +56,11 @@ export function Setup() {
 
       {currentMember?.status === PLAYER_STATUS.BROWSING && (
         <Stack gap="lg">
-          <ReadyStatus players={members} totalPlayers={members.length} />
+          <PlayerStatusBar 
+            members={members} 
+            activePlayerId={null}
+            variant="ready"
+          />
 
           {isCreator ? (
             <Transition mounted={isSetupComplete} transition="slide-up">

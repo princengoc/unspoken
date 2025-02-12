@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import type { Room, Player, RoomSettings } from '@/core/game/types';
+import { type Room, type RoomSettings, DEFAULT_PLAYER } from '@/core/game/types';
 import { roomMembersService } from './roomMembers';
 
 export const roomsService = {
@@ -31,17 +31,12 @@ export const roomsService = {
     if (error) throw error;
 
     // Add creator to room_members
-    await roomMembersService.updatePlayerState(data.id, createdBy, {
-      status: 'choosing',
-      hasSpoken: false,
-      isOnline: true,
-      playerHand: []
-    });
+    await roomMembersService.updatePlayerState(data.id, createdBy, DEFAULT_PLAYER);
 
     return data as Room;
   },
 
-  async join(roomId: string, player: Player): Promise<Room> {
+  async join(roomId: string, playerId: string): Promise<Room> {
     // First check if room exists and is active
     const { data: room, error: findError } = await supabase
       .from('rooms')
@@ -54,17 +49,16 @@ export const roomsService = {
     if (!room) throw new Error('Room not found');
 
     // Check if player already exists in room_members
-    const memberExists = await roomMembersService.hasRoomMember(roomId, player.id); 
+    const memberExists = await roomMembersService.hasRoomMember(roomId, playerId); 
     
     if (memberExists) {
       // Update existing member's status
-      await roomMembersService.updatePlayerState(roomId, player.id, { 
+      await roomMembersService.updatePlayerState(roomId, playerId, { 
         isOnline: true,
-        status: 'choosing'
       })
     } else {
       // Add new member
-      await roomMembersService.addNewMember(roomId, player);
+      await roomMembersService.addNewMember(roomId, playerId);
     }
     
     return room;

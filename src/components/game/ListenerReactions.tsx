@@ -1,5 +1,3 @@
-// src/components/game/ListenerReactions.tsx
-
 import { Group, ActionIcon, Tooltip, Paper, Stack, Avatar } from '@mantine/core';
 import { IconSparkles, IconHeart, IconBulb, IconRipple } from '@tabler/icons-react';
 import { useAuth } from '@/context/AuthProvider';
@@ -14,18 +12,19 @@ const REACTIONS = [
 ] as const;
 
 interface ListenerReactionsProps {
-  gameStateId: string;
   speakerId: string;
   cardId: string;
+  gameStateId: string
 }
 
 export function ListenerReactions({ 
-  gameStateId, 
   speakerId,
-  cardId 
+  cardId, 
+  gameStateId
 }: ListenerReactionsProps) {
   const { user } = useAuth();
-  if (!user) return null;
+  
+  if (!user || !gameStateId) return null;
 
   const { 
     reactions,
@@ -53,53 +52,59 @@ export function ListenerReactions({
   return (
     <Stack spacing="md">
       {/* Active Reactions Display */}
-      <AnimatePresence>
-        {Object.entries(reactionsByUser).map(([userId, userReactions]) => (
-          <motion.div
-            key={userId}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Group spacing="xs" align="center">
-              <Avatar size="sm" radius="xl">
-                {userId.charAt(0).toUpperCase()}
-              </Avatar>
-              <Group spacing={4}>
-                {userReactions.map((reaction) => {
-                  const ReactionIcon = REACTIONS.find(r => r.id === reaction.type)?.icon;
-                  return ReactionIcon ? (
-                    <motion.div
-                      key={reaction.id}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                    >
-                      <ReactionIcon size={16} />
-                    </motion.div>
-                  ) : null;
-                })}
+      <Paper p="md" radius="md" withBorder>
+        <AnimatePresence>
+          {Object.entries(reactionsByUser).map(([userId, userReactions]) => (
+            <motion.div
+              key={userId}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Group spacing="xs" align="center">
+                <Avatar size="sm" radius="xl">
+                  {userId.charAt(0).toUpperCase()}
+                </Avatar>
+                <Group spacing={4}>
+                  {userReactions.map((reaction) => {
+                    const ReactionIcon = REACTIONS.find(r => r.id === reaction.type)?.icon;
+                    return ReactionIcon ? (
+                      <motion.div
+                        key={reaction.id}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                      >
+                        <Paper
+                          p={4}
+                          radius="xl"
+                          bg="gray.0"
+                        >
+                          <ReactionIcon size={16} />
+                        </Paper>
+                      </motion.div>
+                    ) : null;
+                  })}
+                </Group>
               </Group>
-            </Group>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </Paper>
 
       {/* Reaction Controls */}
       <Paper 
-        pos="relative" 
         p="xs"
         radius="xl"
-        bg="white"
-        style={{ 
+        withBorder
+        sx={(theme) => ({
+          backgroundColor: theme.white,
           backdropFilter: 'blur(8px)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-        }}
+        })}
       >
         <Group spacing="xs">
-          {/* Emotional Reactions */}
           {REACTIONS.map(({ id, icon: Icon, label }) => {
             const isActive = hasReaction(id);
             
@@ -119,7 +124,6 @@ export function ListenerReactions({
             );
           })}
 
-          {/* Ripple Control */}
           <Tooltip label="Save for later (Ripple)">
             <ActionIcon
               variant={isRippled() ? "filled" : "subtle"}

@@ -14,16 +14,17 @@ export type Player = {
   status: PlayerStatus;
   selectedCard?: string | null;
   hasSpoken: boolean;
-  speakOrder?: number;
   playerHand?: Card[];  // Added this from PlayerState
 };
 
-// Database schema related types
-export type RoomMember = Omit<Player, 'id'> & {
-  room_id: string;
-  user_id: string;  // This is the id field from Player
-  joined_at: string;
+export const DEFAULT_PLAYER: Omit<Player, 'id' | 'username'> = {
+  isOnline: true,   // Defaulting to online when joining
+  status: PLAYER_STATUS.CHOOSING,
+  selectedCard: null,
+  hasSpoken: false,
+  playerHand: [],
 };
+
 
 export type JoinRequest = {
   id: string;
