@@ -1,6 +1,6 @@
 // src/hooks/game/useGamePhase.ts
 import { useEffect, useState, useCallback } from 'react';
-import { GamePhase, PlayerStatus } from '@/core/game/types';
+import { GamePhase, PlayerStatus, Player } from '@/core/game/types';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import { useGameState } from '@/context/GameStateProvider';
 import { useAuth } from '@/context/AuthProvider';
@@ -16,10 +16,11 @@ interface UseGamePhaseReturn {
   isLoading: boolean;
   isSetupComplete: boolean;
   initializeGame: () => Promise<void>;
-  startGame: () => Promise<void>;
+  startSpeakPhase: () => Promise<void>;
   completeSetup: (cardId: string) => Promise<void>;
   startRound: () => Promise<void>;
   completeRound: () => Promise<void>;
+  handleAllPlayersSetupComplete: () => Promise<void>;
 }
 
 export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
@@ -32,53 +33,41 @@ export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
 
-  // Set up Supabase sync
+  // Set up real-time sync
   useGameSync(gameStateId);
 
-  // Subscribe to state machine changes
+  // Subscribe to state changes
   useEffect(() => {
     if (!user) return;
-
     const unsubscribe = stateMachine.subscribe((state) => {
       setPhase(state.phase);
-      const currentPlayer = state.players.find(p => p.id === user.id);
+      const currentPlayer = state.players.find((p) => p.id === user.id);
       if (currentPlayer) {
         setPlayerStatus(currentPlayer.status);
       }
       setCurrentRound(state.currentRound);
       setTotalRounds(state.totalRounds);
-      setIsSetupComplete(state.players.every(p => p.speakOrder !== undefined));
+      // A player is “done” if they have a speakOrder defined.
+      setIsSetupComplete(state.players.every((p) => p.speakOrder !== undefined));
     });
-
     return unsubscribe;
   }, [stateMachine, user]);
 
   const initializeGame = useCallback(async () => {
     if (!gameStateId) return;
-    
     try {
       setIsLoading(true);
       const gameState = await gameStatesService.get(gameStateId);
-      
-      // Restore all game state aspects
       stateMachine.dispatch(gameActions.phaseChanged(gameState.phase));
-      
       if (gameState.activePlayerId) {
         stateMachine.dispatch(gameActions.setActivePlayer(gameState.activePlayerId));
       }
-
       if (gameState.cardsInPlay?.length > 0) {
         stateMachine.dispatch(gameActions.cardsSelected(gameState.cardsInPlay));
-      }      
-
-      // Sync player states
-      gameState.players.forEach(player => {
-        stateMachine.dispatch(gameActions.playerStatusChanged(
-          player.id,
-          player.status
-        ));
+      }
+      gameState.players.forEach((player) => {
+        stateMachine.dispatch(gameActions.playerStatusChanged(player.id, player.status));
       });
-      
       setPhase(gameState.phase);
       setCurrentRound(gameState.currentRound);
       setTotalRounds(gameState.totalRounds);
@@ -89,79 +78,59 @@ export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
     }
   }, [gameStateId, stateMachine]);
 
-  const startGame = useCallback(async () => {
+  // Helper: orders players and designates the first speaker.
+  const orderPlayersForSpeaking = useCallback((players: Player[]) => {
+    return players.map((player, index) => ({
+      ...player,
+      speakOrder: index + 1,
+      status: index === 0 ? PLAYER_STATUS.SPEAKING : PLAYER_STATUS.LISTENING,
+    }));
+  }, []);
+
+  const startSpeakPhase = useCallback(async () => {
     if (!gameStateId || !user) return;
-    
     try {
       setIsLoading(true);
-      
-      // Reset all players to initial state
-      const initialPlayers = stateMachine.getState().players.map(p => ({
-        ...p,
-        status: PLAYER_STATUS.CHOOSING,
-        hasSpoken: false,
-        speakOrder: undefined,
-        selectedCard: undefined
-      }));
-
-      // Update state machine
-      stateMachine.dispatch(gameActions.phaseChanged('setup'));
-      
-      // Sync with server
+      const state = stateMachine.getState();
+      // Expect every player to be ready (status === BROWSING)
+      const readyPlayers = state.players.filter((p) => p.status === PLAYER_STATUS.BROWSING);
+      if (readyPlayers.length !== state.players.length) {
+        throw new Error('Not all players are ready');
+      }
+      const orderedPlayers = orderPlayersForSpeaking(readyPlayers);
+      const firstSpeaker = orderedPlayers[0];
+      stateMachine.dispatch(gameActions.phaseChanged('speaking'));
+      stateMachine.dispatch(gameActions.setActivePlayer(firstSpeaker.id));
       await gameStatesService.update(gameStateId, {
-        phase: 'setup',
-        currentRound: 1,
-        players: initialPlayers,
-        activePlayerId: null,
-        cardsInPlay: [],
-        discardPile: []
+        phase: 'speaking',
+        players: orderedPlayers,
+        activePlayerId: firstSpeaker.id,
+        isSpeakerSharing: false,
       });
     } catch (error) {
-      console.error('Failed to start game:', error);
+      console.error('Failed to start speak phase:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, [gameStateId, user, stateMachine]);
+  }, [gameStateId, user, stateMachine, orderPlayersForSpeaking]);
 
   const completeSetup = useCallback(async (cardId: string) => {
     if (!gameStateId || !user) return;
-
     try {
       setIsLoading(true);
       const state = stateMachine.getState();
-      
-      // Calculate speak order based on completion order
-      const completedPlayers = state.players.filter(p => p.speakOrder !== undefined);
+      const completedPlayers = state.players.filter((p) => p.speakOrder !== undefined);
       const speakOrder = completedPlayers.length + 1;
-
-      // Update state machine
       stateMachine.dispatch(gameActions.selectCard(user.id, cardId));
       stateMachine.dispatch(gameActions.completeSetup(user.id, speakOrder));
-      stateMachine.dispatch(gameActions.playerStatusChanged(
-        user.id,
-        PLAYER_STATUS.BROWSING
-      ));
-
-      // Sync with server
+      stateMachine.dispatch(gameActions.playerStatusChanged(user.id, PLAYER_STATUS.BROWSING));
       await gameStatesService.updatePlayerState(gameStateId, user.id, {
         status: PLAYER_STATUS.BROWSING,
         speakOrder,
         selectedCard: cardId,
-        hasSpoken: false
+        hasSpoken: false,
       });
-
-      // If all players complete setup, transition to speaking phase
-      const updatedState = stateMachine.getState();
-      if (updatedState.players.every(p => p.speakOrder !== undefined)) {
-        const firstSpeaker = updatedState.players.find(p => p.speakOrder === 1);
-        if (firstSpeaker) {
-          await gameStatesService.update(gameStateId, {
-            phase: 'speaking',
-            activePlayerId: firstSpeaker.id
-          });
-        }
-      }
     } catch (error) {
       console.error('Failed to complete setup:', error);
       throw error;
@@ -170,32 +139,29 @@ export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
     }
   }, [gameStateId, user, stateMachine]);
 
+  const resetPlayersState = useCallback((players: Player[]) => {
+    return players.map((p) => ({
+      ...p,
+      status: PLAYER_STATUS.CHOOSING,
+      hasSpoken: false,
+      speakOrder: undefined,
+      selectedCard: undefined,
+    }));
+  }, []);
+
   const startRound = useCallback(async () => {
     if (!gameStateId) return;
-
     try {
       setIsLoading(true);
       const state = stateMachine.getState();
-      
-      // Reset player states for new round
-      const updatedPlayers = state.players.map(p => ({
-        ...p,
-        status: PLAYER_STATUS.CHOOSING,
-        hasSpoken: false,
-        speakOrder: undefined,
-        selectedCard: undefined
-      }));
-
-      // Update state machine
+      const updatedPlayers = resetPlayersState(state.players);
       stateMachine.dispatch(gameActions.phaseChanged('setup'));
-      
-      // Sync with server
       await gameStatesService.update(gameStateId, {
         phase: 'setup',
         players: updatedPlayers,
         cardsInPlay: [],
         discardPile: [],
-        activePlayerId: null
+        activePlayerId: null,
       });
     } catch (error) {
       console.error('Failed to start round:', error);
@@ -203,34 +169,24 @@ export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [gameStateId, stateMachine]);
+  }, [gameStateId, stateMachine, resetPlayersState]);
 
   const completeRound = useCallback(async () => {
     if (!gameStateId) return;
-
     try {
       setIsLoading(true);
       const state = stateMachine.getState();
-      
       if (state.currentRound >= state.totalRounds) {
-        // Game complete - handle end game logic
+        // End-game logic can be added here.
         return;
       }
-
-      // Update round counter and reset state
       await gameStatesService.update(gameStateId, {
         currentRound: state.currentRound + 1,
         phase: 'setup',
         cardsInPlay: [],
         discardPile: [],
         activePlayerId: null,
-        players: state.players.map(p => ({
-          ...p,
-          status: PLAYER_STATUS.CHOOSING,
-          hasSpoken: false,
-          speakOrder: undefined,
-          selectedCard: undefined
-        }))
+        players: resetPlayersState(state.players),
       });
     } catch (error) {
       console.error('Failed to complete round:', error);
@@ -238,7 +194,17 @@ export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [gameStateId, stateMachine]);
+  }, [gameStateId, stateMachine, resetPlayersState]);
+
+  // This callback is invoked by the room creator (via a button) when everyone is ready.
+  const handleAllPlayersSetupComplete = useCallback(async () => {
+    const state = stateMachine.getState();
+    if (!state.players.every((p) => p.speakOrder !== undefined)) {
+      console.warn('Not all players have completed setup');
+      return;
+    }
+    await startSpeakPhase();
+  }, [stateMachine, startSpeakPhase]);
 
   return {
     phase,
@@ -248,9 +214,10 @@ export function useGamePhase(gameStateId: string | null): UseGamePhaseReturn {
     isLoading,
     isSetupComplete,
     initializeGame,
-    startGame,
+    startSpeakPhase,
     completeSetup,
     startRound,
-    completeRound
+    completeRound,
+    handleAllPlayersSetupComplete,
   };
 }

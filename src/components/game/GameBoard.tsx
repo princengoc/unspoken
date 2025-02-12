@@ -1,6 +1,14 @@
 // src/components/game/GameBoard.tsx
 import { useEffect } from 'react';
-import { Container, Stack, Text, Button, Group, Avatar, Tooltip } from '@mantine/core';
+import {
+  Container,
+  Stack,
+  Text,
+  Button,
+  Group,
+  Avatar,
+  Tooltip,
+} from '@mantine/core';
 import { IconPlayerPause, IconPlayerPlay } from '@tabler/icons-react';
 import { Setup } from './GamePhases/Setup';
 import { useGamePhase } from '@/hooks/game/useGamePhase';
@@ -74,34 +82,31 @@ export function GameBoard({ room, gameStateId }: GameBoardProps) {
 
 function GameBoardContent({ room, gameStateId }: GameBoardProps) {
   const { user } = useAuth();
-  const { 
+  const {
     phase,
     playerStatus,
     currentRound,
     totalRounds,
-    isSetupComplete,
     initializeGame,
-    startGame 
+    startRound,
+    completeRound,
+    handleAllPlayersSetupComplete,
   } = useGamePhase(gameStateId);
 
-  const { 
-    playerHands, 
-    cardsInPlay, 
+  const {
+    playerHands,
+    cardsInPlay,
     discardPile,
-    selectedCards, 
-    loading: cardsLoading, 
     dealInitialCards,
-    selectCardForPool
+    selectCardForPool,
   } = useCardManagement(gameStateId, user?.id ?? null);
 
   const {
     activePlayerId,
-    isActiveSpeaker,
-    currentSpeaker,
-    speakingOrder,
     canStartSpeaking,
     startSpeaking,
-    finishSpeaking
+    finishSpeaking,
+    currentSpeaker,
   } = useTurnManagement(gameStateId);
 
   useEffect(() => {
@@ -120,89 +125,98 @@ function GameBoardContent({ room, gameStateId }: GameBoardProps) {
     );
   }
 
+  // Render the Setup phase using our new Setup component.
+  const renderSetupPhase = () => (
+    <Setup
+      playerHands={playerHands}
+      onDealCards={dealInitialCards}
+      onSelectCard={(cardId) => selectCardForPool(user!.id, cardId)}
+      onStartGame={room.created_by === user.id ? handleAllPlayersSetupComplete : undefined}
+      playerStatus={playerStatus}
+      players={room.players}
+      discardPile={discardPile}
+      isCreator={room.created_by === user.id}
+    />
+  );
+
+  // Render the Speaking phase.
+  // (You can expand this further to handle different UI for the active speaker versus listeners.)
+  const renderSpeakingPhase = () => {
+    // Example: if the current player is still waiting to speak,
+    // show all cards in play along with a "Start Sharing" button if allowed.
+    if (playerStatus === PLAYER_STATUS.BROWSING) {
+      return (
+        <Stack gap="lg">
+          {cardsInPlay.map((card, index) => (
+            <Card
+              key={card.id}
+              card={card}
+              index={index}
+              total={cardsInPlay.length}
+              showExchange={false}
+            />
+          ))}
+          {canStartSpeaking && (
+            <Button onClick={startSpeaking} fullWidth size="lg" variant="filled">
+              Start Sharing
+            </Button>
+          )}
+        </Stack>
+      );
+    }
+
+    // Otherwise, if the player is speaking or listening,
+    // show the current speaker’s card and controls.
+    return (
+      <Stack gap="lg">
+        {currentSpeaker && (
+          <>
+            <Group position="apart">
+              <PlayerStatus player={currentSpeaker} isActive={true} />
+              <Text size="sm" c="dimmed">
+                Round {currentRound} of {totalRounds}
+              </Text>
+            </Group>
+
+            {currentSpeaker.selectedCard && (
+              <Card
+                card={
+                  cardsInPlay.find((c) => c.id === currentSpeaker.selectedCard)!
+                }
+                index={0}
+                total={1}
+              />
+            )}
+
+            {playerStatus === PLAYER_STATUS.SPEAKING ? (
+              <Button
+                onClick={finishSpeaking}
+                fullWidth
+                size="lg"
+                variant="filled"
+                color="green"
+              >
+                Finish Sharing
+              </Button>
+            ) : (
+              <ListenerReactions
+                roomId={gameStateId}
+                speakerId={currentSpeaker.id}
+                cardId={currentSpeaker.selectedCard!}
+              />
+            )}
+          </>
+        )}
+      </Stack>
+    );
+  };
+
   const renderPhase = () => {
     switch (phase) {
       case 'setup':
-        return (
-          <Setup
-            playerHands={playerHands}
-            selectedCards={selectedCards}
-            discardPile={discardPile}
-            onDealCards={dealInitialCards}
-            onSelectCard={(cardId) => selectCardForPool(user.id, cardId)}
-            playerStatus={playerStatus}
-            gameStateId={gameStateId}
-          />
-        );
-
+        return renderSetupPhase();
       case 'speaking':
-        if (playerStatus === PLAYER_STATUS.BROWSING) {
-          return (
-            <Stack gap="lg">
-              {cardsInPlay.map((card, index) => (
-                <Card
-                  key={card.id}
-                  card={card}
-                  index={index}
-                  total={cardsInPlay.length}
-                  showExchange={false}
-                />
-              ))}
-              {canStartSpeaking && (
-                <Button
-                  onClick={startSpeaking}
-                  fullWidth
-                  size="lg"
-                  variant="filled"
-                >
-                  Start Sharing
-                </Button>
-              )}
-            </Stack>
-          );
-        }
-
-        return (
-          <Stack gap="lg">
-            {currentSpeaker && (
-              <>
-                <Group position="apart">
-                  <PlayerStatus player={currentSpeaker} isActive={true} />
-                  <Text size="sm" c="dimmed">
-                    Round {currentRound} of {totalRounds}
-                  </Text>
-                </Group>
-
-                {currentSpeaker.selectedCard && (
-                  <Card
-                    card={cardsInPlay.find(c => c.id === currentSpeaker.selectedCard)!}
-                    index={0}
-                    total={1}
-                  />
-                )}
-
-                {playerStatus === PLAYER_STATUS.SPEAKING ? (
-                  <Button
-                    onClick={finishSpeaking}
-                    fullWidth
-                    size="lg"
-                    variant="filled"
-                    color="green"
-                  >
-                    Finish Sharing
-                  </Button>
-                ) : (
-                  <ListenerReactions 
-                    roomId={gameStateId}
-                    speakerId={currentSpeaker.id}
-                    cardId={currentSpeaker.selectedCard!}
-                  />
-                )}
-              </>
-            )}
-          </Stack>
-        );
-
+        return renderSpeakingPhase();
       default:
         return (
           <Text ta="center" c="dimmed">
