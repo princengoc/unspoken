@@ -63,8 +63,8 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     id: dbState.id,
     room_id: dbState.room_id,
     phase: dbState.phase,
-    currentRound: dbState.current_round,
-    totalRounds: dbState.total_rounds,
+    currentRound: dbState.currentRound,
+    totalRounds: dbState.totalRounds,
     activePlayerId: dbState.activePlayerId,
     players: dbState.players,
     cardsInPlay,
@@ -96,8 +96,8 @@ export const gameStatesService = {
       const dbState = {
         ...initialState,
         players: initializedPlayers,
-        current_round: 1,
-        total_rounds: DEFAULT_TOTAL_ROUNDS,
+        currentRound: 1,
+        totalRounds: DEFAULT_TOTAL_ROUNDS,
         cardsInPlay: toCardIds(initialState.cardsInPlay),
         discardPile: toCardIds(initialState.discardPile),
         playerHands: Object.fromEntries(

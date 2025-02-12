@@ -31,10 +31,7 @@ export type GameState = {
   totalRounds: number;             // Total rounds to play
   activePlayerId: string | null;   // Current speaker
   isSpeakerSharing: boolean;       // Whether speaker is actively sharing
-  playerHands: Record<string, Card[]>;
-  // old fields to remove
-  // round: number;
-  // pendingExchanges: Exchange[];
+  playerHands: Record<string, Card[]>
 };
 
 export type Exchange = {
