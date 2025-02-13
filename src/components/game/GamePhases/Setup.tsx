@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Stack, Text, Group, Button, Paper, Transition } from '@mantine/core';
 import { notifications } from "@mantine/notifications";
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
-import { useGameState } from '@/context/GameStateProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { CardDeck } from '../CardDeck';
@@ -10,14 +9,17 @@ import { Card } from '../Card';
 import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { PlayerStatusBar } from '../PlayerStatus';
+import { useCardsInGame } from '@/context/CardsInGameProvider';
 
 export function Setup() {
-  const { discardPile } = useGameState();
+  const { cardState, getCardById, getCardsByIds } = useCardsInGame(); 
   const { members, currentMember } = useRoomMembers();
   const { 
     handleCardSelection, 
     initiateSpeakingPhase,
     dealCards,
+    canStartDrawCards,
+    canStartChoosing,
     isSetupComplete, 
     isCreator
   } = useRoom();
@@ -57,7 +59,7 @@ export function Setup() {
       </FadeIn>
 
       {/* Show "Draw Cards" if the player hasn't received any cards */}
-      {currentMember?.status === PLAYER_STATUS.CHOOSING && (!currentMember.playerHand || currentMember.playerHand.length === 0) && (
+      {canStartDrawCards && (
         <SlideIn>
             <Button 
                 onClick={handleDrawCards} 
@@ -72,9 +74,14 @@ export function Setup() {
       )}
 
       {/* When cards are available: either allow selection or wait */}
-      {currentMember?.playerHand && currentMember.playerHand.length > 0 && currentMember?.status === PLAYER_STATUS.CHOOSING && (
+      {canStartChoosing && (
         <>
-          <CardDeck cards={currentMember.playerHand} onSelect={handleCardSelection} />
+          {currentMember?.id && (
+            <CardDeck 
+              cards={getCardsByIds(cardState.playerHands[currentMember.id]) || []} 
+              onSelect={handleCardSelection} 
+            />
+          )}
           <SlideIn direction="up">
             <Text size="sm" c="dimmed" ta="center">
               Select one card to share when it&apos;s your turn
@@ -118,18 +125,28 @@ export function Setup() {
             </Paper>
           )}
 
-          {discardPile.length > 0 && (
+          {cardState.discardPile.length > 0 && (
             <>
               <Text size="sm" c="dimmed" ta="center">
                 Browse discarded cards while waiting
               </Text>
               <Stack gap="md">
-                {discardPile.map((card, index) => (
-                  <Card key={card.id} card={card} index={index} total={discardPile.length} showExchange />
-                ))}
+                {cardState.discardPile.map((cardId, index) => {
+                  const card = getCardById(cardId);
+                  return card ? (
+                    <Card 
+                      key={cardId} 
+                      card={card} 
+                      index={index} 
+                      total={cardState.discardPile.length} 
+                      showExchange 
+                    />
+                  ) : null;
+                })}
               </Stack>
             </>
           )}
+
         </Stack>
       )}
     </Stack>

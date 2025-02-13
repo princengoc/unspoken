@@ -1,6 +1,7 @@
 import React, {
   createContext,
   useContext,
+  useState,
   ReactNode,
   useCallback,
 } from 'react';
@@ -18,7 +19,9 @@ interface RoomContextType {
   initiateSpeakingPhase: () => Promise<void>;
   dealCards: (playerId: string) => Promise<Card[]>;
 
-  canStartSpeaking: boolean;
+  canStartDrawCards: boolean;
+  canStartChoosing: boolean;
+  currentSpeakerHasStarted: boolean;
   isActiveSpeaker: boolean;
   isSetupComplete: boolean;
   isCreator: boolean;
@@ -55,6 +58,8 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     markCardAsSelected
   } = useCardsInGame();
 
+  const [currentSpeakerHasStarted, setCurrentSpeakerHasStarted] = useState(false);
+
   // Destructure currentMember values for easier dependency management
   const currentMemberId = currentMember?.id;
   const currentMemberStatus = currentMember?.status;
@@ -62,20 +67,21 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     ? cardState.selectedCards[currentMemberId]
     : null;
 
-  const currentMemberPlayerHand = currentMemberId && cardState.playerHands[currentMemberId] !== undefined
+    const currentMemberPlayerHand = currentMemberId && cardState.playerHands[currentMemberId] !== undefined
     ? cardState.playerHands[currentMemberId]
     : null;
-
-  const canStartSpeaking =
-    phase === 'speaking' &&
-    !currentMember?.hasSpoken &&
-    currentMemberId === activePlayerId &&
-    currentMemberStatus === PLAYER_STATUS.BROWSING;
+  
+  // can start choosing if there are cards in hand
+  const canStartChoosing = Array.isArray(currentMemberPlayerHand) && currentMemberPlayerHand.length > 0 
+    && currentMemberStatus === PLAYER_STATUS.CHOOSING;
+  
+  // can draw cards if hand is empty or null
+  const canStartDrawCards = (!currentMemberPlayerHand || currentMemberPlayerHand.length === 0) 
+    && currentMemberStatus === PLAYER_STATUS.CHOOSING;  
 
   const isActiveSpeaker =
-    phase === 'speaking' &&
     currentMemberId === activePlayerId &&
-    currentMemberStatus === PLAYER_STATUS.SPEAKING;
+    !currentMember?.hasSpoken;
 
   const isSetupComplete = isAllMembersReady;
 
@@ -153,9 +159,8 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     completeRound,
   ]);
 
-  // Rest of the existing functions remain the same
   const startSpeaking = useCallback(async () => {
-    if (!currentMemberId || !canStartSpeaking) return;
+    if (!currentMemberId || phase !== 'speaking') return;
     try {
       await Promise.all([
         updateMemberStatus(currentMemberId, PLAYER_STATUS.SPEAKING),
@@ -163,15 +168,17 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
           .filter((m) => m.id !== currentMemberId)
           .map((m) => updateMemberStatus(m.id, PLAYER_STATUS.LISTENING)),
       ]);
+      setCurrentSpeakerHasStarted(true);
     } catch (error) {
       console.error('Failed to start speaking:', error);
       throw error;
     }
   }, [
     currentMemberId,
-    canStartSpeaking,
+    phase,
     members,
     updateMemberStatus,
+    setCurrentSpeakerHasStarted,    
   ]);
 
   const initiateSpeakingPhase = useCallback(async () => {
@@ -229,7 +236,9 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     handleCardSelection,
     initiateSpeakingPhase,
     dealCards: handleDealCards,
-    canStartSpeaking,
+    canStartDrawCards,
+    canStartChoosing,
+    currentSpeakerHasStarted,
     isActiveSpeaker,
     isSetupComplete,
     isCreator

@@ -5,96 +5,54 @@ import { useRoom } from '@/context/RoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
 import { Card } from '../Card';
 import { PlayerStatusBar } from '../PlayerStatus';
-import { PLAYER_STATUS } from '@/core/game/constants';
+import { useCardsInGame } from '@/context/CardsInGameProvider';
 
 type SpeakingProps = {
   gameStateId: string;
-}
+};
 
-export function Speaking({gameStateId}: SpeakingProps) {
-  const { 
-    activePlayerId,
-    currentRound,
-    totalRounds,
-    cardsInPlay 
-  } = useGameState();
-  
-  const { members, currentMember } = useRoomMembers();
-  
-  const {
-    canStartSpeaking,
-    isActiveSpeaker,
-    startSpeaking,
-    finishSpeaking
-  } = useRoom();
+export function Speaking({ gameStateId }: SpeakingProps) {
+  const { activePlayerId, currentRound, totalRounds } = useGameState();
+  const { members } = useRoomMembers();
+  const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useRoom();
+  const { cardState, getCardById } = useCardsInGame();
 
-  // Find the current speaker from members
-  const currentSpeaker = members.find(m => m.id === activePlayerId);
+  if (!activePlayerId) return null;
+  const activeCard = getCardById(cardState.selectedCards[activePlayerId]);
+  if (!activeCard) return null;
 
-  // Browser Mode: User is waiting to speak
-  if (currentMember?.status === PLAYER_STATUS.BROWSING) {
-    return (
-      <Stack gap="lg">
-        {cardsInPlay.map((card, index) => (
-          <Card
-            key={card.id}
-            card={card}
-            index={index}
-            total={cardsInPlay.length}
-            showExchange={false}
-          />
-        ))}
-        {canStartSpeaking && (
-          <Button onClick={startSpeaking} fullWidth size="lg" variant="filled">
-            Start Sharing
-          </Button>
-        )}
-      </Stack>
-    );
-  }
-
-  // Active Speaker or Listener Mode
   return (
     <Stack gap="lg">
-      {currentSpeaker && (
-        <>
-          <Group position="apart">
-            <PlayerStatusBar 
-              members={[currentSpeaker]} 
-              activePlayerId={activePlayerId}
-              variant="full"
-            />
-            <Text size="sm" c="dimmed">
-              Round {currentRound} of {totalRounds}
-            </Text>
-          </Group>
-          
-          {currentSpeaker.selectedCard && (
-            <Card
-              card={cardsInPlay.find((c) => c.id === currentSpeaker.selectedCard)!}
-              index={0}
-              total={1}
-            />
-          )}
-          
-          {isActiveSpeaker ? (
-            <Button
-              onClick={finishSpeaking}
-              fullWidth
-              size="lg"
-              variant="filled"
-              color="green"
-            >
-              Finish Sharing
-            </Button>
-          ) : (
-            <ListenerReactions
-              speakerId={currentSpeaker.id}
-              cardId={currentSpeaker.selectedCard!}
-              gameStateId={gameStateId}
-            />
-          )}
-        </>
+      <Group position="apart">
+        <PlayerStatusBar
+          members={members}
+          activePlayerId={activePlayerId}
+          variant="full"
+        />
+        <Text size="sm" color="dimmed">
+          Round {currentRound} of {totalRounds}
+        </Text>
+      </Group>
+
+      <Text>{`Speaker ${activePlayerId} is sharing`}</Text>
+      <Card card={activeCard} index={0} total={1} />
+
+      {isActiveSpeaker ? (
+        <Button
+          onClick={currentSpeakerHasStarted ? finishSpeaking : startSpeaking}
+          fullWidth
+          size="lg"
+          variant="filled"
+          color={currentSpeakerHasStarted ? 'green' : 'blue'}
+        >
+          {currentSpeakerHasStarted ? 'Finish Sharing' : 'Start Sharing'}
+        </Button>
+      ) : (
+        <ListenerReactions
+          speakerId={activePlayerId}
+          cardId={activeCard.id}
+          gameStateId={gameStateId}
+        />
       )}
     </Stack>
   );
