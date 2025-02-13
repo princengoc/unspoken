@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Group, Button, Stack } from '@mantine/core';
+import { Group, Button, Stack, Divider } from '@mantine/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Card as CardType } from '@/core/game/types';
 import { Card } from '../Card';
@@ -33,7 +33,7 @@ export function CardDeck({
     <Stack gap="xs" justify="center">
       {/* Main area container */}
         {currentIndex < cards.length ? (
-          <>
+          <Group justify="center" mt="xs">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -46,12 +46,12 @@ export function CardDeck({
                 <Card card={cards[currentIndex]} index={currentIndex} total={cards.length} />
               </motion.div>
             </AnimatePresence>
-          </>
+          </Group>
         ) : <MiniDeck cards={cards} assignedMoods={assignedMoods} onSelect={onSelect}/>}
-
+      
       {currentIndex < cards.length && (
         <>
-          <Group justify="center" mt="xs" spacing="sm">
+          <Group justify="center" mt="xs" gap="sm">
             {moods.map(({ type, icon: Icon, color }) => (
                 <Button key={type}
                   onClick={() => handleAssign(type)}

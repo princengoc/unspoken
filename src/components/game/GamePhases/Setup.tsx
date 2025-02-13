@@ -109,20 +109,6 @@ export function Setup() {
               </Text>
               {/* TODO: implement onClick for this, which is the exchange feature*/}
               <MiniDeck cards={getCardsByIds(cardState.discardPile)}/>
-              <Stack gap="md">
-                {cardState.discardPile.map((cardId, index) => {
-                  const card = getCardById(cardId);
-                  return card ? (
-                    <Card 
-                      key={cardId} 
-                      card={card} 
-                      index={index} 
-                      total={cardState.discardPile.length} 
-                      showExchange 
-                    />
-                  ) : null;
-                })}
-              </Stack>
             </>
           )}
 
