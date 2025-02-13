@@ -1,119 +1,120 @@
 import { useState } from 'react';
-import { Stack, Text, Group, Button, Paper, ScrollArea } from '@mantine/core';
+import { Stack, Text, Group, Button, Paper, Transition } from '@mantine/core';
 import { notifications } from "@mantine/notifications";
-import { motion } from 'framer-motion';
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
+import { CardDeck } from '../CardDeck';
 import { Card } from '../Card';
+import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
+type SetupProps = {
+  roomId: string;
+}
 
-export function Setup() {
-  const { cardState, getCardById, getCardsByIds } = useCardsInGame();
-  const { currentMember } = useRoomMembers();
-  const {
-    handleCardSelection,
+export function Setup({roomId }: SetupProps) {
+  const { cardState, getCardById, getCardsByIds } = useCardsInGame(); 
+  const { members, currentMember } = useRoomMembers();
+  const { 
+    handleCardSelection, 
     initiateSpeakingPhase,
     dealCards,
     canStartDrawCards,
     canStartChoosing,
-    isSetupComplete,
+    isSetupComplete, 
     isCreator
   } = useRoom();
 
   const [isDealing, setIsDealing] = useState(false);
 
   const handleDrawCards = async () => {
-    if (!currentMember?.id) return;
-    
-    setIsDealing(true);
-    try {
-      await dealCards(currentMember.id);
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to draw cards. Please try again.',
-        color: 'red'
-      });
-    } finally {
-      setIsDealing(false);
-    }
+      if (!currentMember?.id) return;
+      
+      setIsDealing(true);
+      try {
+          await dealCards(currentMember.id);
+      } catch (error) {
+          notifications.show({
+              title: 'Error',
+              message: 'Failed to draw cards. Please try again.',
+              color: 'red'
+          });
+          console.error('Failed to draw cards:', error);
+      } finally {
+          setIsDealing(false);
+      }
   };
 
   return (
-    <Stack spacing="md">
+    <Stack gap="xl">
+      <FadeIn>
+        <Group justify="space-between" align="center">
+          <Text size="lg" fw={500}>
+            Round Setup
+          </Text>
+          <Text size="sm" c="dimmed">
+            {members.filter((p) => p.status === PLAYER_STATUS.BROWSING).length} / {members.length} ready
+          </Text>
+        </Group>
+      </FadeIn>
+
+      {/* Show "Draw Cards" if the player hasn't received any cards */}
       {canStartDrawCards && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Button
-            onClick={handleDrawCards}
-            fullWidth
-            size="lg"
-            variant="filled"
-            loading={isDealing}
-          >
-            Draw Cards
-          </Button>
-        </motion.div>
+        <SlideIn>
+            <Button 
+                onClick={handleDrawCards} 
+                fullWidth 
+                size="lg" 
+                variant="filled"
+                loading={isDealing}
+            >
+                Draw Cards
+            </Button>
+        </SlideIn>
       )}
 
-      {canStartChoosing && currentMember?.id && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <ScrollArea>
-            <Group spacing="md" style={{ padding: '8px 0' }}>
-              {getCardsByIds(cardState.playerHands[currentMember.id]).map((card, index) => (
-                <motion.div
-                  key={card.id}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  style={{ minWidth: '250px' }}
-                >
-                  <Card
-                    card={card}
-                    onClick={() => handleCardSelection(card.id)}
-                    selected={cardState.selectedCards[currentMember.id] === card.id}
-                  />
-                </motion.div>
-              ))}
-            </Group>
-          </ScrollArea>
-        </motion.div>
+      {/* When cards are available: either allow selection or wait */}
+      {canStartChoosing && (
+        <>
+          {currentMember?.id && (
+            <CardDeck 
+              cards={getCardsByIds(cardState.playerHands[currentMember.id]) || []} 
+              onSelect={handleCardSelection} 
+            />
+          )}
+          <SlideIn direction="up">
+            <Text size="sm" c="dimmed" ta="center">
+              Select one card to share when it&apos;s your turn
+            </Text>
+          </SlideIn>
+        </>
       )}
 
       {currentMember?.status === PLAYER_STATUS.BROWSING && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
+        <Stack gap="lg">
           {isCreator ? (
-            isSetupComplete && (
-              <Button
-                fullWidth
-                size="lg"
-                onClick={initiateSpeakingPhase}
-                leftSection={<IconCheck size={18} />}
-              >
-                Start Game
-              </Button>
-            )
+            <Transition mounted={isSetupComplete} transition="slide-up">
+              {(styles) => (
+                <Button
+                  style={styles}
+                  fullWidth
+                  size="lg"
+                  onClick={initiateSpeakingPhase}
+                  leftSection={<IconCheck size={18} />}
+                >
+                  Start Game
+                </Button>
+              )}
+            </Transition>
           ) : (
             <Paper p="md" radius="md" withBorder>
-              <Group align="center" spacing="sm">
+              <Group align="center" gap="sm">
                 <IconHourglass size={18} />
                 <Text size="sm">
                   {isSetupComplete
-                    ? "Everyone's ready! Waiting for the room creator..."
+                    ? "Everyone's ready! Waiting for the room creator to start the game..."
                     : "Waiting for other players to choose their cards..."}
                 </Text>
               </Group>
@@ -122,35 +123,27 @@ export function Setup() {
 
           {cardState.discardPile.length > 0 && (
             <>
-              <Text size="sm" c="dimmed" ta="center" mt="md">
+              <Text size="sm" c="dimmed" ta="center">
                 Browse discarded cards while waiting
               </Text>
-              <ScrollArea>
-                <Group spacing="md" style={{ padding: '8px 0' }}>
-                  {cardState.discardPile.map((cardId, index) => {
-                    const card = getCardById(cardId);
-                    return card ? (
-                      <motion.div
-                        key={cardId}
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        style={{ minWidth: '250px' }}
-                      >
-                        <Card
-                          card={card}
-                          index={index}
-                          total={cardState.discardPile.length}
-                          showExchange
-                        />
-                      </motion.div>
-                    ) : null;
-                  })}
-                </Group>
-              </ScrollArea>
+              <Stack gap="md">
+                {cardState.discardPile.map((cardId, index) => {
+                  const card = getCardById(cardId);
+                  return card ? (
+                    <Card 
+                      key={cardId} 
+                      card={card} 
+                      index={index} 
+                      total={cardState.discardPile.length} 
+                      showExchange 
+                    />
+                  ) : null;
+                })}
+              </Stack>
             </>
           )}
-        </motion.div>
+
+        </Stack>
       )}
     </Stack>
   );
