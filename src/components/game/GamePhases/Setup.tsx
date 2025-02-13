@@ -41,7 +41,6 @@ export function Setup() {
           console.error('Failed to draw cards:', error);
       } finally {
           setIsDealing(false);
-          console.log(`Status after dealing: ${JSON.stringify(cardState)}`);
       }
   };
 
