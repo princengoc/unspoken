@@ -9,13 +9,11 @@ import { MiniCard, MoodType } from './MiniCard';
 interface CardDeckProps {
   cards: CardType[];
   onSelect?: (cardId: string) => void;
-  showIndicators?: boolean;
 }
 
 export function CardDeck({
   cards,
   onSelect,
-  showIndicators = true,
 }: CardDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [assignedMoods, setAssignedMoods] = useState<Record<number, MoodType>>({});
@@ -88,9 +86,6 @@ export function CardDeck({
           </>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Text size="sm" ta="center" fw={400} mb={8}>
-              Select one
-            </Text>
             <Group spacing="xs" position="center">
               {Object.entries(assignedMoods).map(([key, mood]) => {
                 const index = Number(key);

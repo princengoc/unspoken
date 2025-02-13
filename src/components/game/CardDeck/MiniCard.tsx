@@ -29,9 +29,10 @@ interface MiniCardProps {
   mood?: MoodType;
   isSelected?: boolean;
   onClick?: () => void;
+  showSender?: boolean;
 }
 
-export function MiniCard({ card, mood, isSelected = false, onClick }: MiniCardProps) {
+export function MiniCard({ card, mood, isSelected = false, onClick, showSender = false }: MiniCardProps) {
   const moodStyles = mood ? moodConfig[mood] : null;
   const IconComponent = moodStyles?.icon;
 
@@ -56,8 +57,8 @@ export function MiniCard({ card, mood, isSelected = false, onClick }: MiniCardPr
           cursor: onClick ? 'pointer' : 'default',
           borderColor: isSelected ? moodStyles?.color : undefined,
           borderWidth: isSelected ? '2px' : '1px',
-          width: '176px', // Fixed width
-          height: '200px', // Fixed height
+          width: '150px', // Fixed width
+          height: '180px', // Fixed height
         }}
         onClick={onClick}
       >
@@ -66,7 +67,7 @@ export function MiniCard({ card, mood, isSelected = false, onClick }: MiniCardPr
             <div
               style={{
                 position: 'absolute',
-                top: rem(4),
+                bottom: rem(4),
                 right: rem(4),
                 color: moodStyles?.color
               }}
@@ -92,6 +93,7 @@ export function MiniCard({ card, mood, isSelected = false, onClick }: MiniCardPr
             {card.content}
           </Text>
 
+        { showSender &&
           <Group gap="xs">
             <Avatar size="xs" radius="xl" color="gray">
               {card.contributor_id?.charAt(0).toUpperCase() || '?'}
@@ -99,7 +101,7 @@ export function MiniCard({ card, mood, isSelected = false, onClick }: MiniCardPr
             <Text size="xs" c="dimmed">
               {card.contributor_id || 'Anonymous'}
             </Text>
-          </Group>
+          </Group> }
         </Stack>
       </MantineCard>
     </motion.div>

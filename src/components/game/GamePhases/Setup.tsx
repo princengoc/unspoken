@@ -10,11 +10,7 @@ import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
-type SetupProps = {
-  roomId: string;
-}
-
-export function Setup({roomId }: SetupProps) {
+export function Setup() {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame(); 
   const { members, currentMember } = useRoomMembers();
   const { 
@@ -49,17 +45,6 @@ export function Setup({roomId }: SetupProps) {
 
   return (
     <Stack gap="xl">
-      <FadeIn>
-        <Group justify="space-between" align="center">
-          <Text size="lg" fw={500}>
-            Round Setup
-          </Text>
-          <Text size="sm" c="dimmed">
-            {members.filter((p) => p.status === PLAYER_STATUS.BROWSING).length} / {members.length} ready
-          </Text>
-        </Group>
-      </FadeIn>
-
       {/* Show "Draw Cards" if the player hasn't received any cards */}
       {canStartDrawCards && (
         <SlideIn>
@@ -84,11 +69,6 @@ export function Setup({roomId }: SetupProps) {
               onSelect={handleCardSelection} 
             />
           )}
-          <SlideIn direction="up">
-            <Text size="sm" c="dimmed" ta="center">
-              Select one card to share when it&apos;s your turn
-            </Text>
-          </SlideIn>
         </>
       )}
 
