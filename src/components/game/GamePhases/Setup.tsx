@@ -8,10 +8,13 @@ import { CardDeck } from '../CardDeck';
 import { Card } from '../Card';
 import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
-import { PlayerStatusBar } from '../PlayerStatus';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
-export function Setup() {
+type SetupProps = {
+  roomId: string;
+}
+
+export function Setup({roomId }: SetupProps) {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame(); 
   const { members, currentMember } = useRoomMembers();
   const { 
@@ -91,12 +94,6 @@ export function Setup() {
 
       {currentMember?.status === PLAYER_STATUS.BROWSING && (
         <Stack gap="lg">
-          <PlayerStatusBar 
-            members={members} 
-            activePlayerId={null}
-            variant="ready"
-          />
-
           {isCreator ? (
             <Transition mounted={isSetupComplete} transition="slide-up">
               {(styles) => (

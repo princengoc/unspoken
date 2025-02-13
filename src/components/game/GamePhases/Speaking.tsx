@@ -9,9 +9,10 @@ import { useCardsInGame } from '@/context/CardsInGameProvider';
 
 type SpeakingProps = {
   gameStateId: string;
+  roomId: string
 };
 
-export function Speaking({ gameStateId }: SpeakingProps) {
+export function Speaking({ gameStateId, roomId }: SpeakingProps) {
   const { activePlayerId, currentRound, totalRounds } = useGameState();
   const { members } = useRoomMembers();
   const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useRoom();
@@ -27,7 +28,10 @@ export function Speaking({ gameStateId }: SpeakingProps) {
         <PlayerStatusBar
           members={members}
           activePlayerId={activePlayerId}
+          roomId={roomId}
           variant="full"
+          gamePhase='speaking'
+          discardPileCount={cardState.discardPile.length}
         />
         <Text size="sm" color="dimmed">
           Round {currentRound} of {totalRounds}

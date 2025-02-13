@@ -21,6 +21,7 @@ import { Setup } from '@/components/game/GamePhases/Setup';
 import { Speaking } from '@/components/game/GamePhases/Speaking';
 import { PlayerStatusBar } from '@/components/game/PlayerStatus';
 import { notifications } from '@mantine/notifications';
+import { useCardsInGame } from '@/context/CardsInGameProvider';
 
 function RoundIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -48,6 +49,7 @@ interface RoomPageContentProps {
 function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   const router = useRouter();
   const { phase, currentRound, totalRounds, activePlayerId } = useGameState();
+  const { cardState } = useCardsInGame();
   const { members, currentMember } = useRoomMembers();
   const { room, leaveRoom } = useRoomHook(roomId);
 
@@ -80,50 +82,18 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   return (
     <Container py="xl">
       {/* Top Bar */}
-      <Paper p="md" radius="md" withBorder mb="xl">
-        <Stack spacing="md">
-          {/* Controls */}
-          <Group position="apart">
-            <Group spacing="xs">
+      <Paper p="md" radius="md" withBorder mb="xl" w = "100%">
               <PlayerStatusBar 
                 members={members} 
                 activePlayerId={activePlayerId}
-                variant="compact"
+                roomId={roomId}
+                variant="ready"
+                gamePhase={phase}
+                discardPileCount={cardState.discardPile.length}
                 showReadyCount={phase === 'setup'}
+                isCreator={isCreator}
+                handleLeaveRoom={handleLeaveRoom}
               />
-              <RoundIndicator current={currentRound} total={totalRounds} />
-            </Group>
-            <Group spacing="xs">
-              {isCreator && (
-                <Button
-                  variant="subtle"
-                  size="sm"
-                  onClick={() => {/* Open settings modal */}}
-                >
-                  <IconSettings size={18} />
-                </Button>
-              )}
-              <Button
-                variant="subtle"
-                size="sm"
-                color="red"
-                onClick={handleLeaveRoom}
-              >
-                <IconDoorExit size={18} />
-              </Button>
-            </Group>
-          </Group>
-
-          {/* Round Progress */}
-          <Group position="apart">
-            <Text size="sm" fw={500}>
-              Round {currentRound} of {totalRounds}
-            </Text>
-            <Text size="sm" c="dimmed">
-              {phase === 'setup' ? 'Setup Phase' : 'Speaking Phase'}
-            </Text>
-          </Group>
-        </Stack>
       </Paper>
 
       {/* Join Requests (for room creator) */}
@@ -135,7 +105,7 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
 
       {/* Game Phases */}
       <Paper p="xl" radius="md" withBorder>
-        {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
+        {phase === 'setup' ? <Setup roomId={roomId}/> : <Speaking gameStateId={gameStateId} roomId={roomId} />}
       </Paper>
     </Container>
   );
