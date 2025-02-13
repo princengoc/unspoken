@@ -104,6 +104,27 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     }
   };
 
+  const updateGameStateMultiple = async (updates: Partial<GameState>) => {
+    // Build a rollback object from the current gameState values
+    const previousValues = Object.fromEntries(
+      (Object.keys(updates) as Array<keyof GameState>).map((key) => [key, gameState[key]])
+    ) as Partial<GameState>;
+  
+    // Optimistically update the state
+    setGameState((prev) => ({ ...prev, ...updates }));
+  
+    try {
+      // Send updates to the server
+      await gameStatesService.update(gameStateId, updates);
+    } catch (error) {
+      console.error('Failed to update game state with multiple values:', error);
+      // Rollback to previous values on error
+      setGameState((prev) => ({ ...prev, ...previousValues }));
+      throw error;
+    }
+  };
+  
+
   // Phase management
   const setPhase = async (phase: GamePhase) => {
     await updateGameState('phase', phase);
@@ -135,28 +156,10 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
 
     const updatedCardsInPlay = gameState.cardsInPlay.filter(c => c.id !== cardId);
     const updatedDiscardPile = [...gameState.discardPile, cardToMove];
-
-    try {
-      setGameState(prev => ({
-        ...prev,
-        cardsInPlay: updatedCardsInPlay,
-        discardPile: updatedDiscardPile,
-      }));
-
-      await gameStatesService.update(gameStateId, {
-        cardsInPlay: updatedCardsInPlay,
-        discardPile: updatedDiscardPile,
-      });
-    } catch (error) {
-      console.error('Failed to move card to discard:', error);
-      // Rollback
-      setGameState(prev => ({
-        ...prev,
-        cardsInPlay: gameState.cardsInPlay,
-        discardPile: gameState.discardPile,
-      }));
-      throw error;
-    }
+    updateGameStateMultiple({
+      discardPile: updatedDiscardPile, 
+      cardsInPlay: updatedCardsInPlay
+    })
   };
 
   // Round management
