@@ -10,14 +10,14 @@ import { PLAYER_STATUS } from '@/core/game/constants';
 
 interface PlayerAvatarProps {
   player: Player;
-  isActive: boolean;
+  isCurrentUser: boolean;
   assignment: PlayerAssignment;
   size?: 'sm' | 'md' | 'lg';
 }
 
 const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   player,
-  isActive,
+  isCurrentUser,
   assignment,
   size = 'md',
 }) => {
@@ -27,15 +27,20 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
     <Avatar
       radius="xl"
       size={size}
+      styles={(theme) => ({
+        root: {
+          border: isCurrentUser ? '3px solid green' : 'none',
+          boxSizing: 'content-box',
+          padding: isCurrentUser ? '2px' : '0',
+        }
+      })}
       style={{
         backgroundColor: bgColor,
-        transform: isActive ? 'scale(1.1)' : 'scale(1)',
         transition: 'all 0.2s ease',
-        border: isActive ? '2px solid white' : 'none',
       }}
     >
-      <Icon 
-        size={size === 'sm' ? 16 : 20} 
+      <Icon
+        size={size === 'sm' ? 16 : 20}
         color="white"
         style={{ opacity: player.isOnline ? 1 : 0.5 }}
       />
@@ -48,60 +53,27 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-    <Tooltip label={`${player.username} - ${player.status}`}>
-      <Indicator
-        size={16}
-        offset={2}
-        position="bottom-end"
-        withBorder
-        color="yellow"
-        processing={player.status===PLAYER_STATUS.SPEAKING}
-        label={statusIcon(player.status)}
-      >
-        {avatarContent}
-      </Indicator>
-    </Tooltip>
-    </motion.div>
-  );
-};
-
-
-interface RoundIndicatorProps {
-  currentRound: number;
-  totalRounds: number;
-}
-
-const RoundIndicator: React.FC<RoundIndicatorProps> = ({ currentRound, totalRounds }) => {
-  return (
-    <Group spacing={4} align="center">
-      {Array.from({ length: totalRounds }).map((_, idx) => (
-        <motion.div
-          key={idx}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: idx * 0.1 }}
+      <Tooltip label={`${player.username} - ${player.status}`}>
+        <Indicator
+          size={16}
+          offset={2}
+          position="bottom-end"
+          withBorder
+          color="yellow"
+          processing={player.status === PLAYER_STATUS.SPEAKING}
+          label={statusIcon(player.status)}
         >
-          <div
-            style={{
-              width: idx === currentRound - 1 ? 12 : 8,
-              height: idx === currentRound - 1 ? 12 : 8,
-              borderRadius: '50%',
-              background: idx < currentRound ? '#228BE6' : '#E9ECEF',
-              transition: 'all 0.2s ease',
-            }}
-          />
-        </motion.div>
-      ))}
-    </Group>
+          {avatarContent}
+        </Indicator>
+      </Tooltip>
+    </motion.div>
   );
 };
 
 interface PlayerStatusBarProps {
   members: Player[];
-  activePlayerId: string | null;
+  currentUserId: string | null;
   roomId: string;
-  currentRound: number;
-  totalRounds: number;
   isCreator?: boolean;
   discardPileCount?: number;
   onDiscardPileClick?: () => void;
@@ -111,10 +83,8 @@ interface PlayerStatusBarProps {
 
 export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
   members,
-  activePlayerId,
+  currentUserId,
   roomId,
-  currentRound,
-  totalRounds,
   isCreator,
   discardPileCount,
   onDiscardPileClick,
@@ -144,7 +114,8 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
             >
               <PlayerAvatar
                 player={player}
-                isActive={player.id === activePlayerId}
+                // isCurrentUser={player.id === activePlayerId}
+                isCurrentUser={true}
                 assignment={playerAssignments.get(player.id)!}
                 size="md"
               />
@@ -157,7 +128,6 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
           <ActionIcon variant="light" size="xl" radius="xl">
             <PhaseIcon size={24} />
           </ActionIcon>
-          <RoundIndicator currentRound={currentRound} totalRounds={totalRounds} />
         </Group>
 
         {/* Right side players (in progress) */}
@@ -172,7 +142,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
             >
               <PlayerAvatar
                 player={player}
-                isActive={player.id === activePlayerId}
+                isCurrentUser={player.id === currentUserId}
                 assignment={playerAssignments.get(player.id)!}
                 size="md"
               />

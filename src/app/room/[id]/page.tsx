@@ -4,9 +4,6 @@ import { useRouter } from 'next/navigation';
 import {
   Container,
   Box,
-  Button,
-  Group,
-  Stack,
   Text,
   Loader,
   Paper,
@@ -66,12 +63,10 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
       <Paper p="md" radius="md" withBorder mb="xl" w = "100%">
               <PlayerStatusBar 
                 members={members} 
-                activePlayerId={activePlayerId}
+                currentUserId={currentMember.id}
                 roomId={roomId}
-                variant="ready"
                 gamePhase={phase}
                 discardPileCount={cardState.discardPile.length}
-                showReadyCount={phase === 'setup'}
                 isCreator={isCreator}
                 handleLeaveRoom={handleLeaveRoom}
               />
