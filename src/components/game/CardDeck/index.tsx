@@ -5,7 +5,6 @@ import { IconCirclesRelation, IconIkosaedr, IconCell } from '@tabler/icons-react
 import type { Card as CardType } from '@/core/game/types';
 import { Card } from '../Card';
 import { MiniCard, MoodType } from './MiniCard';
-import { CardIndicators } from './CardIndicators';
 
 interface CardDeckProps {
   cards: CardType[];
@@ -86,13 +85,6 @@ export function CardDeck({
                 <Card card={cards[currentIndex]} index={currentIndex} total={cards.length} />
               </motion.div>
             </AnimatePresence>
-            {showIndicators && (
-              <CardIndicators
-                total={cards.length}
-                current={currentIndex}
-                style={{ position: 'absolute', bottom: '10px', zIndex: 3 }}
-              />
-            )}
           </>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
