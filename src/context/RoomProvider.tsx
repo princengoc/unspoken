@@ -36,8 +36,7 @@ import React, {
       activePlayerId,
       setPhase,
       setActivePlayer,
-      addCardToPlay,
-      moveCardToDiscard,
+      moveMultipleCardsToDiscardById,
       completeRound, 
       dealCards
     } = useGameState();
@@ -55,7 +54,7 @@ import React, {
     // Destructure currentMember values for easier dependency management.
     const currentMemberId = currentMember?.id;
     const currentMemberStatus = currentMember?.status;
-    const currentMemberSelectedCard = currentMember?.selectedCard;
+    const currentMemberSelectedCardId = currentMember?.selectedCard;
     const currentMemberPlayerHand = currentMember?.playerHand;
   
     const canStartSpeaking =
@@ -84,21 +83,22 @@ import React, {
       return notSpokenMembers[randomIndex];
     }, [members]);
   
-    // Complete setup for the current member by updating their card and status.
+    // currentMember chose a card in setup phase
     const completeSetup = useCallback(
       async (cardId: string) => {
         if (!currentMemberId || phase !== 'setup') return;
         try {
+          const cardsNotChosenIds: string[] = currentMemberPlayerHand
+          ?.filter((c: Card) => c.id !== cardId)
+          .map((c: Card) => c.id) || [];        
           await Promise.all([
             updateMemberCard(currentMemberId, cardId),
             updateMemberStatus(currentMemberId, PLAYER_STATUS.BROWSING),
+            moveMultipleCardsToDiscardById(cardsNotChosenIds);
+            // Reset their hands
+            updateMemberHand(currentMemberId, []);
           ]);
-          const selectedCard = currentMemberPlayerHand?.find(
-            (c: Card) => c.id === cardId
-          );
-          if (selectedCard) {
-            await addCardToPlay(selectedCard);
-          }
+          
         } catch (error) {
           console.error('Failed to complete setup:', error);
           throw error;
@@ -109,8 +109,7 @@ import React, {
         phase,
         currentMemberPlayerHand,
         updateMemberCard,
-        updateMemberStatus,
-        addCardToPlay,
+        updateMemberStatus
       ]
     );
   
@@ -173,8 +172,8 @@ import React, {
           updateMemberStatus(currentMemberId, PLAYER_STATUS.LISTENING),
           markMemberAsSpoken(currentMemberId, true)
         ]);
-        if (currentMemberSelectedCard) {
-          await moveCardToDiscard(currentMemberSelectedCard);
+        if (currentMemberSelectedCardId) {
+          await moveMultipleCardsToDiscardById([currentMemberSelectedCardId]);
         }
         const nextSpeaker = getRandomNotSpokenMember();
         if (nextSpeaker) {
@@ -190,11 +189,11 @@ import React, {
     }, [
       currentMemberId,
       isActiveSpeaker,
-      currentMemberSelectedCard,
+      currentMemberSelectedCardId,
       getRandomNotSpokenMember,
       updateMemberStatus,
       markMemberAsSpoken,
-      moveCardToDiscard,
+      moveCardToDiscardById,
       setActivePlayer,
       setPhase,
     ]);

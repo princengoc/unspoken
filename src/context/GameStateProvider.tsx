@@ -3,6 +3,14 @@ import { gameStatesService } from '@/services/supabase/gameStates';
 import type { GamePhase, Card, GameState } from '@/core/game/types';
 import { DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
 
+/* 
+Notes on game logic
+
+Any card that entered the game will be in either cardsInPlay or discardPile
+
+
+*/
+
 interface GameStateContextType {
   // Core game state
   phase: GamePhase;
@@ -19,9 +27,9 @@ interface GameStateContextType {
   setActivePlayer: (playerId: string | null) => Promise<void>;
   
   // Global card management
-  addCardToPlay: (card: Card) => Promise<void>;
-  moveCardToDiscard: (cardId: string) => Promise<void>;
-
+  addMultipleCardsToPlay: (cards: Card[]) => Promise<void>;
+  moveMultipleCardsToDiscardById: (cardIds: string[]) => Promise<void>;
+  
   // Card management that includes roomMembersService update
   dealCards: (playerId: string) => Promise<Card[]>;
   
@@ -137,31 +145,33 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
   // Card management
   const dealCards = async (playerId: string) => {
     try { 
-      return await gameStatesService.dealCards(gameStateId, playerId); 
+      const newCards = await gameStatesService.dealCards(gameStateId, playerId); 
+      await addMultipleCardsToPlay(newCards);
+      return newCards;
     } catch (error) {
       console.error(`Failed to deal cards: ${JSON.stringify(error)}`);
       throw error
     }
   }
 
-
-  const addCardToPlay = async (card: Card) => {
-    const updatedCards = [...gameState.cardsInPlay, card];
+  const addMultipleCardsToPlay = async (cards: Card[]) => {
+    const updatedCards = [...gameState.cardsInPlay, ...cards];
     await updateGameState('cardsInPlay', updatedCards);
-  };
+  };  
 
-  const moveCardToDiscard = async (cardId: string) => {
-    const cardToMove = gameState.cardsInPlay.find(c => c.id === cardId);
-    if (!cardToMove) return;
-
-    const updatedCardsInPlay = gameState.cardsInPlay.filter(c => c.id !== cardId);
-    const updatedDiscardPile = [...gameState.discardPile, cardToMove];
-    updateGameStateMultiple({
+  const moveMultipleCardsToDiscardById = async (cardIds: string[]) => {
+    const cardsToMove = gameState.cardsInPlay.filter(c => cardIds.includes(c.id));
+    if (cardsToMove.length === 0) throw Error('Not all cards requested is found in play');
+  
+    const updatedCardsInPlay = gameState.cardsInPlay.filter(c => !cardIds.includes(c.id));
+    const updatedDiscardPile = [...gameState.discardPile, ...cardsToMove];
+  
+    await updateGameStateMultiple({
       discardPile: updatedDiscardPile, 
       cardsInPlay: updatedCardsInPlay
-    })
+    });
   };
-
+  
   // Round management
   const startNewRound = async () => {
     try {
@@ -199,8 +209,8 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     // Actions
     setPhase,
     setActivePlayer,
-    addCardToPlay,
-    moveCardToDiscard,
+    addMultipleCardsToPlay,
+    moveMultipleCardsToDiscardById,
     dealCards,
     startNewRound,
     completeRound,

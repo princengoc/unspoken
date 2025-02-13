@@ -81,6 +81,14 @@ export type Card = {
   contributor_id?: string;
 };
 
+export type CardState = {
+  roomPile: string[]; // all cards that have ever appeared, useful for dealing
+  discardPile: string[]; // cards in discard state
+  playerHands: Record<string, string[]>; 
+  selectedCards: Record<string, string>; 
+}
+
+
 // Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {
   const uniqueCards = new Map(cards.map(card => [card.id, card]));
