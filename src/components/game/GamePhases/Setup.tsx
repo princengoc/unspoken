@@ -5,14 +5,14 @@ import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { CardDeck } from '../CardDeck';
-import { MiniDeck } from '../CardDeck/MiniDeck';
 import { SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
+import ScatterDeck from '../CardDeck/ScatterDeck';
 
 export function Setup() {
-  const { cardState, getCardById, getCardsByIds } = useCardsInGame(); 
-  const { members, currentMember } = useRoomMembers();
+  const { cardState, getCardsByIds } = useCardsInGame(); 
+  const { currentMember } = useRoomMembers();
   const { 
     handleCardSelection, 
     initiateSpeakingPhase,
@@ -107,7 +107,7 @@ export function Setup() {
                 Browse discarded cards while waiting
               </Text>
               {/* TODO: implement onClick for this, which is the exchange feature*/}
-              <MiniDeck cards={getCardsByIds(cardState.discardPile)}/>
+              <ScatterDeck cards={getCardsByIds(cardState.discardPile)}/>
             </>
           )}
 
