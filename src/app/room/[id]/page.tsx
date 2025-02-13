@@ -60,7 +60,7 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   return (
     <Container py="xl">
       {/* Top Bar */}
-      <Paper p="md" radius="md" withBorder mb="xl" w = "100%">
+      <Paper p="md" radius="xs" mb="xs" w = "100%">
               <PlayerStatusBar 
                 members={members} 
                 currentUserId={currentMember.id}
@@ -70,7 +70,6 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
                 isCreator={isCreator}
                 handleLeaveRoom={handleLeaveRoom}
               />
-      </Paper>
 
       {/* Join Requests (for room creator) */}
       {isCreator && (
@@ -80,7 +79,6 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
       )}
 
       {/* Game Phases */}
-      <Paper p="xl" radius="md" withBorder>
         {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
       </Paper>
     </Container>

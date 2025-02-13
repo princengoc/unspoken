@@ -30,7 +30,7 @@ export function CardDeck({
   };
 
   return (
-    <Stack spacing="xs">
+    <Stack gap="xs" justify="center">
       {/* Main area container */}
         {currentIndex < cards.length ? (
           <>

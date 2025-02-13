@@ -1,12 +1,10 @@
 import React from 'react';
-import { Group, Avatar, Indicator, Tooltip, Paper, ActionIcon, Center } from '@mantine/core';
+import { Group, Avatar, Indicator, Tooltip, Paper, ActionIcon, Divider } from '@mantine/core';
 import { motion } from 'framer-motion';
 import { IconCards, IconDoorExit, IconSettings, IconHourglass, IconMessageCircle } from '@tabler/icons-react';
 import type { Player } from '@/core/game/types';
 import { getPlayerAssignments, type PlayerAssignment, shouldBeOnLeft, statusIcon } from './statusBarUtils';
 import { PLAYER_STATUS } from '@/core/game/constants';
-
-
 
 interface PlayerAvatarProps {
   player: Player;
@@ -100,82 +98,81 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
   const PhaseIcon = gamePhase === 'setup' ? IconHourglass : IconMessageCircle;
 
   return (
-    <Paper p="md" radius="md" withBorder>
-      <Group position="apart" align="center" spacing={0}>
-        {/* Left side players (completed/spoken) */}
-        <Group spacing={8} align="center">
-          {leftPlayers.map((player) => (
-            <motion.div
-              key={player.id}
-              layout
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <PlayerAvatar
-                player={player}
-                // isCurrentUser={player.id === activePlayerId}
-                isCurrentUser={true}
-                assignment={playerAssignments.get(player.id)!}
-                size="md"
-              />
-            </motion.div>
-          ))}
-        </Group>
+    <Group gap="xs" align="center" justify="space-between">
+      {/* Left side players (completed/spoken) */}
+      <Group gap="sm" align="center" justify='center'>
+        {leftPlayers.map((player) => (
+          <motion.div
+            key={player.id}
+            layout
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          >
+            <PlayerAvatar
+              player={player}
+              // isCurrentUser={player.id === activePlayerId}
+              isCurrentUser={true}
+              assignment={playerAssignments.get(player.id)!}
+              size="md"
+            />
+          </motion.div>
+        ))}
+      </Group>
 
-        {/* Center section with phase icon and round indicator */}
-        <Group spacing={16} align="center" mx="xl">
-          <ActionIcon variant="light" size="xl" radius="xl">
-            <PhaseIcon size={24} />
+      <Divider orientation='vertical' size="sm" />
+
+      {/* Right side players (in progress) */}
+      <Group gap="sm" align="center" justify='center'>
+        {rightPlayers.map((player) => (
+          <motion.div
+            key={player.id}
+            layout
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          >
+            <PlayerAvatar
+              player={player}
+              isCurrentUser={player.id === currentUserId}
+              assignment={playerAssignments.get(player.id)!}
+              size="md"
+            />
+          </motion.div>
+        ))}
+        
+        <Divider orientation='vertical' size="md" />
+        
+        {/* Action buttons */}
+        <Group gap="xs" ml="md" justify="flex-end">
+          {typeof discardPileCount === 'number' && (
+            <ActionIcon onClick={onDiscardPileClick} variant="subtle" size="lg">
+              <Indicator label={discardPileCount} inline size={16} position="top-end">
+                <IconCards size={20} />
+              </Indicator>
+            </ActionIcon>
+          )}
+
+            <ActionIcon variant="subtle" size="xl">
+              <PhaseIcon size={24} />
+            </ActionIcon>            
+          
+          {isCreator && (
+            <ActionIcon variant="subtle" size="lg">
+              <IconSettings size={20} />
+            </ActionIcon>
+          )}
+          
+          <ActionIcon 
+            variant="subtle" 
+            color="red" 
+            size="lg"
+            onClick={handleLeaveRoom}
+          >
+            <IconDoorExit size={20} />
           </ActionIcon>
         </Group>
-
-        {/* Right side players (in progress) */}
-        <Group spacing={8} align="center">
-          {rightPlayers.map((player) => (
-            <motion.div
-              key={player.id}
-              layout
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <PlayerAvatar
-                player={player}
-                isCurrentUser={player.id === currentUserId}
-                assignment={playerAssignments.get(player.id)!}
-                size="md"
-              />
-            </motion.div>
-          ))}
-
-          {/* Action buttons */}
-          <Group spacing={8} ml="md">
-            {typeof discardPileCount === 'number' && (
-              <ActionIcon onClick={onDiscardPileClick} variant="light" size="lg">
-                <Indicator label={discardPileCount} inline size={16} position="top-end">
-                  <IconCards size={20} />
-                </Indicator>
-              </ActionIcon>
-            )}
-            
-            {isCreator && (
-              <ActionIcon variant="light" size="lg">
-                <IconSettings size={20} />
-              </ActionIcon>
-            )}
-            
-            <ActionIcon 
-              variant="light" 
-              color="red" 
-              size="lg"
-              onClick={handleLeaveRoom}
-            >
-              <IconDoorExit size={20} />
-            </ActionIcon>
-          </Group>
-        </Group>
       </Group>
-    </Paper>
+    </Group>
   );
 };

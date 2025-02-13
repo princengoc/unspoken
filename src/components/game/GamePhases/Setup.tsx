@@ -45,7 +45,7 @@ export function Setup() {
   };
 
   return (
-    <Stack gap="xl">
+    <Stack gap="xl" justify="center">
       {/* Show "Draw Cards" if the player hasn't received any cards */}
       {canStartDrawCards && (
         <SlideIn>
@@ -90,7 +90,7 @@ export function Setup() {
               )}
             </Transition>
           ) : (
-            <Paper p="md" radius="md" withBorder>
+            <Paper p="md" radius="md">
               <Group align="center" gap="sm">
                 <IconHourglass size={18} />
                 <Text size="sm">

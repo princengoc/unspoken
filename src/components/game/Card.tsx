@@ -8,6 +8,7 @@ interface GameCardProps {
   total: number;
   showExchange?: boolean;
   selected?: boolean;
+  showSender?: boolean;
   onSelect?: () => void;
   onExchange?: () => void;
 }
@@ -18,6 +19,7 @@ export function GameCard({
   total, 
   showExchange = false,
   selected = false,
+  showSender = false,
   onSelect,
   onExchange
 }: GameCardProps) {
@@ -25,8 +27,8 @@ export function GameCard({
   
   return (
     <MantineCard 
-      shadow="sm" 
-      padding="lg" 
+      shadow="md" 
+      padding="md" 
       radius="md" 
       withBorder
       style={{
@@ -37,10 +39,10 @@ export function GameCard({
       }}
       onClick={isSelectable ? onSelect : undefined}
     >
-      <Stack gap="lg">
+      <Stack gap="xs">
         {/* Card Header */}
         <Group justify="space-between">
-          <Badge variant="light" size="lg">
+          <Badge variant="light" size="md">
             {index + 1}/{total}
           </Badge>
           {showExchange && onExchange && (
@@ -58,11 +60,6 @@ export function GameCard({
               </Button>
             </Tooltip>
           )}
-          {selected && (
-            <Badge color="blue" leftSection={<IconCheck size={14} />}>
-              Selected
-            </Badge>
-          )}
         </Group>
 
         {/* Card Content */}
@@ -71,6 +68,7 @@ export function GameCard({
         </Text>
 
         {/* Card Footer */}
+        {showSender && 
         <Group justify="flex-start" gap="sm">
           <Avatar 
             size="sm" 
@@ -82,7 +80,7 @@ export function GameCard({
           <Text size="sm" c="dimmed">
             {card.contributor_id || 'Anonymous'}
           </Text>
-        </Group>
+        </Group> }
       </Stack>
     </MantineCard>
   );
