@@ -1,3 +1,4 @@
+import { PLAYER_STATUS } from '@/core/game/constants';
 import { supabase } from './client';
 import { type Player, type Card, type JoinRequest, DEFAULT_PLAYER } from '@/core/game/types';
 
@@ -16,6 +17,20 @@ export const roomMembersService = {
     if (!data) throw new Error('Failed to create join request');
     return data;
   },
+
+  async checkJoinRequest(roomId: string, userId: string): Promise<JoinRequest | null> {
+    const { data, error } = await supabase
+      .from('joinroom_requests')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // Ignore not found error
+    return data || null;
+  },
+
 
   async handleJoinRequest(
     requestId: string, 
@@ -43,9 +58,9 @@ export const roomMembersService = {
         .insert([{
           room_id: request.room_id,
           user_id: request.user_id,
-          status: 'choosing',
+          status: PLAYER_STATUS.CHOOSING,
           hasSpoken: false,
-          is_online: true,
+          isOnline: true,
         }]);
 
       if (memberError) throw memberError;

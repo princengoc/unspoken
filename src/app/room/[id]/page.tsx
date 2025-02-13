@@ -29,8 +29,8 @@ function RoundIndicator({ current, total }: { current: number; total: number }) 
         <Box
           key={i}
           sx={theme => ({
-            width: 6,
-            height: 6,
+            width: 10,
+            height: 10,
             borderRadius: '50%',
             backgroundColor: i < current ? theme.colors.blue[6] : theme.colors.gray[3],
           })}
