@@ -6,7 +6,25 @@ import { IconCirclesRelation, IconIkosaedr, IconCell } from '@tabler/icons-react
 /** Mood types that represent different emotional states */
 export type MoodType = 'Expansive' | 'Centered' | 'Introspective';
 
-const moodConfig = {
+export const moods: { type: MoodType; icon: typeof IconCirclesRelation; color: string }[] = [
+  { 
+    type: 'Expansive', 
+    icon: IconCirclesRelation, 
+    color: '#E67E22',
+  },
+  { 
+    type: 'Centered', 
+    icon: IconIkosaedr, 
+    color: '#8E44AD',
+  },
+  { 
+    type: 'Introspective', 
+    icon: IconCell, 
+    color: '#C0392B',
+  },
+];
+
+export const moodConfig = {
   Expansive: {
     icon: IconCirclesRelation,
     color: '#E67E22', // Warm orange

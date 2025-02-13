@@ -5,6 +5,7 @@ import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { CardDeck } from '../CardDeck';
+import { MiniDeck } from '../CardDeck/MiniDeck';
 import { Card } from '../Card';
 import { FadeIn, SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
@@ -106,6 +107,8 @@ export function Setup() {
               <Text size="sm" c="dimmed" ta="center">
                 Browse discarded cards while waiting
               </Text>
+              {/* TODO: implement onClick for this, which is the exchange feature*/}
+              <MiniDeck cards={getCardsByIds(cardState.discardPile)}/>
               <Stack gap="md">
                 {cardState.discardPile.map((cardId, index) => {
                   const card = getCardById(cardId);

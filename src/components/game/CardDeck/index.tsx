@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Group, Text, Button } from '@mantine/core';
+import { Group, Button, Stack } from '@mantine/core';
 import { motion, AnimatePresence } from 'framer-motion';
-import { IconCirclesRelation, IconIkosaedr, IconCell } from '@tabler/icons-react';
 import type { Card as CardType } from '@/core/game/types';
 import { Card } from '../Card';
-import { MiniCard, MoodType } from './MiniCard';
+import { MiniCard, MoodType, moods } from './MiniCard';
+import { MiniDeck } from './MiniDeck';
 
 interface CardDeckProps {
   cards: CardType[];
@@ -17,7 +17,6 @@ export function CardDeck({
 }: CardDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [assignedMoods, setAssignedMoods] = useState<Record<number, MoodType>>({});
-  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
 
   const flipVariants = {
     initial: { rotateY: -30, opacity: 0 },
@@ -25,50 +24,14 @@ export function CardDeck({
     exit: { rotateY: 40, opacity: 0, transition: { duration: 0.5 } },
   };
 
-  // Updated moods with new icons and colors
-  const moods: { type: MoodType; icon: typeof IconCirclesRelation; color: string }[] = [
-    { 
-      type: 'Expansive', 
-      icon: IconCirclesRelation, 
-      color: '#E67E22',
-    },
-    { 
-      type: 'Centered', 
-      icon: IconIkosaedr, 
-      color: '#8E44AD',
-    },
-    { 
-      type: 'Introspective', 
-      icon: IconCell, 
-      color: '#C0392B',
-    },
-  ];
-
   const handleAssign = (mood: MoodType) => {
     setAssignedMoods((prev) => ({ ...prev, [currentIndex]: mood }));
     setCurrentIndex((prev) => prev + 1);
   };
 
-  const handlePeripheralCardClick = (index: number) => {
-    if (currentIndex >= cards.length) {
-      setSelectedCardIndex(index);
-      onSelect?.(cards[index].id);
-    }
-  };
-
   return (
-    <div>
+    <Stack spacing="xs">
       {/* Main area container */}
-      <div
-        style={{
-          height: '300px',
-          perspective: 1000,
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
         {currentIndex < cards.length ? (
           <>
             <AnimatePresence mode="wait">
@@ -84,25 +47,7 @@ export function CardDeck({
               </motion.div>
             </AnimatePresence>
           </>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Group spacing="xs" position="center">
-              {Object.entries(assignedMoods).map(([key, mood]) => {
-                const index = Number(key);
-                return (
-                  <MiniCard
-                    key={index}
-                    card={cards[index]}
-                    mood={mood}
-                    isSelected={selectedCardIndex === index}
-                    onClick={() => handlePeripheralCardClick(index)}
-                  />
-                );
-              })}
-            </Group>
-          </div>
-        )}
-      </div>
+        ) : <MiniDeck cards={cards} assignedMoods={assignedMoods} onSelect={onSelect}/>}
 
       {currentIndex < cards.length && (
         <>
@@ -126,22 +71,9 @@ export function CardDeck({
             ))}
           </Group>
 
-          <Group justify="center" gap="xs" mt="sm">
-            {Object.entries(assignedMoods).map(([key, mood]) => {
-              const index = Number(key);
-              return (
-                <MiniCard
-                  key={index}
-                  card={cards[index]}
-                  mood={mood}
-                  isSelected={selectedCardIndex === index}
-                  onClick={() => handlePeripheralCardClick(index)}
-                />
-              );
-            })}
-          </Group>
+          <MiniDeck cards={cards.slice(0, currentIndex)} assignedMoods={assignedMoods} onSelect={onSelect}/>
         </>
       )}
-    </div>
+    </Stack>
   );
 }
