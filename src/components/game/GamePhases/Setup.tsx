@@ -6,8 +6,7 @@ import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { CardDeck } from '../CardDeck';
 import { MiniDeck } from '../CardDeck/MiniDeck';
-import { Card } from '../Card';
-import { FadeIn, SlideIn } from '@/components/animations/Motion';
+import { SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
