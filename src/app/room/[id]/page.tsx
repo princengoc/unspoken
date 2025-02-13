@@ -11,7 +11,6 @@ import {
   Loader,
   Paper,
 } from '@mantine/core';
-import { IconDoorExit, IconSettings } from '@tabler/icons-react';
 import { useRoomHook } from '@/hooks/room/useRoomHook';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { RoomProvider } from '@/context/RoomProvider';
@@ -23,24 +22,6 @@ import { PlayerStatusBar } from '@/components/game/PlayerStatus';
 import { notifications } from '@mantine/notifications';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
-function RoundIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <Group spacing={4}>
-      {Array.from({ length: total }).map((_, i) => (
-        <Box
-          key={i}
-          sx={theme => ({
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            backgroundColor: i < current ? theme.colors.blue[6] : theme.colors.gray[3],
-          })}
-        />
-      ))}
-    </Group>
-  );
-}
-
 interface RoomPageContentProps {
   roomId: string;
   gameStateId: string
@@ -48,7 +29,7 @@ interface RoomPageContentProps {
 
 function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   const router = useRouter();
-  const { phase, currentRound, totalRounds, activePlayerId } = useGameState();
+  const { phase, activePlayerId } = useGameState();
   const { cardState } = useCardsInGame();
   const { members, currentMember } = useRoomMembers();
   const { room, leaveRoom } = useRoomHook(roomId);
@@ -105,7 +86,7 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
 
       {/* Game Phases */}
       <Paper p="xl" radius="md" withBorder>
-        {phase === 'setup' ? <Setup roomId={roomId}/> : <Speaking gameStateId={gameStateId} roomId={roomId} />}
+        {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
       </Paper>
     </Container>
   );

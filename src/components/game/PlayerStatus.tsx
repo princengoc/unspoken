@@ -1,308 +1,211 @@
-// PlayerStatus.tsx
 import React from 'react';
-import {
-  Group,
-  Avatar,
-  Indicator,
-  Tooltip,
-  Text,
-  Paper,
-  Button,
-  Stack,
-  ActionIcon,
-} from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import {
-  IconDoorExit, 
-  IconSettings,
-  IconHourglass,
-  IconMessageCircleHeart,
-  IconCheck,
-  IconCards,
-  IconPawFilled,
-  IconPlant2,
-  IconMichelinStarGreen,
-  IconAlpha,
-  IconButterfly,
-  IconCheese,
-  IconHorseToy,
-} from '@tabler/icons-react';
+import { Group, Avatar, Indicator, Tooltip, Paper, ActionIcon, Center } from '@mantine/core';
+import { motion } from 'framer-motion';
+import { IconCards, IconDoorExit, IconSettings, IconHourglass, IconMessageCircle } from '@tabler/icons-react';
 import type { Player } from '@/core/game/types';
+import { getPlayerAssignments, type PlayerAssignment, shouldBeOnLeft, statusIcon } from './statusBarUtils';
 import { PLAYER_STATUS } from '@/core/game/constants';
-import { useRoomHook } from '@/hooks/room/useRoomHook';
 
-//
-// Helper functions for seeded shuffling
-//
-function mulberry32(a: number) {
-  return function () {
-    let t = (a += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
-function shuffleArray<T>(array: T[], seed: number): T[] {
-  const random = mulberry32(seed);
-  const arr = array.slice();
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
 
-const hashCode = (str: string) =>
-  str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-//
-// PlayerAvatar Component
-//
 interface PlayerAvatarProps {
   player: Player;
-  roomId: string;
-  isActive?: boolean;
-  showStatus?: boolean;
+  isActive: boolean;
+  assignment: PlayerAssignment;
   size?: 'sm' | 'md' | 'lg';
-  showReadyBadge?: boolean;
-  animalIcon?: React.ElementType;
-  animalBgColor?: string;
 }
 
-export function PlayerAvatar({
+const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   player,
-  isActive = false,
-  showStatus = true,
+  isActive,
+  assignment,
   size = 'md',
-  showReadyBadge = false,
-  animalIcon,
-  animalBgColor,
-}: PlayerAvatarProps) {
-  const avatar = (
+}) => {
+  const { Icon, bgColor } = assignment;
+  
+  const avatarContent = (
     <Avatar
       radius="xl"
       size={size}
-      sx={(theme) => ({
-        backgroundColor: animalBgColor || theme.colors.blue[6],
-        border: isActive
-          ? `2px solid ${animalBgColor || theme.colors.blue[6]}`
-          : undefined,
-      })}
+      style={{
+        backgroundColor: bgColor,
+        transform: isActive ? 'scale(1.1)' : 'scale(1)',
+        transition: 'all 0.2s ease',
+        border: isActive ? '2px solid white' : 'none',
+      }}
     >
-      {animalIcon ? (
-        // Render the assigned animal icon with a suitable size and white color
-        React.createElement(animalIcon, { size: size === 'sm' ? 16 : 20, color: 'white' })
-      ) : (
-        player.username?.[0].toUpperCase() || 'P'
-      )}
-      {showReadyBadge && player.status === PLAYER_STATUS.BROWSING && (
-        <Indicator inline size={10} position="bottom-end" color="green">
-          <IconCheck size={8} />
-        </Indicator>
-      )}
+      <Icon 
+        size={size === 'sm' ? 16 : 20} 
+        color="white"
+        style={{ opacity: player.isOnline ? 1 : 0.5 }}
+      />
     </Avatar>
   );
 
-  const tooltipLabel = `${player.username || 'Player'} - ${player.status}`;
-
-  return showStatus ? (
-    <Tooltip label={tooltipLabel}>
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+    <Tooltip label={`${player.username} - ${player.status}`}>
       <Indicator
-        size={6}
+        size={16}
         offset={2}
         position="bottom-end"
-        color={player.status === PLAYER_STATUS.BROWSING ? 'green' : 'gray'}
         withBorder
+        color="yellow"
+        processing={player.status===PLAYER_STATUS.SPEAKING}
+        label={statusIcon(player.status)}
       >
-        {avatar}
+        {avatarContent}
       </Indicator>
     </Tooltip>
-  ) : (
-    <Tooltip label={tooltipLabel}>{avatar}</Tooltip>
+    </motion.div>
   );
+};
+
+
+interface RoundIndicatorProps {
+  currentRound: number;
+  totalRounds: number;
 }
 
-//
-// PlayerStatusBar Component
-//
+const RoundIndicator: React.FC<RoundIndicatorProps> = ({ currentRound, totalRounds }) => {
+  return (
+    <Group spacing={4} align="center">
+      {Array.from({ length: totalRounds }).map((_, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: idx * 0.1 }}
+        >
+          <div
+            style={{
+              width: idx === currentRound - 1 ? 12 : 8,
+              height: idx === currentRound - 1 ? 12 : 8,
+              borderRadius: '50%',
+              background: idx < currentRound ? '#228BE6' : '#E9ECEF',
+              transition: 'all 0.2s ease',
+            }}
+          />
+        </motion.div>
+      ))}
+    </Group>
+  );
+};
+
 interface PlayerStatusBarProps {
   members: Player[];
   activePlayerId: string | null;
   roomId: string;
-  variant?: 'compact' | 'full' | 'ready';
-  showReadyCount?: boolean;
+  currentRound: number;
+  totalRounds: number;
   isCreator?: boolean;
-  gamePhase?: 'setup' | 'speaking';
   discardPileCount?: number;
   onDiscardPileClick?: () => void;
   handleLeaveRoom?: () => void;
+  gamePhase: 'setup' | 'speaking';
 }
 
-export function PlayerStatusBar({
+export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
   members,
   activePlayerId,
   roomId,
-  variant = 'compact',
-  showReadyCount = false,
-  isCreator = false,
-  gamePhase,
+  currentRound,
+  totalRounds,
+  isCreator,
   discardPileCount,
   onDiscardPileClick,
-  handleLeaveRoom,  
-}: PlayerStatusBarProps) {
-  // Prepare a deterministic assignment of animal icons and background colors
-  const animalIcons = [
-    IconPawFilled,
-    IconPlant2,
-    IconMichelinStarGreen,
-    IconAlpha,
-    IconButterfly,
-    IconCheese,
-    IconHorseToy,
-  ];
-  const animalBgColors = [
-    '#A3E635',
-    '#60A5FA',
-    '#FBBF24',
-    '#F87171',
-    '#34D399',
-    '#6B7280',
-    '#F472B6',
-    '#FCD34D',
-  ];
+  handleLeaveRoom,
+  gamePhase,
+}) => {
+  const playerAssignments = getPlayerAssignments(members, roomId);
 
-  const seedValue = hashCode(roomId);
-  const shuffledIcons = shuffleArray(animalIcons, seedValue);
-  const shuffledColors = shuffleArray(animalBgColors, seedValue + 1);
+  // Split players into left and right groups
+  const leftPlayers = members.filter(player => shouldBeOnLeft(player, gamePhase));
+  const rightPlayers = members.filter(player => !shouldBeOnLeft(player, gamePhase));
 
-  // Sort players by user_id so that the assignment is unique per room
-  const sortedMembers = [...members].sort((a, b) =>
-    a.id.localeCompare(b.id)
-  );
-  const assignment = new Map<string, { Icon: React.ElementType; bgColor: string }>();
-  sortedMembers.forEach((player, index) => {
-    assignment.set(player.id, {
-      Icon: shuffledIcons[index % shuffledIcons.length],
-      bgColor: shuffledColors[index % shuffledColors.length],
-    });
-  });
+  const PhaseIcon = gamePhase === 'setup' ? IconHourglass : IconMessageCircle;
 
-  const readyPlayers = members.filter(
-    (p) => p.status === PLAYER_STATUS.BROWSING
-  );
-  const notReadyPlayers = members.filter(
-    (p) => p.status !== PLAYER_STATUS.BROWSING
-  );
-
-  // For the "ready" variant, arrange avatars around the game phase icon.
-  if (variant === 'ready') {
-    return (
-      <Paper p="md" radius="md" withBorder>
-        <Group align="center">
-          <Group align="center">
-            {readyPlayers.map((player) => (
-              <PlayerAvatar
-                key={player.id}
-                player={player}
-                roomId={roomId}
-                isActive={player.id === activePlayerId}
-                size="sm"
-                showReadyBadge
-                animalIcon={assignment.get(player.id)?.Icon}
-                animalBgColor={assignment.get(player.id)?.bgColor}
-              />
-            ))}
-          </Group>
-
-          <ActionIcon variant="default" size="lg">
-            {gamePhase === 'setup' ? (
-              <IconHourglass size={20} />
-            ) : (
-              <IconMessageCircleHeart size={20} />
-            )}
-          </ActionIcon>
-
-          <Group align="center">
-            {notReadyPlayers.map((player) => (
-              <PlayerAvatar
-                key={player.id}
-                player={player}
-                roomId={roomId}
-                isActive={player.id === activePlayerId}
-                size="sm"
-                animalIcon={assignment.get(player.id)?.Icon}
-                animalBgColor={assignment.get(player.id)?.bgColor}
-              />
-            ))}
-          </Group>
-
-          {typeof discardPileCount === 'number' && (
-            <ActionIcon onClick={onDiscardPileClick} variant="light" size="lg">
-              <Indicator
-                label={discardPileCount}
-                inline
-                size={10}
-                position="top-right"
-              >
-                <IconCards size={20} />
-              </Indicator>
-            </ActionIcon>
-          )}
-
-          {isCreator && (
-            <Button
-              variant="subtle"
-              size="sm"
-              onClick={() => {/* Open settings modal */}}
-            >
-              <IconSettings size={18} />
-            </Button>
-          )}
-          <Button
-            variant="subtle"
-            size="sm"
-            color="red"
-            onClick={handleLeaveRoom}
-          >
-            <IconDoorExit size={18} />
-          </Button>
-        </Group>
-      </Paper>
-    );
-  }
-
-  // For the non-ready variants, display the avatars in a compact group.
   return (
-    <Group spacing={4} align="center">
-      {members.map((player) => (
-        <PlayerAvatar
-          key={player.id}
-          player={player}
-          roomId={roomId}
-          isActive={player.id === activePlayerId}
-          size={variant === 'compact' ? 'sm' : 'md'}
-          animalIcon={assignment.get(player.id)?.Icon}
-          animalBgColor={assignment.get(player.id)?.bgColor}
-        />
-      ))}
-      {showReadyCount && (
-        <Text size="sm" c="dimmed" ml="xs">
-          {readyPlayers.length}/{members.length} ready
-        </Text>
-      )}
-      {typeof discardPileCount === 'number' && (
-        <ActionIcon onClick={onDiscardPileClick} variant="light" size="lg">
-          <Indicator
-            label={discardPileCount}
-            inline
-            size={10}
-            position="top-right"
-          >
-            <IconCards size={20} />
-          </Indicator>
-        </ActionIcon>
-      )}      
-    </Group>    
+    <Paper p="md" radius="md" withBorder>
+      <Group position="apart" align="center" spacing={0}>
+        {/* Left side players (completed/spoken) */}
+        <Group spacing={8} align="center">
+          {leftPlayers.map((player) => (
+            <motion.div
+              key={player.id}
+              layout
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              <PlayerAvatar
+                player={player}
+                isActive={player.id === activePlayerId}
+                assignment={playerAssignments.get(player.id)!}
+                size="md"
+              />
+            </motion.div>
+          ))}
+        </Group>
+
+        {/* Center section with phase icon and round indicator */}
+        <Group spacing={16} align="center" mx="xl">
+          <ActionIcon variant="light" size="xl" radius="xl">
+            <PhaseIcon size={24} />
+          </ActionIcon>
+          <RoundIndicator currentRound={currentRound} totalRounds={totalRounds} />
+        </Group>
+
+        {/* Right side players (in progress) */}
+        <Group spacing={8} align="center">
+          {rightPlayers.map((player) => (
+            <motion.div
+              key={player.id}
+              layout
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              <PlayerAvatar
+                player={player}
+                isActive={player.id === activePlayerId}
+                assignment={playerAssignments.get(player.id)!}
+                size="md"
+              />
+            </motion.div>
+          ))}
+
+          {/* Action buttons */}
+          <Group spacing={8} ml="md">
+            {typeof discardPileCount === 'number' && (
+              <ActionIcon onClick={onDiscardPileClick} variant="light" size="lg">
+                <Indicator label={discardPileCount} inline size={16} position="top-end">
+                  <IconCards size={20} />
+                </Indicator>
+              </ActionIcon>
+            )}
+            
+            {isCreator && (
+              <ActionIcon variant="light" size="lg">
+                <IconSettings size={20} />
+              </ActionIcon>
+            )}
+            
+            <ActionIcon 
+              variant="light" 
+              color="red" 
+              size="lg"
+              onClick={handleLeaveRoom}
+            >
+              <IconDoorExit size={20} />
+            </ActionIcon>
+          </Group>
+        </Group>
+      </Group>
+    </Paper>
   );
-}
+};

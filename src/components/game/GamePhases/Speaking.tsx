@@ -1,20 +1,17 @@
-import { Stack, Text, Button, Group } from '@mantine/core';
+import { Stack, Button, Group } from '@mantine/core';
+import { motion } from 'framer-motion';
 import { useGameState } from '@/context/GameStateProvider';
-import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
 import { Card } from '../Card';
-import { PlayerStatusBar } from '../PlayerStatus';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
-type SpeakingProps = {
-  gameStateId: string;
-  roomId: string
-};
+type SpeakingProp = {
+  gameStateId: string
+}
 
-export function Speaking({ gameStateId, roomId }: SpeakingProps) {
-  const { activePlayerId, currentRound, totalRounds } = useGameState();
-  const { members } = useRoomMembers();
+export function Speaking({ gameStateId }: SpeakingProp) {
+  const { activePlayerId } = useGameState();
   const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useRoom();
   const { cardState, getCardById } = useCardsInGame();
 
@@ -23,41 +20,38 @@ export function Speaking({ gameStateId, roomId }: SpeakingProps) {
   if (!activeCard) return null;
 
   return (
-    <Stack gap="lg">
-      <Group position="apart">
-        <PlayerStatusBar
-          members={members}
-          activePlayerId={activePlayerId}
-          roomId={roomId}
-          variant="full"
-          gamePhase='speaking'
-          discardPileCount={cardState.discardPile.length}
-        />
-        <Text size="sm" color="dimmed">
-          Round {currentRound} of {totalRounds}
-        </Text>
-      </Group>
+    <Stack spacing="md">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card card={activeCard} index={0} total={1} />
+      </motion.div>
 
-      <Text>{`Speaker ${activePlayerId} is sharing`}</Text>
-      <Card card={activeCard} index={0} total={1} />
-
-      {isActiveSpeaker ? (
-        <Button
-          onClick={currentSpeakerHasStarted ? finishSpeaking : startSpeaking}
-          fullWidth
-          size="lg"
-          variant="filled"
-          color={currentSpeakerHasStarted ? 'green' : 'blue'}
-        >
-          {currentSpeakerHasStarted ? 'Finish Sharing' : 'Start Sharing'}
-        </Button>
-      ) : (
-        <ListenerReactions
-          speakerId={activePlayerId}
-          cardId={activeCard.id}
-          gameStateId={gameStateId}
-        />
-      )}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        {isActiveSpeaker ? (
+          <Button
+            onClick={currentSpeakerHasStarted ? finishSpeaking : startSpeaking}
+            fullWidth
+            size="lg"
+            variant="filled"
+            color={currentSpeakerHasStarted ? 'green' : 'blue'}
+          >
+            {currentSpeakerHasStarted ? 'Finish Sharing' : 'Start Sharing'}
+          </Button>
+        ) : (
+          <ListenerReactions
+            speakerId={activePlayerId}
+            cardId={activeCard.id}
+            gameStateId={gameStateId}
+          />
+        )}
+      </motion.div>
     </Stack>
   );
 }
