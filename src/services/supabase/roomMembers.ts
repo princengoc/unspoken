@@ -46,7 +46,6 @@ export const roomMembersService = {
           status: 'choosing',
           hasSpoken: false,
           is_online: true,
-          playerHand: []
         }]);
 
       if (memberError) throw memberError;
@@ -86,9 +85,7 @@ export const roomMembersService = {
         user_id,
         isOnline,
         status,
-        selectedCard,
         hasSpoken,
-        playerHand,
         profiles(username)
       `)
       .eq('room_id', roomId);
@@ -100,9 +97,7 @@ export const roomMembersService = {
       username: (member as any).profiles?.username || "Unknown", 
       isOnline: member.isOnline,
       status: member.status,
-      selectedCard: member.selectedCard,
       hasSpoken: member.hasSpoken,
-      playerHand: member.playerHand
     }));
   },
   
@@ -134,7 +129,7 @@ export const roomMembersService = {
     // Get current state first
     const { data: currentState } = await supabase
       .from('room_members')
-      .select('playerHand, selectedCard, status')
+      .select()
       .eq('room_id', roomId)
       .eq('user_id', userId)
       .single();
@@ -155,27 +150,7 @@ export const roomMembersService = {
       console.error('Error updating player state:', error);
       throw error;
     }
-  },
-
-  async updatePlayerHand(roomId: string, userId: string, cards: Card[]): Promise<boolean> {
-    const serializedCards = cards.map(card => ({
-      id: card.id,
-      content: card.content,
-      category: card.category,
-      depth: card.depth,
-      contributor_id: card.contributor_id
-    }));
-  
-    const { error } = await supabase
-      .from('room_members')
-      .update({ playerHand: serializedCards })
-      .eq('room_id', roomId)
-      .eq('user_id', userId);
-  
-    if (error) throw error;
-    return true;
-  },
-  
+  }, 
 
   // Subscription for player state changes
   subscribeToRoomMembers(roomId: string, callback: (players: Player[]) => void) {

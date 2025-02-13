@@ -12,17 +12,13 @@ export type Player = {
   username: string | null;
   isOnline: boolean;
   status: PlayerStatus;
-  selectedCard?: string | null;
   hasSpoken: boolean;
-  playerHand?: Card[];  // Added this from PlayerState
 };
 
 export const DEFAULT_PLAYER: Omit<Player, 'id' | 'username'> = {
   isOnline: true,   // Defaulting to online when joining
   status: PLAYER_STATUS.CHOOSING,
-  selectedCard: null,
   hasSpoken: false,
-  playerHand: [],
 };
 
 
@@ -42,8 +38,6 @@ export type GameState = {
   id: string;
   room_id: string;
   phase: GamePhase;
-  cardsInPlay: Card[]; // cards that will be excluded from dealing because it is already in play
-  discardPile: Card[]; // cards discard by players in this game
   currentRound: number;
   totalRounds: number;
   activePlayerId: string | null;
@@ -88,7 +82,6 @@ export type CardState = {
   selectedCards: Record<string, string>; 
 }
 
-
 // Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {
   const uniqueCards = new Map(cards.map(card => [card.id, card]));
@@ -102,6 +95,3 @@ export const mergeCardsWithDeduplication = (existingCards: Card[], newCards: Car
   return Array.from(uniqueCards.values());
 };
 
-export function hasSelected(player: Player): boolean {
-  return player.status !== PLAYER_STATUS.CHOOSING && player.selectedCard != null;
-}

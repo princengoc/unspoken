@@ -51,8 +51,6 @@ const fromDatabaseState = async (dbState: any): Promise<GameState> => {
     currentRound: dbState.currentRound,
     totalRounds: dbState.totalRounds,
     activePlayerId: dbState.activePlayerId,
-    cardsInPlay,
-    discardPile,
   };
 };
 
@@ -63,8 +61,6 @@ export const gameStatesService = {
         room_id: initialState.room_id,
         phase: initialState.phase,
         activePlayerId: initialState.activePlayerId,
-        cardsInPlay: toCardIds(initialState.cardsInPlay),
-        discardPile: toCardIds(initialState.discardPile),
         currentRound: 1,
         totalRounds: DEFAULT_TOTAL_ROUNDS,
       };
@@ -111,14 +107,6 @@ export const gameStatesService = {
     // Convert Card objects to IDs for database update
     const dbUpdates: any = { ...updates };
 
-    // Convert Card arrays to ID arrays
-    if (updates.cardsInPlay) {
-      dbUpdates.cardsInPlay = toCardIds(updates.cardsInPlay);
-    }
-    if (updates.discardPile) {
-      dbUpdates.discardPile = toCardIds(updates.discardPile);
-    }
-
     const { data, error } = await supabase
       .from('game_states')
       .update(dbUpdates)
@@ -130,36 +118,6 @@ export const gameStatesService = {
     if (!data) throw new Error('Game state not found');
     
     return await fromDatabaseState(data);
-  },
-
-  async dealCards(gameStateId: string, userId: string): Promise<Card[]> {
-    const dbState = await this.get(gameStateId);
-    
-    const cardsToExclude = [
-      ...toCardIds(dbState.cardsInPlay),
-      ...toCardIds(dbState.discardPile)
-    ];
-    
-    // Get random cards
-    const { data: randomCardsData, error: cardsError } = await supabase.rpc(
-      'get_random_cards',
-      {
-        limit_count: INITIAL_CARDS_PER_PLAYER,
-        exclude_ids: cardsToExclude,
-      }
-    );
-  
-    if (cardsError) throw cardsError;
-    if (!randomCardsData) throw new Error('No cards available to deal');
-    const randomCards = randomCardsData as Card[];
-  
-    // get rippled cards
-    const rippledCards = await reactionsService.getRippledCards(gameStateId, userId);    
-    const newCards = [...randomCards, ...rippledCards];
-
-    // Update player's hand in room_members
-    await roomMembersService.updatePlayerHand(dbState.room_id, userId, newCards);  
-    return newCards;
   },
   
   subscribeToChanges(gameStateId: string, callback: (state: GameState) => void) {

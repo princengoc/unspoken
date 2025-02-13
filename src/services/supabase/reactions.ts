@@ -125,6 +125,7 @@ export const reactionsService = {
     return data || [];
   },
 
+  // FIXME: change gameStateId to roomId
   async getRippledCards(
     gameStateId: string,
     playerId: string

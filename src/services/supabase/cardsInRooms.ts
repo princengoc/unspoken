@@ -127,7 +127,7 @@ export const cardsInRoomsService = {
     }
   },
   
-  // Move multiple cards into a player's hand
+  // Move multiple cards into a player's hand (eg ripple, exchange updates)
   async moveCardsToPlayerHand(roomId: string, cardIds: string[], playerId: string): Promise<void> {
     if (cardIds.length === 0) return; // Prevent unnecessary DB query
   
@@ -142,4 +142,5 @@ export const cardsInRoomsService = {
       throw error;
     }
   },
+
 };

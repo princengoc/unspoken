@@ -16,8 +16,6 @@ interface RoomMembersContextType {
   
   // Actions
   updateMemberStatus: (memberId: string, status: PlayerStatus) => Promise<void>;
-  updateMemberCard: (memberId: string, cardId: string | null) => Promise<void>;
-  updateMemberHand: (memberId: string, cards: Card[]) => Promise<void>;
   markMemberAsSpoken: (memberId: string, hasSpoken: boolean) => Promise<void>;
 }
 
@@ -84,32 +82,6 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
     }
   };
 
-  const updateMemberCard = async (memberId: string, cardId: string | null) => {
-    try {
-      await roomMembersService.updatePlayerState(roomId, memberId, { 
-        selectedCard: cardId 
-      });
-      setMembers(prev => 
-        prev.map(m => m.id === memberId ? { ...m, selectedCard: cardId } : m)
-      );
-    } catch (error) {
-      console.error('Failed to update member card:', error);
-      throw error;
-    }
-  };
-
-  const updateMemberHand = async (memberId: string, cards: Card[]) => {
-    try {
-      await roomMembersService.updatePlayerHand(roomId, memberId, cards);
-      setMembers(prev => 
-        prev.map(m => m.id === memberId ? { ...m, playerHand: cards } : m)
-      );
-    } catch (error) {
-      console.error('Failed to update member hand:', error);
-      throw error;
-    }
-  };
-
   const markMemberAsSpoken = async (memberId: string, hasSpoken: boolean) => {
     try {
       await roomMembersService.updatePlayerState(roomId, memberId, { hasSpoken });
@@ -133,8 +105,6 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
     
     // Actions
     updateMemberStatus,
-    updateMemberCard,
-    updateMemberHand,
     markMemberAsSpoken,
   };
 
