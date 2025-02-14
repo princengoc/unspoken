@@ -75,31 +75,24 @@ export function JoinRoom() {
     }
   
     try {
-      console.log("Attempting to find room with passcode:", passcode);
       const room = await findRoomByPasscode(passcode);
-      console.log("Room found:", room);
       
       // Check if user is room creator
       if (room.created_by === user.id) {
-        console.log("User is the creator. Joining room directly.");
         await joinRoom(room.id);
         router.push(`/room/${room.id}`);
         return;
       }
   
-      console.log(`Checking existing join request for room ID ${room.id} and user ID ${user.id}`);
       const existingRequest = await roomMembersService.checkJoinRequest(room.id, user.id);
-      console.log("Existing join request:", existingRequest);
   
       if (existingRequest?.status === 'approved') {
-        console.log("Join request already approved. Joining room.");
         await joinRoom(room.id);
         router.push(`/room/${room.id}`);
         return;
       }
   
       if (!existingRequest || existingRequest.status === 'rejected') {
-        console.log("No join request found or previous request was rejected. Creating a new join request.");
         const request = await roomMembersService.createJoinRequest(room.id, user.id);
         setJoinRequest(request);
         notifications.show({
@@ -108,7 +101,6 @@ export function JoinRoom() {
           color: 'blue'
         });
       } else {
-        console.log("Join request exists but is pending.");
         setJoinRequest(existingRequest);
         notifications.show({
           title: 'Existing Request',

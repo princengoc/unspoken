@@ -1,10 +1,11 @@
 import React from 'react';
-import { Group, Avatar, Indicator, Tooltip, Paper, ActionIcon, Divider } from '@mantine/core';
+import { Group, Avatar, Indicator, Tooltip, ActionIcon, Divider } from '@mantine/core';
 import { motion } from 'framer-motion';
 import { IconCards, IconDoorExit, IconSettings, IconHourglass, IconMessageCircle } from '@tabler/icons-react';
 import type { Player } from '@/core/game/types';
 import { getPlayerAssignments, type PlayerAssignment, shouldBeOnLeft, statusIcon } from './statusBarUtils';
 import { PLAYER_STATUS } from '@/core/game/constants';
+import { JoinRequests } from '@/hooks/room/JoinRequests';
 
 interface PlayerAvatarProps {
   player: Player;
@@ -162,6 +163,10 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
               <IconSettings size={20} />
             </ActionIcon>
           )}
+
+          {isCreator && (
+            <JoinRequests roomId={roomId} />
+          )}          
           
           <ActionIcon 
             variant="subtle" 

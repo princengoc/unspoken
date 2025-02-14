@@ -1,6 +1,6 @@
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { supabase } from './client';
-import { type Player, type Card, type JoinRequest, DEFAULT_PLAYER } from '@/core/game/types';
+import { type Player, type JoinRequest, DEFAULT_PLAYER } from '@/core/game/types';
 
 export const roomMembersService = {
   async createJoinRequest(roomId: string, userId: string): Promise<JoinRequest> {

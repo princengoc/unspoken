@@ -9,7 +9,6 @@ import {
   Paper,
 } from '@mantine/core';
 import { useRoomHook } from '@/hooks/room/useRoomHook';
-import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { RoomProvider } from '@/context/RoomProvider';
 import { useGameState } from '@/context/GameStateProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
@@ -70,13 +69,6 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
                 isCreator={isCreator}
                 handleLeaveRoom={handleLeaveRoom}
               />
-
-      {/* Join Requests (for room creator) */}
-      {isCreator && (
-        <Box mb="xl">
-          <JoinRequests roomId={roomId} />
-        </Box>
-      )}
 
       {/* Game Phases */}
         {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}

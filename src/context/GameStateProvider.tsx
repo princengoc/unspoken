@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { gameStatesService } from '@/services/supabase/gameStates';
 import type { GamePhase, GameState } from '@/core/game/types';
 import { DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
+import { notifications } from "@mantine/notifications";
 
 interface GameStateContextType {
   // Core game state
@@ -113,6 +114,7 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
 
   const completeRound = async () => {
     if (gameState.currentRound >= gameState.totalRounds) {
+      notifications.show({ title: "Success", message: "Game finished!", color: "green" });
       return;
     }
     await startNewRound();

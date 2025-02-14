@@ -9,6 +9,7 @@ interface UseRoomReturn {
   loading: boolean;
   error: Error | null;
   findRoomByPasscode: (passcode: string) => Promise<Room>;
+  findPasscodeByRoom: (roomId: string) => Promise<string>;
   createRoom: (name: string, settings?: Partial<RoomSettings>) => Promise<Room>;
   joinRoom: (roomId: string) => Promise<Room>;
   updateSettings: (settings: Partial<RoomSettings>) => Promise<void>;
@@ -74,6 +75,12 @@ export function useRoomHook(roomId?: string): UseRoomReturn {
     }
   };
 
+  const findPasscodeByRoom = async (roomId: string): Promise<string> => {
+    const passcode = await roomsService.findPasscodeByRoom(roomId); 
+    if (!passcode) throw new Error(`Passcode not found for room with ID ${roomId}`);
+    return passcode
+  };
+
   const findRoomByPasscode = async (passcode: string): Promise<Room> => {
     const room = await roomsService.findRoomByPasscode(passcode);
     if (!room) throw new Error('Room not found');
@@ -129,6 +136,7 @@ export function useRoomHook(roomId?: string): UseRoomReturn {
     loading,
     error,
     findRoomByPasscode,
+    findPasscodeByRoom,
     createRoom,
     joinRoom,
     updateSettings,

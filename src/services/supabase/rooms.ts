@@ -114,6 +114,22 @@ export const roomsService = {
     return data as Room;
   },
 
+  async findPasscodeByRoom(roomId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('passcode') // Select only the 'passcode' field
+      .eq('id', roomId)
+      .eq('is_active', true)
+      .single();
+  
+    if (error && error.code === 'PGRST116') return null; // Room not found
+    if (error) throw error;
+
+    const passcode = data?.passcode as string | undefined; 
+
+    return passcode? passcode.toUpperCase() : null;
+  },
+
   async findRoomByPasscode(passcode: string): Promise<Room | null> {
     const { data, error } = await supabase
       .from('rooms')
