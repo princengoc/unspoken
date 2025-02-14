@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Popover, CopyButton, Button, Group, Avatar, Indicator, ActionIcon, Tooltip } from '@mantine/core';
-import { IconUserPlus, IconCheck, IconX, IconCopy } from '@tabler/icons-react';
+import { Popover, Group, Avatar, Indicator, ActionIcon, Tooltip } from '@mantine/core';
+import { IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { roomMembersService } from '@/services/supabase/roomMembers';
 import { useAuth } from '@/context/AuthProvider';
 import { useRoomHook } from './useRoomHook';
+import CopyCodeButton from './CopyCodeButton';
 
 
 interface JoinRequestsProps {
@@ -150,18 +151,7 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
             </Group>
           ))
         ) : (
-          <CopyButton value={roomPasscode} timeout={2000}>
-            {({ copied, copy }) => (
-              <Button
-                variant="light"
-                color={copied ? 'teal' : 'blue'}
-                leftSection={copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
-                onClick={copy}
-              >
-                {copied ? 'Copied!' : 'Copy Code'}
-              </Button>
-            )}
-          </CopyButton>
+          <CopyCodeButton roomPasscode={roomPasscode} setOpened={setOpened} />
         )}
       </Popover.Dropdown>
     </Popover>
