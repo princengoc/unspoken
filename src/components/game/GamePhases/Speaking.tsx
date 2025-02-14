@@ -20,7 +20,8 @@ export function Speaking({ gameStateId }: SpeakingProp) {
   if (!activeCard) return null;
 
   return (
-    <Stack spacing="md">
+    <Stack gap="md">
+      <Group justify='center'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -28,6 +29,7 @@ export function Speaking({ gameStateId }: SpeakingProp) {
       >
         <Card card={activeCard} index={0} total={1} />
       </motion.div>
+      </Group>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
