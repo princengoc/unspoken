@@ -23,8 +23,62 @@ interface ReactionsFeedProps {
   speakerId: string;
   cardId: string;
   currentUserId: string;
-  playerAssignments: Record<string, PlayerAssignment>;
+  playerAssignments: Map<string, PlayerAssignment>;
 }
+
+// Custom avatar for reactions using player assignments
+interface ReactionAvatarProps {
+  listenerId: string;
+  isCurrentUser: boolean;
+  isPrivate: boolean;
+  playerAssignments: Map<string, PlayerAssignment>;
+  size?: 'sm' | 'md';
+}
+
+// TODO: resume here
+function ReactionAvatar({ 
+  listenerId, 
+  isCurrentUser, 
+  isPrivate, 
+  playerAssignments,
+  size = 'sm'
+}: ReactionAvatarProps) {
+  const assignment = playerAssignments.get(listenerId);
+  
+  if (!assignment) {
+    // Fallback if no assignment found
+    return (
+      <Avatar
+        radius="xl"
+        size={size}
+        style={{
+          opacity: isPrivate ? 0.7 : 1,
+          border: isCurrentUser ? '2px solid green' : 'none',
+        }}
+      />
+    );
+  }
+  
+  const { Icon, bgColor } = assignment;
+  const avatarSize = size === 'sm' ? 24 : 32;
+  
+  return (
+    <Avatar
+      radius="xl"
+      size={size}
+      styles={() => ({
+        root: {
+          border: isCurrentUser ? '2px solid green' : 'none',
+          backgroundColor: bgColor,
+          opacity: isPrivate ? 0.7 : 1,
+        }
+      })}
+    >
+      <Icon size={avatarSize} color="white" />
+    </Avatar>
+  );
+}
+
 
 export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, playerAssignments }: ReactionsFeedProps) {
   const [reactionGroups, setReactionGroups] = useState<ReactionGroup[]>([]);
@@ -99,15 +153,6 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
   }
 
   return (
-    <Paper 
-      p="sm" 
-      radius="md" 
-      shadow="sm" 
-      withBorder
-      style={{ 
-        maxWidth: '100%',
-      }}
-    >
       <Group justify="center" gap="xl">
         <AnimatePresence>
           {/* Compact reaction groups */}
@@ -131,17 +176,13 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
                       style={{ marginLeft: -8 * index }}
                     >
                         <Box style={{ position: 'relative' }}>
-                        <Avatar 
-                          size="md" 
-                          radius="xl" 
-                          color={color}
-                          style={{ 
-                            opacity: reaction.isPrivate ? 0.7 : 1,
-                            border: `1px solid ${theme.white}`,
-                          }}
-                        >
-                          {reaction.username?.charAt(0) || '?'}
-                        </Avatar>
+                          <ReactionAvatar
+                            listenerId={reaction.listenerId}
+                            isCurrentUser={reaction.listenerId === currentUserId}
+                            isPrivate={reaction.isPrivate}
+                            playerAssignments={playerAssignments}
+                            size="sm"
+                          />                          
                         {reaction.isPrivate && (
                            <Box 
                              style={{ 
@@ -200,18 +241,13 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
                     style={{ marginLeft: -8 * index }}
                   >
                     <Box style={{ position: 'relative' }}>
-                      {/* TODO: change the Avatar block below to use PlayerAvatar */}
-                      <Avatar 
-                        size="md" 
-                        radius="xl" 
-                        color="violet"
-                        style={{ 
-                          opacity: reaction.isPrivate ? 0.7 : 1,
-                          border: `1px solid ${theme.white}`,
-                        }}
-                      >
-                        {reaction.username?.charAt(0) || '?'}
-                      </Avatar>
+                      <ReactionAvatar
+                        listenerId={reaction.listenerId}
+                        isCurrentUser={reaction.listenerId === currentUserId}
+                        isPrivate={reaction.isPrivate}
+                        playerAssignments={playerAssignments}
+                        size="sm"
+                      />
                       {reaction.isPrivate && (
                          <Box 
                            style={{ 
@@ -254,6 +290,5 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
           )}
           </AnimatePresence>
      </Group>
-    </Paper>
   );
 }
