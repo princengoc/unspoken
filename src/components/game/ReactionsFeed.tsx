@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Paper, Group, Avatar, Text, Badge, Stack, useMantineTheme, ScrollArea } from '@mantine/core';
-import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock, IconWorld } from '@tabler/icons-react';
+import { Paper, Group, Avatar, Tooltip, useMantineTheme } from '@mantine/core';
+import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock } from '@tabler/icons-react';
 import { reactionsService, ListenerReaction, ReactionType } from '@/services/supabase/reactions';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -112,129 +112,120 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
         maxWidth: '100%',
       }}
     >
-      <Stack gap="xs">
-        <Text size="sm" fw={500} c="dimmed">Reactions</Text>
-        
-        <ScrollArea h={200} type="auto">
-          <Stack gap="md">
-            <AnimatePresence>
-              {/* Standard reactions */}
-              {reactionGroups.map((group) => {
-                const { icon: Icon, color, label } = REACTION_CONFIG[group.type];
-                return (
+      <Group justify="center" gap="xl">
+        <AnimatePresence>
+          {/* Compact reaction groups */}
+          {reactionGroups.map((group) => {
+            const { icon: Icon, color, label } = REACTION_CONFIG[group.type];
+            return (
+              <Tooltip
+                key={group.type}
+                label={`${label} (${group.reactions.length})`}
+                position="top"
+                withArrow
+              >
+                <Group gap='xs' justify='center'>
+                  <Icon color={theme.colors[color][6]} size={16} />
+                  {group.reactions.slice(0, 3).map((reaction, index) => (
+                    <motion.div
+                      key={reaction.id}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2, delay: index * 0.1 }}
+                      style={{ marginLeft: -8 * index }}
+                    >
+                      <Tooltip 
+                        label={`${reaction.username} ${reaction.isPrivate ? '(private)' : ''}`}
+                        position="top"
+                      >
+                        <Avatar 
+                          size="xs" 
+                          radius="xl" 
+                          color={color}
+                          style={{ 
+                            opacity: reaction.isPrivate ? 0.7 : 1,
+                            border: `1px solid ${theme.white}`,
+                          }}
+                        >
+                          {reaction.username?.charAt(0) || '?'}
+                        </Avatar>
+                      </Tooltip>
+                    </motion.div>
+                  ))}
+                  {group.reactions.length > 3 && (
+                    <Tooltip label={`${group.reactions.length - 3} more`}>
+                      <Avatar 
+                        size="xs" 
+                        radius="xl" 
+                        color={color}
+                        style={{ 
+                          marginLeft: -8,
+                          border: `1px solid ${theme.white}`,
+                        }}
+                      >
+                        {group.reactions.length - 3}
+                      </Avatar>
+                    </Tooltip>
+                  )}
+                </Group>
+              </Tooltip>
+            );
+          })}
+          {/* Compact ripples */}
+          {ripples.length > 0 && (
+            <Tooltip 
+              label={`Saved for later (${ripples.length})`}
+              position="top"
+              withArrow
+            >
+              <Group gap="xs" justify='center'>
+                <IconRipple color={theme.colors.violet[6]} size={16} />
+                {ripples.slice(0, 3).map((reaction, index) => (
                   <motion.div
-                    key={group.type}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
+                    key={reaction.id}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2, delay: index * 0.1 }}
+                    style={{ marginLeft: -8 * index }}
                   >
-                    <Paper p="xs" radius="sm" withBorder>
-                      <Stack gap="xs">
-                        <Group justify="apart">
-                          <Group gap="xs">
-                            <Icon color={theme.colors[color][6]} size={18} />
-                            <Text size="sm" fw={500}>{label}</Text>
-                          </Group>
-                          <Badge size="sm" color={color}>
-                            {group.reactions.length}
-                          </Badge>
-                        </Group>
-                        
-                        <Group gap="xs">
-                          {group.reactions.map((reaction) => (
-                            <motion.div
-                              key={reaction.id}
-                              initial={{ scale: 0.8 }}
-                              animate={{ scale: 1 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <Avatar 
-                                size="sm" 
-                                radius="xl" 
-                                color={color}
-                                style={{ opacity: reaction.isPrivate ? 0.7 : 1 }}
-                              >
-                                {reaction.username?.charAt(0) || '?'}
-                              </Avatar>
-                              {reaction.isPrivate && (
-                                <div style={{ 
-                                  position: 'absolute', 
-                                  bottom: -2, 
-                                  right: -2,
-                                  background: theme.white,
-                                  borderRadius: '50%',
-                                  padding: 2
-                                }}>
-                                  <IconLock size={10} />
-                                </div>
-                              )}
-                            </motion.div>
-                          ))}
-                        </Group>
-                      </Stack>
-                    </Paper>
+                    <Tooltip 
+                      label={`${reaction.username} ${reaction.isPrivate ? '(private)' : ''}`}
+                      position="top"
+                    >
+                      <Avatar 
+                        size="xs" 
+                        radius="xl" 
+                        color="violet"
+                        style={{ 
+                          opacity: reaction.isPrivate ? 0.7 : 1,
+                          border: `1px solid ${theme.white}`,
+                        }}
+                      >
+                        {reaction.username?.charAt(0) || '?'}
+                      </Avatar>
+                    </Tooltip>
                   </motion.div>
-                );
-              })}
-
-              {/* Ripples section */}
-              {ripples.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Paper p="xs" radius="sm" withBorder>
-                    <Stack gap="xs">
-                      <Group justify="apart">
-                        <Group gap="xs">
-                          <IconRipple color={theme.colors.violet[6]} size={18} />
-                          <Text size="sm" fw={500}>Saved for later</Text>
-                        </Group>
-                        <Badge size="sm" color="violet">
-                          {ripples.length}
-                        </Badge>
-                      </Group>
-                      
-                      <Group gap="xs">
-                        {ripples.map((reaction) => (
-                          <motion.div
-                            key={reaction.id}
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <Avatar 
-                              size="sm" 
-                              radius="xl" 
-                              color="violet"
-                              style={{ opacity: reaction.isPrivate ? 0.7 : 1 }}
-                            >
-                              {reaction.username?.charAt(0) || '?'}
-                            </Avatar>
-                            {reaction.isPrivate && (
-                              <div style={{ 
-                                position: 'absolute', 
-                                bottom: -2, 
-                                right: -2,
-                                background: theme.white,
-                                borderRadius: '50%',
-                                padding: 2
-                              }}>
-                                <IconLock size={10} />
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </Group>
-                    </Stack>
-                  </Paper>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Stack>
-        </ScrollArea>
-      </Stack>
+                ))}
+                {ripples.length > 3 && (
+                  <Tooltip label={`${ripples.length - 3} more`}>
+                    <Avatar 
+                      size="xs" 
+                      radius="xl" 
+                      color="violet"
+                      style={{ 
+                        marginLeft: -8,
+                        border: `1px solid ${theme.white}`,
+                      }}
+                    >
+                      {ripples.length - 3}
+                    </Avatar>
+                  </Tooltip>
+                )}
+              </Group>
+            </Tooltip>
+          )}
+          </AnimatePresence>
+     </Group>
     </Paper>
   );
 }
