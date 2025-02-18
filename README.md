@@ -2,7 +2,7 @@
 
 * [ ] Implement Ripple cards
 * [ ] Implment Exchange
-* [ ] Let game settings be different icons on the toolbar
+* [ ] Let game settings be different icons on the toolbar(??)
 
 # Minor game logic changes
 
@@ -35,8 +35,10 @@ In game
     * [x] Get an "End Game" page
     * [x] Remove current vs total round. Always have one round, but  enable other settings (eg depth: filter for cards depth)
 * [x] Enable depth filter
+* [x] Improved Minicard display and PlayerAvatar consistency
 
 ## Bugs
 
+* [ ] PlayerAvatar in end game is different from profile???
 * [ ] game_state is created twice to the same room_id
 

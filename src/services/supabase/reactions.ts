@@ -125,11 +125,10 @@ export const reactionsService = {
     return data || [];
   },
 
-  // FIXME: change gameStateId to roomId
   async getRippledCards(
     gameStateId: string,
     playerId: string
-  ): Promise<Card[]> {
+  ): Promise<string[]> {
     const { data: reactions } = await supabase
       .from('reactions')
       .select('card_id')
@@ -141,14 +140,9 @@ export const reactionsService = {
 
     if (!reactions?.length) return [];
 
-    const cardIds = reactions.map(r => r.card_id);
-    
-    const { data: cards } = await supabase
-      .from('cards')
-      .select('*')
-      .in('id', cardIds);
+    const cardIds = reactions.map(r => r.card_id) as string[];
 
-    return cards || [];
+    return cardIds || [];
   },
 
   async getReactionsForSpeaker(

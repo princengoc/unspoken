@@ -3,7 +3,7 @@ import { cardsInRoomsService } from '@/services/supabase/cardsInRooms';
 import { supabase } from '@/services/supabase/client';
 import { reactionsService } from '@/services/supabase/reactions';
 import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
-import type { Card, CardState, RoomSettings } from '@/core/game/types';
+import type { Card, CardState } from '@/core/game/types';
 
 interface CardsInGameContextType {
   // Card states
@@ -152,18 +152,18 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     }
 
     // get rippled cards. These are in the discard pile and should be move to the player hands
-    // FIXME: getRippledCards should just return the cardIds as string[], then we will use the cardState to turn them into cards below
-    const rippledCards = await reactionsService.getRippledCards(roomId, playerId);    
-
+    const rippledCardsIds = await reactionsService.getRippledCards(roomId, playerId);    
+    
     // Add cards to the game and player's hand
     await Promise.all(
         [
             addNewCardsToPlayer(randomCards.map((c: Card) => c.id), playerId), 
-            moveCardsToPlayerHand(rippledCards.map((c: Card) => c.id), playerId)
+            moveCardsToPlayerHand(rippledCardsIds, playerId)
         ]
     )
 
     // return all the cards in player's hand
+    const rippledCards = getCardsByIds(rippledCardsIds);
     return [...randomCards, ...rippledCards];
   };
 
