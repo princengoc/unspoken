@@ -104,7 +104,7 @@ export const cardsInRoomsService = {
   async moveCardsToDiscard(roomId: string, cardIds: string[]): Promise<void> {
     const { error } = await supabase
       .from(CARDS_IN_ROOMS_DB)
-      .update({ in_play: false }) // keep player_id will keep the selectedCards, enables history tracking
+      .update({ in_play: false, in_player_hand: false }) // keep player_id will keep the selectedCards, enables history tracking
       .filter('room_id', 'eq', roomId)
       .in('card_id', cardIds);
   
