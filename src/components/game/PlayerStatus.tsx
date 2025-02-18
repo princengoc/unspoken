@@ -1,17 +1,19 @@
 import React from 'react';
-import { Group, Avatar, Indicator, Tooltip, ActionIcon, Divider } from '@mantine/core';
+import { Group, Avatar, Indicator, Tooltip, ActionIcon, Divider, Modal } from '@mantine/core';
 import { motion } from 'framer-motion';
 import { IconCards, IconDoorExit, IconSettings, IconHourglass, IconMessageCircle } from '@tabler/icons-react';
 import type { Player } from '@/core/game/types';
 import { getPlayerAssignments, type PlayerAssignment, shouldBeOnLeft, statusIcon } from './statusBarUtils';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
+import { ProfileSettings } from '@/app/auth/ProfileSettings';
 
 interface PlayerAvatarProps {
   player: Player;
   isCurrentUser: boolean;
   assignment: PlayerAssignment;
   size?: 'sm' | 'md' | 'lg';
+  onClick?: () => void;
 }
 
 const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
@@ -19,6 +21,7 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   isCurrentUser,
   assignment,
   size = 'md',
+  onClick
 }) => {
   const { Icon, bgColor } = assignment;
   
@@ -37,6 +40,7 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
         backgroundColor: bgColor,
         transition: 'all 0.2s ease',
       }}
+      onClick={isCurrentUser ? onClick : undefined} // Only add onClick for current user
     >
       <Icon
         size={size === 'sm' ? 16 : 20}
@@ -90,6 +94,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
   handleLeaveRoom,
   gamePhase,
 }) => {
+  const [profileModalOpen, setProfileModalOpen] = React.useState(false);
   const playerAssignments = getPlayerAssignments(members, roomId);
 
   // Split players into left and right groups
@@ -98,86 +103,104 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
 
   const PhaseIcon = gamePhase === 'setup' ? IconHourglass : IconMessageCircle;
 
+  const handleAvatarClick = () => {
+    setProfileModalOpen(true);
+  };
+
   return (
-    <Group gap="xs" align="center" justify="space-between">
-      {/* Left side players (completed/spoken) */}
-      <Group gap="sm" align="center" justify='center'>
-        {leftPlayers.map((player) => (
-          <motion.div
-            key={player.id}
-            layout
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          >
-            <PlayerAvatar
-              player={player}
-              // isCurrentUser={player.id === activePlayerId}
-              isCurrentUser={true}
-              assignment={playerAssignments.get(player.id)!}
-              size="md"
-            />
-          </motion.div>
-        ))}
-      </Group>
+    <>
+      <Group gap="xs" align="center" justify="space-between">
+        {/* Left side players (completed/spoken) */}
+        <Group gap="sm" align="center" justify='center'>
+          {leftPlayers.map((player) => (
+            <motion.div
+              key={player.id}
+              layout
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              <PlayerAvatar
+                player={player}
+                // isCurrentUser={player.id === activePlayerId}
+                isCurrentUser={true}
+                assignment={playerAssignments.get(player.id)!}
+                size="md"
+                onClick={player.id === currentUserId ? handleAvatarClick : undefined}
+              />
+            </motion.div>
+          ))}
+        </Group>
 
-      <Divider orientation='vertical' size="sm" />
+        <Divider orientation='vertical' size="sm" />
 
-      {/* Right side players (in progress) */}
-      <Group gap="sm" align="center" justify='center'>
-        {rightPlayers.map((player) => (
-          <motion.div
-            key={player.id}
-            layout
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          >
-            <PlayerAvatar
-              player={player}
-              isCurrentUser={player.id === currentUserId}
-              assignment={playerAssignments.get(player.id)!}
-              size="md"
-            />
-          </motion.div>
-        ))}
-        
-        <Divider orientation='vertical' size="md" />
-        
-        {/* Action buttons */}
-        <Group gap="xs" ml="md" justify="flex-end">
-          {typeof discardPileCount === 'number' && (
-            <ActionIcon onClick={onDiscardPileClick} variant="subtle" size="lg">
-              <Indicator label={discardPileCount} inline size={16} position="top-end">
-                <IconCards size={20} />
-              </Indicator>
-            </ActionIcon>
-          )}
-
-            <ActionIcon variant="subtle" size="xl">
-              <PhaseIcon size={24} />
-            </ActionIcon>            
+        {/* Right side players (in progress) */}
+        <Group gap="sm" align="center" justify='center'>
+          {rightPlayers.map((player) => (
+            <motion.div
+              key={player.id}
+              layout
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              <PlayerAvatar
+                player={player}
+                isCurrentUser={player.id === currentUserId}
+                assignment={playerAssignments.get(player.id)!}
+                size="md"
+                onClick={player.id === currentUserId ? handleAvatarClick : undefined}
+              />
+            </motion.div>
+          ))}
           
-          {isCreator && (
-            <ActionIcon variant="subtle" size="lg">
-              <IconSettings size={20} />
-            </ActionIcon>
-          )}
-
-          {isCreator && (
-            <JoinRequests roomId={roomId} />
-          )}          
+          <Divider orientation='vertical' size="md" />
           
-          <ActionIcon 
-            variant="subtle" 
-            color="red" 
-            size="lg"
-            onClick={handleLeaveRoom}
-          >
-            <IconDoorExit size={20} />
-          </ActionIcon>
+          {/* Action buttons */}
+          <Group gap="xs" ml="md" justify="flex-end">
+            {typeof discardPileCount === 'number' && (
+              <ActionIcon onClick={onDiscardPileClick} variant="subtle" size="lg">
+                <Indicator label={discardPileCount} inline size={16} position="top-end">
+                  <IconCards size={20} />
+                </Indicator>
+              </ActionIcon>
+            )}
+
+              <ActionIcon variant="subtle" size="xl">
+                <PhaseIcon size={24} />
+              </ActionIcon>            
+            
+            {isCreator && (
+              <ActionIcon variant="subtle" size="lg">
+                <IconSettings size={20} />
+              </ActionIcon>
+            )}
+
+            {isCreator && (
+              <JoinRequests roomId={roomId} />
+            )}          
+            
+            <ActionIcon 
+              variant="subtle" 
+              color="red" 
+              size="lg"
+              onClick={handleLeaveRoom}
+            >
+              <IconDoorExit size={20} />
+            </ActionIcon>
+          </Group>
         </Group>
       </Group>
-    </Group>
+
+      {/* Profile Modal */}
+      <Modal
+        opened={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        title="Profile Settings"
+        size="md"
+      >
+        <ProfileSettings />
+      </Modal>    
+    </>
   );
 };
