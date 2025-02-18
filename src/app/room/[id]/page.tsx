@@ -18,6 +18,7 @@ import { PlayerStatus } from '@/components/game/PlayerStatus';
 import { SideNavbar } from '@/components/layout/SideNavbar';
 import { notifications } from '@mantine/notifications';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
+import { Endgame } from '@/components/game/GamePhases/Endgame';
 
 interface RoomPageContentProps {
   roomId: string;
@@ -90,7 +91,14 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
       >
         <Paper p="md" radius="xs" style={{ height: '100%' }}>
           {/* Game Phases */}
-          {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
+          {/* Game Phases */}
+          {phase === 'setup' ? (
+            <Setup />
+          ) : phase === 'endgame' ? (
+            <Endgame />
+          ) : (
+            <Speaking gameStateId={gameStateId} />
+          )}
         </Paper>
       </Box>
     </Box>
