@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Group, ActionIcon, Tooltip } from '@mantine/core';
-import { IconSparkles, IconHeart, IconBulb, IconRipple } from '@tabler/icons-react';
+import { Group, ActionIcon, Tooltip, Switch } from '@mantine/core';
+import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock, IconWorld } from '@tabler/icons-react';
 import { useAuth } from '@/context/AuthProvider';
 import { useReactions } from '@/hooks/game/useReactions';
 import type { ReactionType } from '@/services/supabase/reactions';
@@ -19,6 +19,8 @@ interface ListenerReactionsProps {
 
 export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerReactionsProps) {
   const { user } = useAuth();
+  const [isPrivate, setIsPrivate] = useState(true);
+
   if (!user || !gameStateId) return null;
 
   const { toggleReaction, toggleRipple, hasReaction, isRippled, reactions } = useReactions({
@@ -45,7 +47,7 @@ export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerRe
 
   const handleReactionClick = (id: ReactionType) => {
     // optimistic UI update
-    toggleReaction(id);
+    toggleReaction(id, isPrivate);
     
     // Disable button to prevent spam clicking
     setDisabledButtons((prev) => ({ ...prev, [id]: true }));
@@ -63,6 +65,8 @@ export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerRe
       setRippleDisabled(false);
     }, 2000);
   };
+
+  const PrivacyIcon = isPrivate ? IconLock : IconWorld;
 
   return (
     <Group justify="center" gap="xs">
@@ -95,6 +99,24 @@ export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerRe
           <IconRipple size={18} />
         </ActionIcon>
       </Tooltip>
+
+      {/* Privacy toggle */}
+      <Group justify="center" gap="xs">
+        <Switch
+          checked={!isPrivate}
+          onChange={() => setIsPrivate(!isPrivate)}
+          color="blue"
+          size="xs"
+          label={
+            <Group gap="md">
+              <PrivacyIcon size={14} />
+              {isPrivate ? 'Private' : 'Public'}
+            </Group>
+          }
+        />
+      </Group>      
     </Group>
+
+    
   );
 }

@@ -151,6 +151,39 @@ export const reactionsService = {
     return cards || [];
   },
 
+  async getReactionsForSpeaker(
+    gameStateId: string,
+    speakerId: string,
+    cardId: string
+  ): Promise<{ data: ListenerReaction[] }> {
+    const { data, error } = await supabase
+      .from('reactions')
+      .select('*')
+      .match({
+        game_state_id: gameStateId,
+        speaker_id: speakerId,
+        card_id: cardId
+      });
+      
+    if (error) {
+      console.error('Error fetching speaker reactions:', error);
+      throw error;
+    }
+    
+    return { 
+      data: data.map(item => ({
+        id: item.id,
+        gameStateId: item.game_state_id,
+        speakerId: item.speaker_id,
+        listenerId: item.listener_id,
+        cardId: item.card_id,
+        type: item.type as ReactionType,
+        isPrivate: item.is_private,
+        rippleMarked: item.ripple_marked
+      }))
+    };
+  },
+
   subscribeToReactions(
     gameStateId: string,
     callback: (reactions: ListenerReaction[]) => void
@@ -169,7 +202,18 @@ export const reactionsService = {
             .from('reactions')
             .select('*')
             .eq('game_state_id', gameStateId);
-          callback(data || []);
+
+          const mappedData = (data || []).map(item => ({
+            id: item.id,
+            gameStateId: item.game_state_id,
+            speakerId: item.speaker_id,
+            listenerId: item.listener_id,
+            cardId: item.card_id,
+            type: item.type as ReactionType,
+            isPrivate: item.is_private,
+            rippleMarked: item.ripple_marked
+          }));
+          callback(mappedData);
         }
       )
       .subscribe();

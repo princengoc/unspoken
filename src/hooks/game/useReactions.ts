@@ -50,7 +50,7 @@ export function useReactions({
     debounceRef.current[key] = setTimeout(callback, 300); // 300 seconds debounce
   };
 
-  const toggleReaction = (type: ReactionType) => {
+  const toggleReaction = (type: ReactionType, isPrivate: boolean = true) => {
     if (!gameStateId || !speakerId || !listenerId || !cardId) return;
   
     debounce(type, async () => {
@@ -67,7 +67,7 @@ export function useReactions({
                 listenerId, 
                 cardId, 
                 type,
-                isPrivate: true,  // Default value from backend
+                isPrivate: isPrivate,
                 rippleMarked: false,
               }
             ];

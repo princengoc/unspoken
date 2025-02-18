@@ -11,8 +11,12 @@
 
 
 # Minor UIs
+
+Sign up
 * [ ] signup form should require a username
 * [ ] pasword field too small
+
+In game
 * [ ] add effects for buttons eg game phase (display explanations?)
 * [ ] change playerAvatar to an ActionIcon so that mouse over has a clickable effect
 
