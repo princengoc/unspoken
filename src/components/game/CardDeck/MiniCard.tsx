@@ -1,7 +1,9 @@
-import { Card as MantineCard, Group, Text, Avatar, Stack, rem } from '@mantine/core';
+import { Card as MantineCard, Text, Avatar, Stack, rem, Box, Tooltip } from '@mantine/core';
 import { motion } from 'framer-motion';
 import type { Card as CardType } from '@/core/game/types';
 import { IconCirclesRelation, IconIkosaedr, IconCell } from '@tabler/icons-react';
+import type { PlayerAssignment } from '../statusBarUtils';
+import { PlayerAvatar } from '../PlayerAvatar';
 
 /** Mood types that represent different emotional states */
 export type MoodType = 'Expansive' | 'Centered' | 'Introspective';
@@ -48,9 +50,13 @@ interface MiniCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   showSender?: boolean;
+  contributorName?: string | null; 
+  contributorAssignment?: PlayerAssignment; 
+  playerAssignment?: PlayerAssignment; 
+  playerName?: string;
 }
 
-export function MiniCard({ card, mood, isSelected = false, onClick, showSender = false }: MiniCardProps) {
+export function MiniCard({ card, mood, isSelected = false, onClick, showSender = false, contributorAssignment, contributorName, playerAssignment, playerName }: MiniCardProps) {
   const moodStyles = mood ? moodConfig[mood] : null;
   const IconComponent = moodStyles?.icon;
 
@@ -64,7 +70,7 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
           '0 0 2px rgba(0, 0, 0, 0.1)'
         ]
       } : {}}
-      transition={{ duration: 1, repeat: isSelected ? Infinity : 0, repeatType: "reverse" }}
+      transition={{ duration: 0.1, repeat: isSelected ? Infinity : 0, repeatType: "reverse" }}
     >
       <MantineCard
         shadow="sm"
@@ -76,7 +82,8 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
           borderColor: isSelected ? moodStyles?.color : undefined,
           borderWidth: isSelected ? '2px' : '1px',
           width: '150px', // Fixed width
-          height: '180px', // Fixed height
+          height: '160px', // Fixed height
+          // position: 'relative'
         }}
         onClick={onClick}
       >
@@ -94,6 +101,65 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
             </div>
           )}
 
+         {/* Player who used this card - top right corner */}
+         {playerAssignment && (
+           <Tooltip label={playerName || 'Speaker'} position="top" withArrow>
+             <Box
+               style={{
+                 position: 'absolute',
+                 top: rem(4),
+                 right: rem(4),
+                 zIndex: 2
+               }}
+             >
+               <PlayerAvatar
+                 assignment={playerAssignment}
+                 size="xs"
+                 showTooltip={false}
+               />
+             </Box>
+           </Tooltip>
+         )}
+
+         {/* Contributor/Sender - bottom left corner */}
+         {showSender && contributorAssignment && (
+           <Tooltip label={contributorName || (card.contributor_id || 'Anonymous')} position="bottom" withArrow>
+             <Box
+               style={{
+                 position: 'absolute',
+                 bottom: rem(4),
+                 left: rem(4),
+                 zIndex: 2
+               }}
+             >
+               <PlayerAvatar
+                 assignment={contributorAssignment}
+                 size="xs"
+                 showTooltip={false}
+               />
+             </Box>
+           </Tooltip>
+         )}
+
+         {/* Fallback for contributor when no PlayerAssignment is available */}
+         {showSender && !contributorAssignment && card.contributor_id && (
+           <Tooltip label={`Contributor: ${card.contributor_id}`} position="bottom" withArrow>
+             <Avatar 
+               size="xs" 
+               radius="xl" 
+               color="gray"
+               style={{
+                 position: 'absolute',
+                 bottom: rem(4),
+                 left: rem(4),
+                 zIndex: 2
+               }}
+             >
+               {card.contributor_id.charAt(0).toUpperCase()}
+             </Avatar>
+           </Tooltip>
+         )}
+
           <Text 
             size="sm" 
             fw={500} 
@@ -105,21 +171,12 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
               display: '-webkit-box',
               WebkitLineClamp: 4,
               WebkitBoxOrient: 'vertical',
-              lineHeight: '1.4'
+              lineHeight: '1.4', 
             }}
           >
             {card.content}
           </Text>
 
-        { showSender &&
-          <Group gap="xs">
-            <Avatar size="xs" radius="xl" color="gray">
-              {card.contributor_id?.charAt(0).toUpperCase() || '?'}
-            </Avatar>
-            <Text size="xs" c="dimmed">
-              {card.contributor_id || 'Anonymous'}
-            </Text>
-          </Group> }
         </Stack>
       </MantineCard>
     </motion.div>

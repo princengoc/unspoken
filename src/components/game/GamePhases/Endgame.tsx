@@ -8,12 +8,18 @@ import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { SlideIn, FadeIn } from '@/components/animations/Motion';
 import { MiniCard } from '../CardDeck/MiniCard';
+import { getPlayerAssignments } from '../statusBarUtils';
 
-export function Endgame() {
+type EndgameProp = {
+  roomId: string
+}
+
+export function Endgame({roomId}: EndgameProp) {
   const { members } = useRoomMembers();
   const { cardState, getCardById } = useCardsInGame();
   const { isCreator } = useRoom();
   const [showingCards, setShowingCards] = useState(false);
+  const playerAssignments = getPlayerAssignments(members, roomId);
 
   useEffect(() => {
     // Delay showing cards for a dramatic effect
@@ -28,10 +34,18 @@ export function Endgame() {
   const playerCards = Object.entries(cardState.selectedCards).map(([playerId, cardId]) => {
     const player = members.find(m => m.id === playerId);
     const card = getCardById(cardId);
+
+    const contributorId = card?.contributor_id;
+    const contributor = contributorId 
+      ? members.find(m => m.id === contributorId) 
+      : undefined;    
     return { 
       playerId, 
       playerName: player?.username || "Unknown Player", 
-      card 
+      playerAssignments: playerAssignments.get(playerId),
+      card, 
+      contributorName: contributor?.username, 
+      contributorAssignment: contributorId ? playerAssignments.get(contributorId) : undefined
     };
   });
 
@@ -42,7 +56,7 @@ export function Endgame() {
 
   return (
     <Container size="lg" py="md">
-      <Stack gap="lg">
+      <Stack gap="xs">
         <FadeIn>
           <Title order={2} ta="center">Game Complete</Title>
           <Text ta="center" size="md" c="dimmed">
@@ -56,19 +70,18 @@ export function Endgame() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
-              {playerCards.map(({ playerId, playerName, card }, index) => (
+            <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="xs" verticalSpacing='xs'>
+                {playerCards.map(({ playerId, playerName, playerAssignments, card, contributorAssignment, contributorName }, index) => (
                 card && (
                   <SlideIn key={playerId} delay={index * 0.1}>
-                    <Paper p="xs" radius="md" withBorder>
-                      <Stack gap="xs">
-                        <Badge size="sm" radius="sm">{playerName}</Badge>
                         <MiniCard
                           card={card}
-                          showSender={false}
+                          showSender={true}
+                          playerAssignment={playerAssignments}
+                          playerName={playerName}
+                          contributorAssignment={contributorAssignment}
+                          contributorName={contributorName}
                         />
-                      </Stack>
-                    </Paper>
                   </SlideIn>
                 )
               ))}
@@ -99,7 +112,7 @@ export function Endgame() {
         )}
         
         {!isCreator && (
-          <Paper p="md" radius="md" withBorder>
+          <Paper p="md" radius="md">
             <Text ta="center">
               Waiting for room creator to start an encore or end the game...
             </Text>

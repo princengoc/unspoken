@@ -47,8 +47,14 @@ export function shuffleArray<T>(array: T[], seed: number): T[] {
   return arr;
 }
 
-export const hashCode = (str: string): number =>
-  str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+export const hashCode = (str: string): number =>{
+  if (!str) {
+    return 0
+  } else {
+    str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  }
+}
+  
 
 // Available icons and colors for player avatars
 export const PLAYER_ICONS = [
