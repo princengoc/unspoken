@@ -9,7 +9,7 @@ import {
   IconMicrophone, IconBook, IconDots, IconX, IconEar
 } from '@tabler/icons-react';
 
-import type { Player, PlayerStatus } from '@/core/game/types';
+import type { GamePhase, Player, PlayerStatus } from '@/core/game/types';
 import { PLAYER_STATUS } from '@/core/game/constants';
 
 export const statusIcon = (status: PlayerStatus) => {
@@ -98,7 +98,7 @@ export function getPlayerAssignments(members: Player[], roomId: string): Map<str
 }
 
 // Helper function to determine if a player should be on the left side, meaning they are done with the current game phase
-export function shouldBeOnLeft(player: Player, gamePhase: 'setup' | 'speaking'): boolean {
+export function shouldBeOnLeft(player: Player, gamePhase: GamePhase): boolean {
   if (gamePhase === 'setup') {
     return player.status === PLAYER_STATUS.BROWSING;
   } else {

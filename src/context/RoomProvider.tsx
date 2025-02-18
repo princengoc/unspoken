@@ -4,6 +4,7 @@ import React, {
   useState,
   ReactNode,
   useCallback,
+  useEffect,
 } from 'react';
 import { GameStateProvider, useGameState } from './GameStateProvider';
 import { RoomMembersProvider, useRoomMembers } from './RoomMembersProvider';
@@ -59,6 +60,8 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
   } = useCardsInGame();
 
   const [currentSpeakerHasStarted, setCurrentSpeakerHasStarted] = useState(false);
+  // Flag to signal that finishSpeaking has completed its database and state updates
+  const [finishSpeakingPending, setFinishSpeakingPending] = useState(false);
 
   // Destructure currentMember values for easier dependency management
   const currentMemberId = currentMember?.id;
@@ -137,12 +140,7 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
       if (currentMemberSelectedCardId) {
         await moveCardsToDiscard([currentMemberSelectedCardId]);
       }
-      const nextSpeaker = getRandomNotSpokenMember();
-      if (nextSpeaker) {
-        await setActivePlayer(nextSpeaker.id);
-      } else {
-        await completeRound();
-      }
+      setFinishSpeakingPending(true);
     } catch (error) {
       console.error('Failed to finish speaking:', error);
       throw error;
@@ -151,12 +149,34 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     currentMemberId,
     isActiveSpeaker,
     currentMemberSelectedCardId,
-    getRandomNotSpokenMember,
     updateMemberStatus,
     markMemberAsSpoken,
     moveCardsToDiscard,
-    setActivePlayer,
-    completeRound,
+  ]);
+
+  // after async updates of finishSpeaking and states have been re-rendered
+  // we now get and set next speaker
+  useEffect(() => {
+    if (finishSpeakingPending) {
+      const nextSpeaker = getRandomNotSpokenMember(); 
+      if (nextSpeaker) {
+        setActivePlayer(nextSpeaker.id)
+        .then(() =>
+          console.log(`finishSpeaking: set next speaker. Members status: ${JSON.stringify(members)}`)
+        )
+        .catch((err) => console.error('Error setting next speaker', err));
+      } else {
+        completeRound();
+      }
+      // reset flag
+      setFinishSpeakingPending(false);
+    }
+  }, [
+    finishSpeakingPending, 
+    members,
+    getRandomNotSpokenMember, 
+    setActivePlayer, 
+    completeRound
   ]);
 
   const startSpeaking = useCallback(async () => {

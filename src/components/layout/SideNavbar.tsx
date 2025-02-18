@@ -2,11 +2,12 @@ import React from 'react';
 import { Stack, ActionIcon, Tooltip, Indicator, Divider } from '@mantine/core';
 import { IconDoorExit, IconSettings, IconHourglass, IconMessageCircle, IconCards } from '@tabler/icons-react';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
+import { GamePhase } from '@/core/game/types';
 
 interface SideNavbarProps {
   roomId: string;
   isCreator: boolean;
-  gamePhase: 'setup' | 'speaking';
+  gamePhase: GamePhase;
   discardPileCount?: number;
   onDiscardPileClick?: () => void;
   handleLeaveRoom?: () => void;

@@ -5,15 +5,20 @@ import { useRoom } from '@/context/RoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
 import { Card } from '../Card';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
+import { Endgame } from './Endgame';
 
 type SpeakingProp = {
   gameStateId: string
 }
 
 export function Speaking({ gameStateId }: SpeakingProp) {
-  const { activePlayerId } = useGameState();
+  const { phase, activePlayerId } = useGameState();
   const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useRoom();
   const { cardState, getCardById } = useCardsInGame();
+
+  if (phase === 'endgame') {
+    return <Endgame />;
+  }
 
   if (!activePlayerId) return null;
   const activeCard = getCardById(cardState.selectedCards[activePlayerId]);

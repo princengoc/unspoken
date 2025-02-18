@@ -1,12 +1,12 @@
 export const DEFAULT_GAME_CONFIG = {
   allowExchanges: true,
   allowRipples: true,
-  roundsPerPlayer: 3,
+  roundsPerPlayer: 1,
   cardSelectionTime: 120, // seconds
   baseSharingTime: 300   // seconds
 } as const;
 
-export const DEFAULT_TOTAL_ROUNDS = 3;
+export const DEFAULT_TOTAL_ROUNDS = 1;
 export const INITIAL_CARDS_PER_PLAYER = 3;
 
 export const PLAYER_STATUS = {

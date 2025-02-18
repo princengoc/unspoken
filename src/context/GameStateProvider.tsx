@@ -1,14 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { gameStatesService } from '@/services/supabase/gameStates';
 import type { GamePhase, GameState } from '@/core/game/types';
-import { DEFAULT_TOTAL_ROUNDS } from '@/core/game/constants';
 import { notifications } from "@mantine/notifications";
 
 interface GameStateContextType {
   // Core game state
   phase: GamePhase;
   currentRound: number;
-  totalRounds: number;
   activePlayerId: string | null;
   
   // Phase management
@@ -34,7 +32,6 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
     id: gameStateId,
     phase: 'setup',
     currentRound: 1,
-    totalRounds: DEFAULT_TOTAL_ROUNDS,
     activePlayerId: null,
   });
 
@@ -113,11 +110,18 @@ export function GameStateProvider({ roomId, gameStateId, children }: GameStatePr
   };
 
   const completeRound = async () => {
-    if (gameState.currentRound >= gameState.totalRounds) {
+    try {
       notifications.show({ title: "Success", message: "Game finished!", color: "green" });
-      return;
+      const updates = {
+        phase: 'endgame' as GamePhase, 
+        activePlayerId: null
+      };
+      setGameState(prev => ({...prev, ...updates }));
+      await gameStatesService.update(gameStateId, updates)
+    } catch (error) {
+      console.error(`Failed to complete round: ${JSON.stringify(error)}`);
+      throw error;
     }
-    await startNewRound();
   };
 
   const value = {

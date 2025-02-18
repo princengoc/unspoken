@@ -1,7 +1,7 @@
 // src/core/game/types.ts
 import { PLAYER_STATUS } from "./constants";
 
-export type GamePhase = 'setup' | 'speaking';
+export type GamePhase = 'setup' | 'speaking' | 'endgame';
 export type PlayerStatus = (typeof PLAYER_STATUS)[keyof typeof PLAYER_STATUS];
 export type JoinRequestStatus = 'pending' | 'approved' | 'rejected';
 export type GameMode = 'irl' | 'remote';
@@ -39,7 +39,6 @@ export type GameState = {
   room_id: string;
   phase: GamePhase;
   currentRound: number;
-  totalRounds: number;
   activePlayerId: string | null;
 };
 

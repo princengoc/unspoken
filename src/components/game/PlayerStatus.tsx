@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Stack, Avatar, Indicator, Tooltip, Modal } from '@mantine/core';
 import { motion } from 'framer-motion';
-import type { Player } from '@/core/game/types';
+import type { GamePhase, Player } from '@/core/game/types';
 import { getPlayerAssignments, type PlayerAssignment, shouldBeOnLeft, statusIcon } from './statusBarUtils';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { ProfileSettings } from '@/app/auth/ProfileSettings';
@@ -79,7 +79,7 @@ interface PlayerStatusProps {
   currentUserId: string | null;
   activePlayerId: string | null;
   roomId: string;
-  gamePhase: 'setup' | 'speaking';
+  gamePhase: GamePhase;
 }
 
 export function PlayerStatus({
