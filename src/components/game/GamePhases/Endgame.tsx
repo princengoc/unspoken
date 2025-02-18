@@ -1,13 +1,13 @@
 // src/components/game/GamePhases/Endgame.tsx
 import { useEffect, useState } from 'react';
-import { Container, Stack, Title, Text, Group, Button, Paper, Divider, Badge } from '@mantine/core';
+import { Container, Stack, Title, Text, Group, Button, Paper, Divider, Badge, SimpleGrid } from '@mantine/core';
 import { IconRepeat, IconArrowRight } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
-import { Card } from '../Card';
 import { useRoom } from '@/context/RoomProvider';
 import { SlideIn, FadeIn } from '@/components/animations/Motion';
+import { MiniCard } from '../CardDeck/MiniCard';
 
 export function Endgame() {
   const { members } = useRoomMembers();
@@ -19,7 +19,7 @@ export function Endgame() {
     // Delay showing cards for a dramatic effect
     const timer = setTimeout(() => {
       setShowingCards(true);
-    }, 1500);
+    }, 500);
     
     return () => clearTimeout(timer);
   }, []);
@@ -41,12 +41,12 @@ export function Endgame() {
   };
 
   return (
-    <Container size="lg" py="xl">
-      <Stack gap="xl">
+    <Container size="lg" py="md">
+      <Stack gap="lg">
         <FadeIn>
-          <Title order={1} ta="center">Game Complete</Title>
-          <Text ta="center" size="lg">
-            Thanks for playing! Here's what everyone shared:
+          <Title order={2} ta="center">Game Complete</Title>
+          <Text ta="center" size="md" c="dimmed">
+            Here's what everyone shared:
           </Text>
         </FadeIn>
 
@@ -56,41 +56,39 @@ export function Endgame() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <Stack gap="lg">
+            <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
               {playerCards.map(({ playerId, playerName, card }, index) => (
-                <SlideIn key={playerId} delay={index * 0.2}>
-                  <Paper p="md" radius="md" withBorder>
-                    <Group align="normal" mb="xs">
-                      <Group>
-                        <Badge size="lg" color="blue">{playerName}</Badge>
-                      </Group>
-                    </Group>
-                    <Divider mb="md" />
-                    {card && (
-                      <Group align="center">
-                        <Card card={card} index={0} total={1} showSender={false} />
-                      </Group>
-                    )}
-                  </Paper>
-                </SlideIn>
+                card && (
+                  <SlideIn key={playerId} delay={index * 0.1}>
+                    <Paper p="xs" radius="md" withBorder>
+                      <Stack gap="xs">
+                        <Badge size="sm" radius="sm">{playerName}</Badge>
+                        <MiniCard
+                          card={card}
+                          showSender={false}
+                        />
+                      </Stack>
+                    </Paper>
+                  </SlideIn>
+                )
               ))}
-            </Stack>
+            </SimpleGrid>
           </motion.div>
         )}
         
         {isCreator && (
-          <Group justify="center" mt="xl">
+          <Group justify="center" mt="md">
             <Button
-              size="lg"
-              leftSection={<IconRepeat size={20} />}
+              size="md"
+              leftSection={<IconRepeat size={18} />}
               onClick={handleEncoreClick}
               color="indigo"
             >
               Play Encore Round
             </Button>
             <Button
-              size="lg"
-              rightSection={<IconArrowRight size={20} />}
+              size="md"
+              rightSection={<IconArrowRight size={18} />}
               variant="outline"
               color="gray"
               onClick={() => window.location.href = '/'}
