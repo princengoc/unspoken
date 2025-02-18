@@ -64,6 +64,7 @@ export type RoomSettings = {
   card_selection_time: number;
   base_sharing_time: number;
   card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
+  ripple_only: boolean; // If true, only use rippled and exchanged cards for this round
 };
 
 export type Card = {

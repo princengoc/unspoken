@@ -12,7 +12,7 @@ import ScatterDeck from '../CardDeck/ScatterDeck';
 
 export function Setup() {
   const { cardState, getCardsByIds } = useCardsInGame(); 
-  const { currentMember } = useRoomMembers();
+  const { currentMember, updateMemberStatus } = useRoomMembers();
   const { 
     handleCardSelection, 
     initiateSpeakingPhase,
@@ -24,13 +24,20 @@ export function Setup() {
   } = useRoom();
 
   const [isDealing, setIsDealing] = useState(false);
+  const [noCardsAvailable, setNoCardsAvailable] = useState(false);  
 
   const handleDrawCards = async () => {
       if (!currentMember?.id) return;
       
       setIsDealing(true);
       try {
-          await dealCards(currentMember.id);
+          const cards = await dealCards(currentMember.id);
+          // If no cards were dealt (eg ripple and exchange-only round)
+          // mark the player as ready immediately
+          if (cards.length === 0) {
+            setNoCardsAvailable(true);
+            await updateMemberStatus(currentMember.id, PLAYER_STATUS.BROWSING);
+          }
       } catch (error) {
           notifications.show({
               title: 'Error',
@@ -46,7 +53,7 @@ export function Setup() {
   return (
     <Stack gap="xl" justify="center">
       {/* Show "Draw Cards" if the player hasn't received any cards */}
-      {canStartDrawCards && (
+      {canStartDrawCards && !noCardsAvailable && (
         <SlideIn>
             <Button 
                 onClick={handleDrawCards} 
@@ -59,6 +66,21 @@ export function Setup() {
             </Button>
         </SlideIn>
       )}
+
+      {/* Show message when player has no cards available in ripple-only round */}
+      {noCardsAvailable && (
+        <Paper p="md" radius="md">
+          <Stack align="center" gap="md">
+            <Text size="md">
+              You don't have any rippled cards for this round.
+            </Text>
+            <Text size="sm" c="dimmed">
+              You'll participate as a listener in this round.
+            </Text>
+          </Stack>
+        </Paper>
+      )}
+
 
       {/* When cards are available: either allow selection or wait */}
       {canStartChoosing && (

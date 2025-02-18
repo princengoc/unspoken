@@ -137,9 +137,31 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
   // Helper to deal new cards to a player
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
     // Get room settings card depth
-    const { data: roomData } = await supabase.from('rooms').select('settings').eq('id', roomId).single();
-    const cardDepth = roomData?.settings?.card_depth;
+    const { data: roomData } = await supabase.from('rooms').select('settings, game_state_id').eq('id', roomId).single();
+    const roomSettings = roomData?.settings;
+    const cardDepth = roomSettings?.card_depth;
+    const rippleOnly = roomSettings?.ripple_only || false;
+    const gameStateId = roomData?.game_state_id; 
     
+    // Get rippled cards first
+    const rippledCardsIds = await reactionsService.getRippledCards(gameStateId, playerId);
+    console.log(`rippled Cards Ids: ${JSON.stringify(rippledCardsIds)}`);
+    
+    // If this is a ripple-only round,
+    // only use rippled cards and don't deal new ones
+    if (rippleOnly) {
+      if (rippledCardsIds.length > 0) {
+        // Add rippled cards to player's hand
+        await moveCardsToPlayerHand(rippledCardsIds, playerId);
+        const rippledCards = getCardsByIds(rippledCardsIds);
+        return rippledCards;
+      } else {
+        // Player has no rippled cards in a ripple-only round
+        // Return empty array, this player will skip card selection
+        return [];
+      }
+    }
+        
     // Get random cards from the cards table
     const { data: randomCards } = await supabase.rpc('get_random_cards', {
       limit_count: INITIAL_CARDS_PER_PLAYER,
@@ -150,9 +172,6 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     if (!randomCards?.length) {
       throw new Error('No cards available to deal');
     }
-
-    // get rippled cards. These are in the discard pile and should be move to the player hands
-    const rippledCardsIds = await reactionsService.getRippledCards(roomId, playerId);    
     
     // Add cards to the game and player's hand
     await Promise.all(

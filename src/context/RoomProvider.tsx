@@ -9,7 +9,8 @@ import React, {
 import { GameStateProvider, useGameState } from './GameStateProvider';
 import { RoomMembersProvider, useRoomMembers } from './RoomMembersProvider';
 import { CardsInGameProvider, useCardsInGame } from './CardsInGameProvider';
-import type { Room, Card } from '@/core/game/types';
+import type { Room, Card, RoomSettings } from '@/core/game/types';
+import { roomsService } from '@/services/supabase/rooms';
 import { PLAYER_STATUS } from '@/core/game/constants';
 
 interface RoomContextType {
@@ -26,6 +27,8 @@ interface RoomContextType {
   isActiveSpeaker: boolean;
   isSetupComplete: boolean;
   isCreator: boolean;
+  startNextRound: (settings: Partial<RoomSettings>) => Promise<void>;
+  room: Room | null;  // TODO: is this a good idea to pass room around?
 }
 
 const RoomContext = createContext<RoomContextType | null>(null);
@@ -249,6 +252,45 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     }
   }, [dealCardsToPlayer]);
 
+  // Generalized method to start next round (regular or encore)
+  const startNextRound = useCallback(async (settings: Partial<RoomSettings>): Promise<void> => {
+    if (!currentMemberId || !isCreator) {
+      console.warn('Only the room creator can start the next round.');
+      return;
+    }
+
+    try {
+      // Reset player statuses and spoken flags
+      await Promise.all(
+        members.map(member => Promise.all([
+          updateMemberStatus(member.id, PLAYER_STATUS.CHOOSING),
+          markMemberAsSpoken(member.id, false)
+        ]))
+      );
+      
+      // Update game state to start new round
+      await setPhase('setup');
+      
+      // Update room settings for the next round
+      await roomsService.updateSettings(room.id, {
+        ...room.settings,
+        ...settings
+      });
+      
+    } catch (error) {
+      console.error('Failed to start next round:', error);
+      throw error;
+    }
+  }, [
+    currentMemberId,
+    isCreator,
+    members,
+    updateMemberStatus,
+    markMemberAsSpoken,
+    setPhase,
+    room
+  ]);
+
   const value = {
     completeSetup,
     startSpeaking,
@@ -261,7 +303,9 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     currentSpeakerHasStarted,
     isActiveSpeaker,
     isSetupComplete,
-    isCreator
+    isCreator, 
+    startNextRound, 
+    room
   };
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;

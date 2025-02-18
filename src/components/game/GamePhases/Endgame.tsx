@@ -1,7 +1,8 @@
 // src/components/game/GamePhases/Endgame.tsx
 import { useEffect, useState } from 'react';
-import { Container, Stack, Title, Text, Group, Button, Paper, Divider, Badge, SimpleGrid } from '@mantine/core';
+import { Container, Stack, Title, Text, Group, Button, Paper, Switch, Select, SimpleGrid } from '@mantine/core';
 import { IconRepeat, IconArrowRight } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { motion } from 'framer-motion';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
@@ -9,6 +10,8 @@ import { useRoom } from '@/context/RoomProvider';
 import { SlideIn, FadeIn } from '@/components/animations/Motion';
 import { MiniCard } from '../CardDeck/MiniCard';
 import { getPlayerAssignments } from '../statusBarUtils';
+import { RoomSettings } from '@/core/game/types';
+
 
 type EndgameProp = {
   roomId: string
@@ -17,8 +20,15 @@ type EndgameProp = {
 export function Endgame({roomId}: EndgameProp) {
   const { members } = useRoomMembers();
   const { cardState, getCardById } = useCardsInGame();
-  const { isCreator } = useRoom();
+  const { isCreator, startNextRound, room } = useRoom();
   const [showingCards, setShowingCards] = useState(false);
+  const [nextRoundSettings, setNextRoundSettings] = useState<Partial<RoomSettings>>({
+      ripple_only: false,
+      card_depth: null,
+  });
+  const [loading, setLoading] = useState(false);
+  
+  if (!roomId) return null;  
   const playerAssignments = getPlayerAssignments(members, roomId);
 
   useEffect(() => {
@@ -29,8 +39,17 @@ export function Endgame({roomId}: EndgameProp) {
     
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (room?.settings?.card_depth) {
+      setNextRoundSettings(prev => ({
+        ...prev,
+        card_depth: room?.settings?.card_depth
+      }));
+    }
+  }, [room?.settings?.card_depth]);  
   
-  // Get player → card mapping
+  // Get player to card mapping
   const playerCards = Object.entries(cardState.selectedCards).map(([playerId, cardId]) => {
     const player = members.find(m => m.id === playerId);
     const card = getCardById(cardId);
@@ -49,10 +68,28 @@ export function Endgame({roomId}: EndgameProp) {
     };
   });
 
-  const handleEncoreClick = () => {
-    // TODO: Implement Encore feature
-    alert('Encore feature coming soon! This will allow playing with rippled and exchanged cards.');
-  };
+  const handleStartEncore = async () => {
+    if (!isCreator) return;
+    
+    setLoading(true);
+    try {
+      await startNextRound(nextRoundSettings);
+      notifications.show({
+        title: 'Success',
+        message: 'Encore round started!',
+        color: 'green'
+      });
+    } catch (error) {
+      console.error('Failed to start encore:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to start encore round',
+        color: 'red'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };  
 
   return (
     <Container size="lg" py="md">
@@ -90,25 +127,65 @@ export function Endgame({roomId}: EndgameProp) {
         )}
         
         {isCreator && (
-          <Group justify="center" mt="md">
-            <Button
-              size="md"
-              leftSection={<IconRepeat size={18} />}
-              onClick={handleEncoreClick}
-              color="indigo"
-            >
-              Play Encore Round
-            </Button>
-            <Button
-              size="md"
-              rightSection={<IconArrowRight size={18} />}
-              variant="outline"
-              color="gray"
-              onClick={() => window.location.href = '/'}
-            >
-              Exit Game
-            </Button>
-          </Group>
+         <Paper p="md" radius="md" withBorder mt="md">
+           <Stack gap="md">
+             <Title order={4}>Play an Encore Round</Title>
+             
+             <Switch
+               label="Use only rippled and exchanged cards"
+               description="If enabled, players will only use cards they rippled or exchanged. If disabled, additional cards will be dealt."
+               checked={nextRoundSettings.ripple_only}
+               onChange={(event) => {
+                const isChecked = event?.currentTarget?.checked ?? false;
+                console.log(`Ripple only is checked: ${isChecked}`);
+                setNextRoundSettings(prev => ({
+                  ...prev,
+                  ripple_only: isChecked
+                }));
+              }}
+             />
+             
+             <Select
+               label="Card Depth"
+               description={nextRoundSettings.ripple_only ? 
+                 "This setting is disabled when using only rippled cards" : 
+                 "Filter additional cards by conversation depth level"}
+               data={[
+                 { value: 'all', label: 'All Depths' },
+                 { value: '1', label: 'Light (Level 1)' },
+                 { value: '2', label: 'Medium (Level 2)' },
+                 { value: '3', label: 'Deep (Level 3)' }
+               ]}
+               value={nextRoundSettings.card_depth ? nextRoundSettings.card_depth.toString() : 'all'}
+               onChange={(value) => setNextRoundSettings(prev => ({
+                 ...prev,
+                 card_depth: value === 'all' ? null : parseInt(value as string) as 1 | 2 | 3
+               }))}
+               disabled={nextRoundSettings.ripple_only}
+             />
+             
+             <Group justify="center" mt="sm">
+               <Button
+                 size="md"
+                 leftSection={<IconRepeat size={18} />}
+                 onClick={handleStartEncore}
+                 color="indigo"
+                 loading={loading}
+               >
+                 Start Encore Round
+               </Button>
+               <Button
+                 size="md"
+                 rightSection={<IconArrowRight size={18} />}
+                 variant="outline"
+                 color="gray"
+                 onClick={() => window.location.href = '/'}
+               >
+                 Exit Game
+               </Button>
+             </Group>
+           </Stack>
+         </Paper>
         )}
         
         {!isCreator && (
