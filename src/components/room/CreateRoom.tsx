@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, TextInput, Stack, Button, Switch, Group, Text } from '@mantine/core';
+import { Card, TextInput, Stack, Button, Switch, Group, Text, Select } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconAdjustments } from '@tabler/icons-react';
 import { useRoomHook } from '@/hooks/room/useRoomHook';
@@ -17,7 +17,8 @@ export function CreateRoom() {
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
     allow_card_exchanges: true,
     allow_ripple_effects: true,
-    rounds_per_player: 3
+    rounds_per_player: 3,
+    card_depth: null
   });
   const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
   const [roomPasscode, setRoomPasscode] = useState<string | null>(null);
@@ -131,6 +132,21 @@ export function CreateRoom() {
               min={1}
               max={10}
             />
+           <Select
+             label="Card Depth"
+             description="Filter cards by conversation depth level"
+             data={[
+               { value: 'all', label: 'All Depths' },
+               { value: '1', label: 'Light (Level 1)' },
+               { value: '2', label: 'Medium (Level 2)' },
+               { value: '3', label: 'Deep (Level 3)' }
+             ]}
+             value={settings.card_depth?.toString() || 'all'}
+             onChange={(value) => setSettings(prev => ({
+               ...prev,
+               card_depth: value === 'all' ? null : parseInt(value as string) as 1 | 2 | 3
+             }))}
+           />
           </Stack>
         )}
 

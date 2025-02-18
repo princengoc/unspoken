@@ -1,11 +1,8 @@
 # TODO
 
-* [ ] End game changes
-    * [ ] Get an "End Game" page
-    * [ ] Remove current vs total round. Always have one round, but  enable other settings (eg depth: filter for cards depth)
-* [ ] Let game settings be different icons on the toolbar
 * [ ] Implement Ripple cards
 * [ ] Implment Exchange
+* [ ] Let game settings be different icons on the toolbar
 
 # Minor game logic changes
 
@@ -30,6 +27,10 @@
 * [x] remove navbar header
 * [x] profile edit: click on self icon, and should be an overlaid window that allows us to return to game
 * [x] Navbar vs PlayerStatus
+* [x] End game changes
+    * [x] Get an "End Game" page
+    * [x] Remove current vs total round. Always have one round, but  enable other settings (eg depth: filter for cards depth)
+* [x] Enable depth filter
 
 ## Bugs
 

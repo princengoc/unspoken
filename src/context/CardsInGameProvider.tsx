@@ -3,7 +3,7 @@ import { cardsInRoomsService } from '@/services/supabase/cardsInRooms';
 import { supabase } from '@/services/supabase/client';
 import { reactionsService } from '@/services/supabase/reactions';
 import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
-import type { Card, CardState } from '@/core/game/types';
+import type { Card, CardState, RoomSettings } from '@/core/game/types';
 
 interface CardsInGameContextType {
   // Card states
@@ -136,10 +136,15 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
   
   // Helper to deal new cards to a player
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
+    // Get room settings card depth
+    const { data: roomData } = await supabase.from('rooms').select('settings').eq('id', roomId).single();
+    const cardDepth = roomData?.settings?.card_depth;
+    
     // Get random cards from the cards table
     const { data: randomCards } = await supabase.rpc('get_random_cards', {
       limit_count: INITIAL_CARDS_PER_PLAYER,
-      exclude_ids: cardState.roomPile
+      exclude_ids: cardState.roomPile, 
+      depth: cardDepth
     });
 
     if (!randomCards?.length) {

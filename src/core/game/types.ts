@@ -63,6 +63,7 @@ export type RoomSettings = {
   rounds_per_player: number;
   card_selection_time: number;
   base_sharing_time: number;
+  card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
 };
 
 export type Card = {
