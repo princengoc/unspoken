@@ -23,7 +23,7 @@ export const reactionsService = {
     listenerId: string,
     cardId: string,
     type: ReactionType,
-    isPrivate = true
+    isPrivate: boolean = true
   ): Promise<void> {
     // Check if reaction exists
     const { data: existing } = await supabase

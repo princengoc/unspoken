@@ -74,7 +74,7 @@ export function useReactions({
       });
   
       try {
-        await reactionsService.toggleReaction(gameStateId, speakerId, listenerId, cardId, type);
+        await reactionsService.toggleReaction(gameStateId, speakerId, listenerId, cardId, type, isPrivate);
       } catch (error) {
         console.error('Failed to toggle reaction:', error);
       }

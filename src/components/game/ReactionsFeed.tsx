@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Paper, Group, Avatar, Tooltip, useMantineTheme } from '@mantine/core';
+import { Paper, Group, Avatar, Tooltip, useMantineTheme, Box } from '@mantine/core';
 import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock } from '@tabler/icons-react';
 import { reactionsService, ListenerReaction, ReactionType } from '@/services/supabase/reactions';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -134,12 +134,9 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
                       transition={{ duration: 0.2, delay: index * 0.1 }}
                       style={{ marginLeft: -8 * index }}
                     >
-                      <Tooltip 
-                        label={`${reaction.username} ${reaction.isPrivate ? '(private)' : ''}`}
-                        position="top"
-                      >
+                        <Box style={{ position: 'relative' }}>
                         <Avatar 
-                          size="xs" 
+                          size="md" 
                           radius="xl" 
                           color={color}
                           style={{ 
@@ -149,13 +146,31 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
                         >
                           {reaction.username?.charAt(0) || '?'}
                         </Avatar>
-                      </Tooltip>
+                        {reaction.isPrivate && (
+                           <Box 
+                             style={{ 
+                               position: 'absolute', 
+                               bottom: -2, 
+                               right: -2, 
+                               background: theme.white,
+                               borderRadius: '50%',
+                               width: 12,
+                               height: 12,
+                               display: 'flex',
+                               alignItems: 'center',
+                               justifyContent: 'center'
+                             }}
+                           >
+                             <IconLock size={8} />
+                           </Box>
+                         )}
+                       </Box>
                     </motion.div>
                   ))}
                   {group.reactions.length > 3 && (
                     <Tooltip label={`${group.reactions.length - 3} more`}>
                       <Avatar 
-                        size="xs" 
+                        size="md" 
                         radius="xl" 
                         color={color}
                         style={{ 
@@ -188,12 +203,9 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
                     transition={{ duration: 0.2, delay: index * 0.1 }}
                     style={{ marginLeft: -8 * index }}
                   >
-                    <Tooltip 
-                      label={`${reaction.username} ${reaction.isPrivate ? '(private)' : ''}`}
-                      position="top"
-                    >
+                    <Box style={{ position: 'relative' }}>
                       <Avatar 
-                        size="xs" 
+                        size="md" 
                         radius="xl" 
                         color="violet"
                         style={{ 
@@ -203,7 +215,25 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
                       >
                         {reaction.username?.charAt(0) || '?'}
                       </Avatar>
-                    </Tooltip>
+                      {reaction.isPrivate && (
+                         <Box 
+                           style={{ 
+                             position: 'absolute', 
+                             bottom: -2, 
+                             right: -2, 
+                             background: theme.white,
+                             borderRadius: '50%',
+                             width: 12,
+                             height: 12,
+                             display: 'flex',
+                             alignItems: 'center',
+                             justifyContent: 'center'
+                           }}
+                         >
+                           <IconLock size={8} />
+                         </Box>
+                       )}
+                     </Box>
                   </motion.div>
                 ))}
                 {ripples.length > 3 && (
