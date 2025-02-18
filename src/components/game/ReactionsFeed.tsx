@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Paper, Group, Avatar, Tooltip, useMantineTheme, Box } from '@mantine/core';
-import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock } from '@tabler/icons-react';
+import { Group, Avatar, Tooltip, useMantineTheme, Box } from '@mantine/core';
+import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock, IconWorld } from '@tabler/icons-react';
 import { reactionsService, ListenerReaction, ReactionType } from '@/services/supabase/reactions';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerAssignment } from './statusBarUtils';
-import { PlayerAvatar } from './PlayerStatus';
+import { PlayerAvatar } from './PlayerAvatar';
 
 // Define reaction display config
 const REACTION_CONFIG = {
@@ -25,60 +25,6 @@ interface ReactionsFeedProps {
   currentUserId: string;
   playerAssignments: Map<string, PlayerAssignment>;
 }
-
-// Custom avatar for reactions using player assignments
-interface ReactionAvatarProps {
-  listenerId: string;
-  isCurrentUser: boolean;
-  isPrivate: boolean;
-  playerAssignments: Map<string, PlayerAssignment>;
-  size?: 'sm' | 'md';
-}
-
-// TODO: resume here
-function ReactionAvatar({ 
-  listenerId, 
-  isCurrentUser, 
-  isPrivate, 
-  playerAssignments,
-  size = 'sm'
-}: ReactionAvatarProps) {
-  const assignment = playerAssignments.get(listenerId);
-  
-  if (!assignment) {
-    // Fallback if no assignment found
-    return (
-      <Avatar
-        radius="xl"
-        size={size}
-        style={{
-          opacity: isPrivate ? 0.7 : 1,
-          border: isCurrentUser ? '2px solid green' : 'none',
-        }}
-      />
-    );
-  }
-  
-  const { Icon, bgColor } = assignment;
-  const avatarSize = size === 'sm' ? 24 : 32;
-  
-  return (
-    <Avatar
-      radius="xl"
-      size={size}
-      styles={() => ({
-        root: {
-          border: isCurrentUser ? '2px solid green' : 'none',
-          backgroundColor: bgColor,
-          opacity: isPrivate ? 0.7 : 1,
-        }
-      })}
-    >
-      <Icon size={avatarSize} color="white" />
-    </Avatar>
-  );
-}
-
 
 export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, playerAssignments }: ReactionsFeedProps) {
   const [reactionGroups, setReactionGroups] = useState<ReactionGroup[]>([]);
@@ -176,13 +122,15 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
                       style={{ marginLeft: -8 * index }}
                     >
                         <Box style={{ position: 'relative' }}>
-                          <ReactionAvatar
-                            listenerId={reaction.listenerId}
-                            isCurrentUser={reaction.listenerId === currentUserId}
-                            isPrivate={reaction.isPrivate}
-                            playerAssignments={playerAssignments}
-                            size="sm"
-                          />                          
+                          <PlayerAvatar
+                            assignment={playerAssignments.get(reaction.listenerId)!}
+                            size="md"
+                            highlighted={reaction.listenerId === currentUserId}
+                            highlightColor='green'
+                            showIndicator={true}
+                            indicatorColor={reaction.isPrivate ? 'yellow' : 'green'}
+                            indicatorIcon = {reaction.isPrivate ? <IconLock size={10}/> : <IconWorld size={10}/>}
+                          />
                         {reaction.isPrivate && (
                            <Box 
                              style={{ 
@@ -241,12 +189,14 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
                     style={{ marginLeft: -8 * index }}
                   >
                     <Box style={{ position: 'relative' }}>
-                      <ReactionAvatar
-                        listenerId={reaction.listenerId}
-                        isCurrentUser={reaction.listenerId === currentUserId}
-                        isPrivate={reaction.isPrivate}
-                        playerAssignments={playerAssignments}
-                        size="sm"
+                      <PlayerAvatar
+                        assignment={playerAssignments.get(reaction.listenerId)!}
+                        size="md"
+                        highlighted={reaction.listenerId === currentUserId}
+                        highlightColor='green'
+                        showIndicator={true}
+                        indicatorColor={reaction.isPrivate ? 'yellow' : 'green'}
+                        indicatorIcon = {reaction.isPrivate ? <IconLock size={10}/> : <IconWorld size={10}/>}
                       />
                       {reaction.isPrivate && (
                          <Box 
@@ -271,7 +221,6 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
                 ))}
                 {ripples.length > 3 && (
                   <Tooltip label={`${ripples.length - 3} more`}>
-                    {/* TODO: change the Avatar block below to use PlayerAvatar */}
                     <Avatar 
                       size="xs" 
                       radius="xl" 
