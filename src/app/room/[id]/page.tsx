@@ -14,7 +14,8 @@ import { useGameState } from '@/context/GameStateProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { Setup } from '@/components/game/GamePhases/Setup';
 import { Speaking } from '@/components/game/GamePhases/Speaking';
-import { PlayerStatusBar } from '@/components/game/PlayerStatus';
+import { PlayerStatus } from '@/components/game/PlayerStatus';
+import { SideNavbar } from '@/components/layout/SideNavbar';
 import { notifications } from '@mantine/notifications';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 
@@ -46,7 +47,7 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   if (!currentMember) {
     return (
       <Container size="sm" py="xl">
-        <Box sx={{ textAlign: 'center' }}>
+        <Box ta='center'>
           <Loader size="xl" />
           <Text mt="md">Joining room...</Text>
         </Box>
@@ -57,23 +58,42 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   const isCreator = currentMember.id === room?.created_by;
 
   return (
-    <Container py="xl">
-      {/* Top Bar */}
-      <Paper p="md" radius="xs" mb="xs" w = "100%">
-              <PlayerStatusBar 
-                members={members} 
-                currentUserId={currentMember.id}
-                roomId={roomId}
-                gamePhase={phase}
-                discardPileCount={cardState.discardPile.length}
-                isCreator={isCreator}
-                handleLeaveRoom={handleLeaveRoom}
-              />
+    <Box style={{ height: '100vh', position: 'relative' }}>
+      {/* Side Navigation */}
+      <SideNavbar 
+        roomId={roomId}
+        isCreator={isCreator}
+        gamePhase={phase}
+        discardPileCount={cardState.discardPile.length}
+        onDiscardPileClick={() => {}}
+        handleLeaveRoom={handleLeaveRoom}
+      />
 
-      {/* Game Phases */}
-        {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
-      </Paper>
-    </Container>
+      {/* Player Status on right side */}
+      <PlayerStatus
+        members={members}
+        currentUserId={currentMember.id}
+        activePlayerId={activePlayerId}
+        roomId={roomId}
+        gamePhase={phase}
+      />
+
+      {/* Main Content */}
+      <Box 
+        style={{ 
+          marginLeft: '60px', // Side navbar width
+          marginRight: '80px', // Player status width
+          padding: '1rem',
+          height: '100%',
+          overflowY: 'auto'
+        }}
+      >
+        <Paper p="md" radius="xs" style={{ height: '100%' }}>
+          {/* Game Phases */}
+          {phase === 'setup' ? <Setup /> : <Speaking gameStateId={gameStateId} />}
+        </Paper>
+      </Box>
+    </Box>
   );
 }
 
@@ -100,7 +120,7 @@ export default function RoomPage({ params }: RoomPageProps) {
   if (loading || !room || !room?.game_state_id) {
     return (
       <Container py="xl">
-        <Box sx={{ textAlign: 'center' }}>
+        <Box ta='center'>
           <Loader size="xl" />
           <Text mt="md">Loading room...</Text>
         </Box>

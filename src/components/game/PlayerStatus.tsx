@@ -1,16 +1,15 @@
-import React from 'react';
-import { Group, Avatar, Indicator, Tooltip, ActionIcon, Divider, Modal } from '@mantine/core';
+import React, { useState } from 'react';
+import { Stack, Avatar, Indicator, Tooltip, Modal } from '@mantine/core';
 import { motion } from 'framer-motion';
-import { IconCards, IconDoorExit, IconSettings, IconHourglass, IconMessageCircle } from '@tabler/icons-react';
 import type { Player } from '@/core/game/types';
 import { getPlayerAssignments, type PlayerAssignment, shouldBeOnLeft, statusIcon } from './statusBarUtils';
 import { PLAYER_STATUS } from '@/core/game/constants';
-import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { ProfileSettings } from '@/app/auth/ProfileSettings';
 
 interface PlayerAvatarProps {
   player: Player;
   isCurrentUser: boolean;
+  isActiveSpeaker: boolean;
   assignment: PlayerAssignment;
   size?: 'sm' | 'md' | 'lg';
   onClick?: () => void;
@@ -19,6 +18,7 @@ interface PlayerAvatarProps {
 const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   player,
   isCurrentUser,
+  isActiveSpeaker,
   assignment,
   size = 'md',
   onClick
@@ -31,16 +31,17 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
       size={size}
       styles={(theme) => ({
         root: {
-          border: isCurrentUser ? '3px solid green' : 'none',
+          border: isCurrentUser ? '3px solid green' : isActiveSpeaker ? '3px solid blue' : 'none',
           boxSizing: 'content-box',
-          padding: isCurrentUser ? '2px' : '0',
+          padding: (isCurrentUser || isActiveSpeaker) ? '2px' : '0',
+          cursor: isCurrentUser ? 'pointer' : 'default',
         }
       })}
       style={{
         backgroundColor: bgColor,
         transition: 'all 0.2s ease',
       }}
-      onClick={isCurrentUser ? onClick : undefined} // Only add onClick for current user
+      onClick={isCurrentUser ? onClick : undefined}
     >
       <Icon
         size={size === 'sm' ? 16 : 20}
@@ -62,7 +63,7 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
           offset={2}
           position="bottom-end"
           withBorder
-          color="yellow"
+          color={isActiveSpeaker ? "blue" : "yellow"}
           processing={player.status === PLAYER_STATUS.SPEAKING}
           label={statusIcon(player.status)}
         >
@@ -73,35 +74,27 @@ const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   );
 };
 
-interface PlayerStatusBarProps {
+interface PlayerStatusProps {
   members: Player[];
   currentUserId: string | null;
+  activePlayerId: string | null;
   roomId: string;
-  isCreator?: boolean;
-  discardPileCount?: number;
-  onDiscardPileClick?: () => void;
-  handleLeaveRoom?: () => void;
   gamePhase: 'setup' | 'speaking';
 }
 
-export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
+export function PlayerStatus({
   members,
   currentUserId,
+  activePlayerId,
   roomId,
-  isCreator,
-  discardPileCount,
-  onDiscardPileClick,
-  handleLeaveRoom,
   gamePhase,
-}) => {
-  const [profileModalOpen, setProfileModalOpen] = React.useState(false);
+}: PlayerStatusProps) {
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const playerAssignments = getPlayerAssignments(members, roomId);
 
-  // Split players into left and right groups
+  // Split players into groups
   const leftPlayers = members.filter(player => shouldBeOnLeft(player, gamePhase));
   const rightPlayers = members.filter(player => !shouldBeOnLeft(player, gamePhase));
-
-  const PhaseIcon = gamePhase === 'setup' ? IconHourglass : IconMessageCircle;
 
   const handleAvatarClick = () => {
     setProfileModalOpen(true);
@@ -109,88 +102,49 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
 
   return (
     <>
-      <Group gap="xs" align="center" justify="space-between">
-        {/* Left side players (completed/spoken) */}
-        <Group gap="sm" align="center" justify='center'>
+      <Stack 
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '80px',
+          background: 'white',
+          borderLeft: '1px solid #eee',
+        }}
+        p="md"
+        justify="space-between"
+      >
+        {/* Completed/spoken players at the top */}
+        <Stack gap="md" align="center">
           {leftPlayers.map((player) => (
-            <motion.div
+            <PlayerAvatar
               key={player.id}
-              layout
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <PlayerAvatar
-                player={player}
-                // isCurrentUser={player.id === activePlayerId}
-                isCurrentUser={true}
-                assignment={playerAssignments.get(player.id)!}
-                size="md"
-                onClick={player.id === currentUserId ? handleAvatarClick : undefined}
-              />
-            </motion.div>
+              player={player}
+              isCurrentUser={player.id === currentUserId}
+              isActiveSpeaker={player.id === activePlayerId}
+              assignment={playerAssignments.get(player.id)!}
+              size="md"
+              onClick={player.id === currentUserId ? handleAvatarClick : undefined}
+            />
           ))}
-        </Group>
+        </Stack>
 
-        <Divider orientation='vertical' size="sm" />
-
-        {/* Right side players (in progress) */}
-        <Group gap="sm" align="center" justify='center'>
+        {/* In progress players at the bottom */}
+        <Stack gap="md" align="center">
           {rightPlayers.map((player) => (
-            <motion.div
+            <PlayerAvatar
               key={player.id}
-              layout
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <PlayerAvatar
-                player={player}
-                isCurrentUser={player.id === currentUserId}
-                assignment={playerAssignments.get(player.id)!}
-                size="md"
-                onClick={player.id === currentUserId ? handleAvatarClick : undefined}
-              />
-            </motion.div>
+              player={player}
+              isCurrentUser={player.id === currentUserId}
+              isActiveSpeaker={player.id === activePlayerId}
+              assignment={playerAssignments.get(player.id)!}
+              size="md"
+              onClick={player.id === currentUserId ? handleAvatarClick : undefined}
+            />
           ))}
-          
-          <Divider orientation='vertical' size="md" />
-          
-          {/* Action buttons */}
-          <Group gap="xs" ml="md" justify="flex-end">
-            {typeof discardPileCount === 'number' && (
-              <ActionIcon onClick={onDiscardPileClick} variant="subtle" size="lg">
-                <Indicator label={discardPileCount} inline size={16} position="top-end">
-                  <IconCards size={20} />
-                </Indicator>
-              </ActionIcon>
-            )}
-
-              <ActionIcon variant="subtle" size="xl">
-                <PhaseIcon size={24} />
-              </ActionIcon>            
-            
-            {isCreator && (
-              <ActionIcon variant="subtle" size="lg">
-                <IconSettings size={20} />
-              </ActionIcon>
-            )}
-
-            {isCreator && (
-              <JoinRequests roomId={roomId} />
-            )}          
-            
-            <ActionIcon 
-              variant="subtle" 
-              color="red" 
-              size="lg"
-              onClick={handleLeaveRoom}
-            >
-              <IconDoorExit size={20} />
-            </ActionIcon>
-          </Group>
-        </Group>
-      </Group>
+        </Stack>
+      </Stack>
 
       {/* Profile Modal */}
       <Modal
@@ -200,7 +154,7 @@ export const PlayerStatusBar: React.FC<PlayerStatusBarProps> = ({
         size="md"
       >
         <ProfileSettings />
-      </Modal>    
+      </Modal>
     </>
   );
-};
+}
