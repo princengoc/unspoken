@@ -19,6 +19,7 @@ interface CardsInGameContextType {
   moveCardsToDiscard: (cardIds: string[]) => Promise<void>;
   markCardAsSelected: (cardId: string, playerId: string) => Promise<void>;
   moveCardsToPlayerHand: (cardIds: string[], playerId: string) => Promise<void>;
+  emptyPlayerHand: (playerId: string) => Promise<void>; // convenient function to reset cards_in_game state: empty all cards in player hand to discard
   
   // Card dealing helper that includes fetching new cards
   dealCardsToPlayer: (playerId: string) => Promise<Card[]>;
@@ -133,6 +134,13 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
   const moveCardsToPlayerHand = async (cardIds: string[], playerId: string) => {
     await cardsInRoomsService.moveCardsToPlayerHand(roomId, cardIds, playerId);
   };
+
+  const emptyPlayerHand = async (playerId: string) => {
+    const player_hand = cardState.playerHands[playerId]; 
+    if (player_hand) {
+      cardsInRoomsService.moveCardsToDiscard(roomId, player_hand);
+    }
+  };
   
   // Helper to deal new cards to a player
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
@@ -199,6 +207,7 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     moveCardsToDiscard,
     markCardAsSelected,
     moveCardsToPlayerHand,
+    emptyPlayerHand,
     dealCardsToPlayer,
     hasSelected
   };

@@ -122,7 +122,7 @@ export const cardsInRoomsService = {
       .filter('card_id', 'eq', cardId);
   
     if (error) {
-      console.error('Error moving card to player hand:', error);
+      console.error('Error marking card as selected:', error);
       throw error;
     }
   },

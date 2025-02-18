@@ -59,7 +59,8 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     cardState,
     dealCardsToPlayer,
     moveCardsToDiscard,
-    markCardAsSelected
+    markCardAsSelected, 
+    emptyPlayerHand
   } = useCardsInGame();
 
   const [currentSpeakerHasStarted, setCurrentSpeakerHasStarted] = useState(false);
@@ -138,11 +139,9 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     try {
       await Promise.all([
         updateMemberStatus(currentMemberId, PLAYER_STATUS.LISTENING),
-        markMemberAsSpoken(currentMemberId, true)
+        markMemberAsSpoken(currentMemberId, true), 
+        emptyPlayerHand(currentMemberId)
       ]);
-      if (currentMemberSelectedCardId) {
-        await moveCardsToDiscard([currentMemberSelectedCardId]);
-      }
       setFinishSpeakingPending(true);
     } catch (error) {
       console.error('Failed to finish speaking:', error);
@@ -154,7 +153,7 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     currentMemberSelectedCardId,
     updateMemberStatus,
     markMemberAsSpoken,
-    moveCardsToDiscard,
+    emptyPlayerHand
   ]);
 
   // after async updates of finishSpeaking and states have been re-rendered
@@ -264,7 +263,8 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
       await Promise.all(
         members.map(member => Promise.all([
           updateMemberStatus(member.id, PLAYER_STATUS.CHOOSING),
-          markMemberAsSpoken(member.id, false)
+          markMemberAsSpoken(member.id, false), 
+          emptyPlayerHand(member.id)
         ]))
       );
       
@@ -287,6 +287,7 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     members,
     updateMemberStatus,
     markMemberAsSpoken,
+    emptyPlayerHand,
     setPhase,
     room
   ]);
