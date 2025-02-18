@@ -8,28 +8,27 @@ import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { ReactionsFeed } from '../ReactionsFeed';
 import { useAuth } from '@/context/AuthProvider';
+import { getPlayerAssignments } from '../statusBarUtils';
 
 type SpeakingProp = {
   gameStateId: string
+  roomId: string | undefined
 }
 
-export function Speaking({ gameStateId }: SpeakingProp) {
+export function Speaking({ gameStateId, roomId }: SpeakingProp) {
   const { user } = useAuth();
   const { activePlayerId } = useGameState();
   const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
 
- // Convert members array to a map for easier lookup
-  const membersMap = members.reduce((acc, member) => {
-    acc[member.id] = { username: member.username };
-      return acc;
-  }, {} as Record<string, { username: string | null }>);
-
-
   if (!activePlayerId) return null;
   const activeCard = getCardById(cardState.selectedCards[activePlayerId]);
   if (!activeCard) return null;
+
+  if (!roomId) return null;
+
+  const playerAssignments = getPlayerAssignments(members, roomId);
 
   return (
     <Stack gap="md">
@@ -67,7 +66,7 @@ export function Speaking({ gameStateId }: SpeakingProp) {
                      speakerId={activePlayerId}
                      cardId={activeCard.id}
                      currentUserId={user.id}
-                     membersMap={membersMap}
+                     playerAssignments={playerAssignments}
                    />
                  </Box>
                )}            
@@ -87,7 +86,7 @@ export function Speaking({ gameStateId }: SpeakingProp) {
                      speakerId={activePlayerId}
                      cardId={activeCard.id}
                      currentUserId={user.id}
-                     membersMap={membersMap}
+                     playerAssignments={playerAssignments}
                    />
                  </Box>
                )}            

@@ -15,7 +15,7 @@ interface PlayerAvatarProps {
   onClick?: () => void;
 }
 
-const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
+export const PlayerAvatar: React.FC<PlayerAvatarProps> = ({
   player,
   isCurrentUser,
   isActiveSpeaker,

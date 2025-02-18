@@ -3,6 +3,8 @@ import { Paper, Group, Avatar, Tooltip, useMantineTheme, Box } from '@mantine/co
 import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock } from '@tabler/icons-react';
 import { reactionsService, ListenerReaction, ReactionType } from '@/services/supabase/reactions';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { PlayerAssignment } from './statusBarUtils';
+import { PlayerAvatar } from './PlayerStatus';
 
 // Define reaction display config
 const REACTION_CONFIG = {
@@ -21,10 +23,10 @@ interface ReactionsFeedProps {
   speakerId: string;
   cardId: string;
   currentUserId: string;
-  membersMap: Record<string, { username: string | null }>;
+  playerAssignments: Record<string, PlayerAssignment>;
 }
 
-export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, membersMap }: ReactionsFeedProps) {
+export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, playerAssignments }: ReactionsFeedProps) {
   const [reactionGroups, setReactionGroups] = useState<ReactionGroup[]>([]);
   const [ripples, setRipples] = useState<(ListenerReaction & { username?: string })[]>([]);
   const theme = useMantineTheme();
@@ -62,19 +64,13 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameStateId, speakerId, cardId, membersMap]);
+  }, [gameStateId, speakerId, cardId, playerAssignments]);
 
   // Process and group reactions
   const processReactions = (reactions: ListenerReaction[]) => {
-    // Enhance reactions with usernames
-    const enhancedReactions = reactions.map(reaction => ({
-      ...reaction,
-      username: membersMap[reaction.listenerId]?.username || 'Anonymous'
-    }));
-
     // Filter and group by type
     const reactionsByType = Object.keys(REACTION_CONFIG).reduce<Record<string, (ListenerReaction & { username?: string })[]>>((acc, type) => {
-      acc[type] = enhancedReactions.filter(r => 
+      acc[type] = reactions.filter(r => 
         r.type === type && 
         (!r.isPrivate || r.listenerId === currentUserId || r.speakerId === currentUserId)
       );
@@ -88,7 +84,7 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
     })).filter(group => group.reactions.length > 0);
 
     // Handle ripples separately
-    const relevantRipples = enhancedReactions.filter(r => 
+    const relevantRipples = reactions.filter(r => 
       r.rippleMarked && 
       (!r.isPrivate || r.listenerId === currentUserId || r.speakerId === currentUserId)
     );
@@ -204,6 +200,7 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
                     style={{ marginLeft: -8 * index }}
                   >
                     <Box style={{ position: 'relative' }}>
+                      {/* TODO: change the Avatar block below to use PlayerAvatar */}
                       <Avatar 
                         size="md" 
                         radius="xl" 
@@ -238,6 +235,7 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, m
                 ))}
                 {ripples.length > 3 && (
                   <Tooltip label={`${ripples.length - 3} more`}>
+                    {/* TODO: change the Avatar block below to use PlayerAvatar */}
                     <Avatar 
                       size="xs" 
                       radius="xl" 
