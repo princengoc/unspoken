@@ -140,24 +140,9 @@ export const roomMembersService = {
     updates: Partial<Player>
   ): Promise<void> {
     console.log('Updating player state:', { roomId, userId, updates }); // Debug log
-    
-    // Get current state first
-    const { data: currentState } = await supabase
-      .from('room_members')
-      .select()
-      .eq('room_id', roomId)
-      .eq('user_id', userId)
-      .single();
-
-    // Merge with current state to prevent overwriting
-    const mergedUpdates = {
-      ...currentState,
-      ...updates,
-    };
-
     const { error } = await supabase
       .from('room_members')
-      .update(mergedUpdates)
+      .update(updates)
       .eq('room_id', roomId)
       .eq('user_id', userId);
 

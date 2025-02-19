@@ -12,7 +12,7 @@ import ScatterDeck from '../CardDeck/ScatterDeck';
 
 export function Setup() {
   const { cardState, getCardsByIds } = useCardsInGame(); 
-  const { currentMember, updateMemberStatus } = useRoomMembers();
+  const { currentMember, updateMemberStatus, markMemberAsSpoken } = useRoomMembers();
   const { 
     handleCardSelection, 
     initiateSpeakingPhase,
@@ -33,10 +33,14 @@ export function Setup() {
       try {
           const cards = await dealCards(currentMember.id);
           // If no cards were dealt (eg ripple and exchange-only round)
-          // mark the player as ready immediately
+          // mark the player as ready and spoken immediately
           if (cards.length === 0) {
             setNoCardsAvailable(true);
-            await updateMemberStatus(currentMember.id, PLAYER_STATUS.BROWSING);
+            await Promise.all([
+              updateMemberStatus(currentMember.id, PLAYER_STATUS.BROWSING),
+              markMemberAsSpoken(currentMember.id, true)
+            ]);
+            console.log(`No cards available, marked member as spoken: ${currentMember}`);            
           }
       } catch (error) {
           notifications.show({

@@ -45,9 +45,8 @@ export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerRe
 
   const rippled = useMemo(() => isRippled(), [reactions]);
 
-  const handleReactionClick = (id: ReactionType) => {
-    // optimistic UI update
-    toggleReaction(id, isPrivate);
+  const handleReactionClick = async (id: ReactionType) => {
+    await toggleReaction(id, isPrivate);
     
     // Disable button to prevent spam clicking
     setDisabledButtons((prev) => ({ ...prev, [id]: true }));
@@ -56,8 +55,8 @@ export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerRe
     }, 500);
   };
 
-  const handleRippleClick = () => {
-    toggleRipple();
+  const handleRippleClick = async () => {
+    await toggleRipple();
 
     // ✅ Disable ripple button for 2 seconds
     setRippleDisabled(true);

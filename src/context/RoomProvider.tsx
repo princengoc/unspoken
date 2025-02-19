@@ -66,6 +66,7 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
   const [currentSpeakerHasStarted, setCurrentSpeakerHasStarted] = useState(false);
   // Flag to signal that finishSpeaking has completed its database and state updates
   const [finishSpeakingPending, setFinishSpeakingPending] = useState(false);
+  const [startNextRoundPending, setStartNextRoundPending] = useState(false);
 
   // Destructure currentMember values for easier dependency management
   const currentMemberId = currentMember?.id;
@@ -135,7 +136,12 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
   );
 
   const finishSpeaking = useCallback(async () => {
-    if (!currentMemberId || !isActiveSpeaker) return;
+    if (!currentMemberId || !isActiveSpeaker) {
+      console.log(`Calling finishSpeaking but member ID is ${currentMemberId} and ${isActiveSpeaker} \n
+        Members status: ${members}
+        `);
+      return;
+    }
     try {
       await Promise.all([
         updateMemberStatus(currentMemberId, PLAYER_STATUS.LISTENING),
@@ -260,23 +266,20 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
 
     try {
       // Reset player statuses and spoken flags
-      await Promise.all(
-        members.map(member => Promise.all([
+      console.log(`Members before update: ${JSON.stringify(members)}`);
+      await Promise.all([
+        ...members.flatMap(member => [
           updateMemberStatus(member.id, PLAYER_STATUS.CHOOSING),
-          markMemberAsSpoken(member.id, false), 
+          markMemberAsSpoken(member.id, false),
           emptyPlayerHand(member.id)
-        ]))
-      );
-      
-      // Update game state to start new round
-      await setPhase('setup');
-      
-      // Update room settings for the next round
-      await roomsService.updateSettings(room.id, {
-        ...room.settings,
-        ...settings
-      });
-      
+        ]),
+        // Update room settings for the next round
+        roomsService.updateSettings(room.id, {
+          ...room.settings,
+          ...settings
+        })
+      ]);
+      setStartNextRoundPending(true);
     } catch (error) {
       console.error('Failed to start next round:', error);
       throw error;
@@ -291,6 +294,15 @@ function RoomProviderInner({ room, children }: { room: Room; children: ReactNode
     setPhase,
     room
   ]);
+
+  useEffect(() => {
+    if (startNextRoundPending) {
+      setPhase('setup');
+      console.log(`Members after startNextRoundPending: ${JSON.stringify(members)}`);
+    }
+    // reset flag
+    setStartNextRoundPending(false);
+  }, [startNextRoundPending, setPhase]);
 
   const value = {
     completeSetup,
