@@ -118,23 +118,29 @@ export const exchangeRequestsService = {
     if (error) throw error;
   },
 
-  // Subscribe to exchange requests changes
-  subscribeToExchangeRequests(roomId: string, callback: (requests: ExchangeRequest[]) => void) {
+  // Fixed subscription to exchange requests changes
+  subscribeToExchangeRequests(roomId: string, userId: string, callback: (outgoing: ExchangeRequest[], incoming: ExchangeRequest[]) => void) {
     return supabase
-      .channel(`exchange_requests:${roomId}`)
+      .channel(`exchange_requests:${roomId}:${userId}`)
       .on('postgres_changes', 
         { 
           event: '*', 
           schema: 'public', 
           table: 'exchange_requests',
-          filter: `room_id=eq.${roomId}`
+          filter: `room_id=eq.${roomId}`,
         }, 
         async () => {
-          const [outgoing, incoming] = await Promise.all([
-            this.getExchangeRequests(roomId, null, 'outgoing'),  // We'll filter client-side
-            this.getExchangeRequests(roomId, null, 'incoming')   // We'll filter client-side  
-          ]);
-          callback([...outgoing, ...incoming]);
+          try {
+            // Get both outgoing and incoming requests in parallel
+            const [outgoing, incoming] = await Promise.all([
+              this.getExchangeRequests(roomId, userId, 'outgoing'),
+              this.getExchangeRequests(roomId, userId, 'incoming')
+            ]);
+            
+            callback(outgoing, incoming);
+          } catch (error) {
+            console.error('Error fetching exchange requests:', error);
+          }
         }
       )
       .subscribe();

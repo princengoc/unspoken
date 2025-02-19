@@ -10,6 +10,20 @@ interface UseExchangesProps {
   getCardById: (cardId: string) => Card | undefined;
 }
 
+export interface EnrichedExchangeRequest extends ExchangeRequest {
+  fromPlayer?: Player;
+  toPlayer?: Player;
+  card?: Card;
+}
+
+export interface ExchangePair {
+  playerId: string;
+  playerName: string;
+  outgoingRequest: EnrichedExchangeRequest | null;
+  incomingRequest: EnrichedExchangeRequest | null;
+  hasMatch: boolean;
+}
+
 export function useExchanges({ roomId, players, getCardById }: UseExchangesProps) {
   const { user } = useAuth();
   const [outgoingRequests, setOutgoingRequests] = useState<ExchangeRequest[]>([]);
@@ -19,39 +33,48 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
   // Load exchange requests and subscribe to changes
   useEffect(() => {
     if (!roomId || !user?.id) return;
+    
+    let subscription: ReturnType<typeof exchangeRequestsService.subscribeToExchangeRequests>;
 
+    const subscribeToChanges = () => {
+      subscription = exchangeRequestsService.subscribeToExchangeRequests(
+        roomId,
+        user.id,
+        (outgoing, incoming) => {
+          setOutgoingRequests(outgoing);
+          setIncomingRequests(incoming);
+          setLoading(false);
+        }
+      );
+    };
+
+    // Initial load
     const loadRequests = async () => {
       try {
         setLoading(true);
-        const outgoing = await exchangeRequestsService.getExchangeRequests(roomId, user.id, 'outgoing');
-        const incoming = await exchangeRequestsService.getExchangeRequests(roomId, user.id, 'incoming');
+        const [outgoing, incoming] = await Promise.all([
+          exchangeRequestsService.getExchangeRequests(roomId, user.id, 'outgoing'),
+          exchangeRequestsService.getExchangeRequests(roomId, user.id, 'incoming')
+        ]);
         
         setOutgoingRequests(outgoing);
         setIncomingRequests(incoming);
+        setLoading(false);
+        
+        // Subscribe after initial load
+        subscribeToChanges();
       } catch (error) {
         console.error('Failed to load exchange requests:', error);
-      } finally {
         setLoading(false);
       }
     };
 
     loadRequests();
 
-    // Subscribe to changes
-    const subscription = exchangeRequestsService.subscribeToExchangeRequests(
-      roomId,
-      (allRequests) => {
-        // Filter for current user
-        const outgoing = allRequests.filter(req => req.from_id === user.id);
-        const incoming = allRequests.filter(req => req.to_id === user.id);
-        
-        setOutgoingRequests(outgoing);
-        setIncomingRequests(incoming);
-      }
-    );
-
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [roomId, user?.id]);
 
@@ -176,26 +199,59 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
   };
 
   // Prepare requests with player and card data for UI
-  const enrichedOutgoingRequests = outgoingRequests.map(req => ({
+  const enrichedOutgoingRequests: EnrichedExchangeRequest[] = outgoingRequests.map(req => ({
     ...req,
     toPlayer: getPlayerById(req.to_id),
     card: getCardById(req.card_id)
   }));
 
-  const enrichedIncomingRequests = incomingRequests.map(req => ({
+  const enrichedIncomingRequests: EnrichedExchangeRequest[] = incomingRequests.map(req => ({
     ...req,
     fromPlayer: getPlayerById(req.from_id),
     card: getCardById(req.card_id)
   }));
 
+  // Get exchange pairs for the unified UI
+  const getExchangePairs = useCallback((): ExchangePair[] => {
+    if (!user?.id) return [];
+
+    // Filter current user out of players
+    const otherPlayers = players.filter(p => p.id !== user.id);
+    
+    return otherPlayers.map(player => {
+      // Find any outgoing requests to this player
+      const outgoing = enrichedOutgoingRequests.find(req => req.to_id === player.id);
+      
+      // Find any incoming requests from this player  
+      const incoming = enrichedIncomingRequests.find(req => req.from_id === player.id);
+      
+      // Check for a match (both sides have accepted)
+      const hasMatch = !!(outgoing?.status === 'accepted' && incoming?.status === 'accepted');
+      
+      return {
+        playerId: player.id,
+        playerName: player.username || 'Unknown Player',
+        outgoingRequest: outgoing || null,
+        incomingRequest: incoming || null,
+        hasMatch
+      };
+    });
+  }, [user?.id, players, enrichedOutgoingRequests, enrichedIncomingRequests]);
+
   // Check if there's a match for the given request
   const hasMatch = (request: ExchangeRequest): boolean => {
     // Find a matching request from the other player
-    const match = outgoingRequests.find(req => 
-      req.to_id === request.from_id && 
-      req.status === 'accepted' && 
-      request.status === 'accepted'
-    );
+    if (request.status !== 'accepted') return false;
+    
+    const match = request.from_id === user?.id
+      ? incomingRequests.find(req => 
+          req.from_id === request.to_id && 
+          req.status === 'accepted'
+        )
+      : outgoingRequests.find(req => 
+          req.to_id === request.from_id &&
+          req.status === 'accepted'
+        );
     
     return !!match;
   };
@@ -203,6 +259,7 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
   return {
     outgoingRequests: enrichedOutgoingRequests,
     incomingRequests: enrichedIncomingRequests,
+    exchangePairs: getExchangePairs(),
     loading,
     requestExchange,
     acceptRequest,
