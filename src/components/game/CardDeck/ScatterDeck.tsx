@@ -18,8 +18,8 @@ export function ScatterDeck({ cards, assignedMoods = {}, onSelect }: ScatterDeck
 
   // Constants for animation
   const CARD_WIDTH = isMobile ? 300 : 360;
-  const CARD_OFFSET = isMobile ? 60 : 80;
-  const CARD_Y_OFFSET = isMobile ? 10 : 15;
+  const CARD_OFFSET = isMobile ? 50 : 70;
+  const CARD_Y_OFFSET = isMobile ? 15 : 20;
 
   // Card variants for Framer Motion
   const cardVariants = {
@@ -86,7 +86,7 @@ export function ScatterDeck({ cards, assignedMoods = {}, onSelect }: ScatterDeck
   return (
     <Box 
       pos="relative" 
-      h={400} 
+      h={300} 
       sx={(theme) => ({
         background: theme.fn.linearGradient(45, theme.colors.gray[0], theme.colors.gray[1]),
         borderRadius: theme.radius.lg,
@@ -128,8 +128,8 @@ export function ScatterDeck({ cards, assignedMoods = {}, onSelect }: ScatterDeck
                 whileTap={{ scale: 0.98, cursor: 'grabbing' }}
               >
                 <Paper
-                  p="xl"
-                  h={280}
+                  p="lg"
+                  h={200}
                   radius="md"
                   withBorder
                   onClick={() => {
@@ -150,7 +150,7 @@ export function ScatterDeck({ cards, assignedMoods = {}, onSelect }: ScatterDeck
                 >
                   <Stack h="100%" spacing="xs" justify="center" align="center">
                     <Text 
-                      size="lg" 
+                      size="md" 
                       weight={500} 
                       align="center"
                       sx={{ lineHeight: 1.6 }}

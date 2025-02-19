@@ -9,6 +9,7 @@ import { SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 import ScatterDeck from '../CardDeck/ScatterDeck';
+import { MiniDeck } from '../CardDeck/MiniDeck';
 
 export function Setup() {
   const { cardState, getCardsByIds } = useCardsInGame(); 
