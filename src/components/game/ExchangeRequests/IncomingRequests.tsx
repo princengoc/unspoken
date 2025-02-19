@@ -5,6 +5,7 @@ import { MiniCard } from '../CardDeck/MiniCard';
 import { ExchangeRequest } from '@/services/supabase/exchangeRequests';
 import { Card, Player } from '@/core/game/types';
 import { MiniDeck } from '../CardDeck/MiniDeck';
+import { useCardsInGame } from '@/context/CardsInGameProvider';
 
 interface IncomingRequestsProps {
   requests: Array<ExchangeRequest & { 
@@ -14,8 +15,6 @@ interface IncomingRequestsProps {
   onAccept: (requestId: string) => void;
   onDecline: (requestId: string) => void;
   onCounter: (fromPlayerId: string, cardId: string) => void;
-  currentUserCards: string[];
-  getCardById: (cardId: string) => Card | undefined;
 }
 
 export function IncomingRequests({ 
@@ -23,13 +22,12 @@ export function IncomingRequests({
   onAccept, 
   onDecline, 
   onCounter,
-  currentUserCards,
-  getCardById
 }: IncomingRequestsProps) {
   const [counterModalOpen, setCounterModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ExchangeRequest | null>(null);
+  const {cardState, getCardsByIds} = useCardsInGame();
 
-  const handleCounter = (requestId: string, fromPlayerId: string) => {
+  const handleCounter = (requestId: string) => {
     const request = requests.find(r => r.id === requestId);
     if (request) {
       setSelectedRequest(request);
@@ -101,7 +99,7 @@ export function IncomingRequests({
                   color="blue"
                   size="sm"
                   leftSection={<IconExchange size={16} />}
-                  onClick={() => handleCounter(request.id, request.from_id)}
+                  onClick={() => handleCounter(request.id)}
                 >
                   Counter
                 </Button>
@@ -124,16 +122,16 @@ export function IncomingRequests({
       <Modal
         opened={counterModalOpen}
         onClose={() => setCounterModalOpen(false)}
-        title="Counter with another card"
+        title="Counter with another question"
         size="lg"
       >
         <Stack gap="md">
           <Text size="sm" c="dimmed">
-            Select one of your cards to counter with:
+            Select a card from the discard pile to counter-propose:
           </Text>
           
           <MiniDeck
-            cards={currentUserCards.map(id => getCardById(id)).filter(Boolean)}
+            cards={getCardsByIds(cardState.discardPile)}
             onSelect={handleCounterSubmit}
           />
         </Stack>

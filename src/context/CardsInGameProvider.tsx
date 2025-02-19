@@ -3,7 +3,7 @@ import { cardsInRoomsService } from '@/services/supabase/cardsInRooms';
 import { supabase } from '@/services/supabase/client';
 import { reactionsService } from '@/services/supabase/reactions';
 import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
-import type { Card, CardState } from '@/core/game/types';
+import type { Card, CardState, MatchedExchange } from '@/core/game/types';
 
 interface CardsInGameContextType {
   // Card states
@@ -151,18 +151,28 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     const rippleOnly = roomSettings?.ripple_only || false;
     const gameStateId = roomData?.game_state_id; 
     
-    // Get rippled cards first
+    // 1. Get rippled cards first
     const rippledCardsIds = await reactionsService.getRippledCards(gameStateId, playerId);
     console.log(`rippled Cards Ids: ${JSON.stringify(rippledCardsIds)}`);
     
+    // 2. Get mutually accepted exchange cards (for encore rounds)
+    // We need useExchanges hook, but we can't use hooks inside this function
+    // So we'll use the service directly
+    const { data: matchedExchanges } = await supabase.rpc('get_matched_exchange_requests', { room_id_param: roomId });
+    const exchangeCardIds = (matchedExchanges as MatchedExchange[] || [])
+      .filter(match => match.player1 === playerId || match.player2 === playerId)
+      .map(match => match.player1 === playerId ? match.player2_card : match.player1_card);
+    
+    // Combine rippled and exchange cards
+    const availableCardIds = [...rippledCardsIds, ...exchangeCardIds];
+
     // If this is a ripple-only round,
-    // only use rippled cards and don't deal new ones
+    // only use rippled and exchanged cards
     if (rippleOnly) {
-      if (rippledCardsIds.length > 0) {
-        // Add rippled cards to player's hand
-        await moveCardsToPlayerHand(rippledCardsIds, playerId);
-        const rippledCards = getCardsByIds(rippledCardsIds);
-        return rippledCards;
+      if (availableCardIds.length > 0) {
+        await moveCardsToPlayerHand(availableCardIds, playerId);
+        const availableCards = getCardsByIds(availableCardIds);
+        return availableCards;
       } else {
         // Player has no rippled cards in a ripple-only round
         // Return empty array, this player will skip card selection
@@ -185,13 +195,13 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     await Promise.all(
         [
             addNewCardsToPlayer(randomCards.map((c: Card) => c.id), playerId), 
-            moveCardsToPlayerHand(rippledCardsIds, playerId)
+            moveCardsToPlayerHand(availableCardIds, playerId)
         ]
     )
 
     // return all the cards in player's hand
-    const rippledCards = getCardsByIds(rippledCardsIds);
-    return [...randomCards, ...rippledCards];
+    const availableCards = getCardsByIds(availableCardIds);
+    return [...randomCards, ...availableCards];
   };
 
   const hasSelected = (playerId: string): boolean => {

@@ -78,6 +78,15 @@ export type CardState = {
   selectedCards: Record<string, string>; 
 }
 
+// Exchange types
+
+export type MatchedExchange = {
+  player1: string; 
+  player2: string;
+  player1_card: string; 
+  player2_card: string;
+}
+
 // Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {
   const uniqueCards = new Map(cards.map(card => [card.id, card]));

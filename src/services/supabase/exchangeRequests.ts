@@ -1,3 +1,4 @@
+import { MatchedExchange } from '@/core/game/types';
 import { supabase } from './client';
 
 export type ExchangeRequestStatus = 'pending' | 'accepted' | 'declined';
@@ -100,7 +101,7 @@ export const exchangeRequestsService = {
     return data || [];
   },
 
-  async getMatchedRequests(roomId: string): Promise<{player1: string, player2: string, player1_card: string, player2_card: string}[]> {
+  async getMatchedRequests(roomId: string): Promise<MatchedExchange[]> {
     const { data, error } = await supabase.rpc('get_matched_exchange_requests', { room_id_param: roomId });
 
     if (error) throw error;

@@ -21,10 +21,12 @@ interface OutgoingRequestsProps {
 
 export function OutgoingRequests({ requests, otherMembers, roomId }: OutgoingRequestsProps) {
   const { user } = useAuth();
-  const { cardState, getCardById } = useCardsInGame();
+  const { cardState, getCardById, getCardsByIds } = useCardsInGame();
   const { members } = useRoomMembers();
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const discardedCards = getCardsByIds(cardState.discardPile);
 
   const { requestExchange } = useExchanges({
     roomId,
@@ -128,17 +130,17 @@ export function OutgoingRequests({ requests, otherMembers, roomId }: OutgoingReq
       <Modal
         opened={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={`Request a card from ${selectedPlayer?.username || 'player'}`}
+        title={`Challenge ${selectedPlayer?.username || 'player'} to answer this. In exchange, you will answer a card that they propose.`}
         size="lg"
       >
         {selectedPlayer && user?.id && (
           <Stack>
             <Text size="sm" c="dimmed">
-              Select a card to request from this player:
+              Select a card from the discard pile to propose:
             </Text>
 
             <MiniDeck
-              cards={getCardsByIds(cardState.playerHands[selectedPlayer.id] || [])}
+              cards={discardedCards}
               onSelect={(cardId) => handleCreateRequest(selectedPlayer.id, cardId)}
             />
           </Stack>
@@ -147,7 +149,4 @@ export function OutgoingRequests({ requests, otherMembers, roomId }: OutgoingReq
     </Stack>
   );
 
-  function getCardsByIds(cardIds: string[]) {
-    return cardIds.map(id => getCardById(id)).filter(Boolean);
-  }
 }

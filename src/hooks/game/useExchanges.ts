@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { exchangeRequestsService, ExchangeRequest } from '@/services/supabase/exchangeRequests';
 import { useAuth } from '@/context/AuthProvider';
 import { Card, Player } from '@/core/game/types';
@@ -81,6 +81,27 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
       });
     }
   };
+
+  // Check for mutually accepted exchanges
+  const getMutuallyAcceptedExchanges = useCallback(async (playerId: string): Promise<string[]> => {
+    try {
+      // Get matched/accepted exchange requests
+      const matchedRequests = await exchangeRequestsService.getMatchedRequests(roomId);
+      
+      // Filter exchanges involving this player
+      const playerExchanges = matchedRequests.filter(match => 
+        match.player1 === playerId || match.player2 === playerId
+      );
+      
+      // Get the card IDs that should be available to this player
+      return playerExchanges.map(match => 
+        match.player1 === playerId ? match.player2_card : match.player1_card
+      );
+    } catch (error) {
+      console.error('Failed to get mutually accepted exchanges:', error);
+      return [];
+    }
+  }, [roomId]);
 
   // Accept an incoming exchange request
   const acceptRequest = async (requestId: string) => {
@@ -187,6 +208,7 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
     acceptRequest,
     declineRequest,
     counterRequest,
-    hasMatch
+    hasMatch, 
+    getMutuallyAcceptedExchanges
   };
 }

@@ -13,7 +13,7 @@ interface ExchangeTabProps {
 
 export function ExchangeTab({ roomId }: ExchangeTabProps) {
   const { user } = useAuth();
-  const { cardState, getCardById } = useCardsInGame();
+  const { getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
   
   // Filter out current user from members
@@ -46,7 +46,8 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
     <Box>
       <Alert icon={<IconInfoCircle size={16} />} color="blue" mb="md">
         <Text size="sm">
-          Exchange cards with other players. Both players must accept for an exchange to be finalized.
+          Propose cards from the discard pile for other players to answer. 
+          If both players accept, these cards will be available in encore rounds.
         </Text>
       </Alert>
       
@@ -89,8 +90,6 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
               onAccept={acceptRequest}
               onDecline={declineRequest}
               onCounter={(fromPlayerId, cardId) => counterRequest(fromPlayerId, cardId)}
-              currentUserCards={user?.id ? cardState.playerHands[user.id] || [] : []}
-              getCardById={getCardById}
             />
           )}
         </Tabs.Panel>
