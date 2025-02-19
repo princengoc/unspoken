@@ -15,9 +15,7 @@ export function CreateRoom() {
   const [name, setName] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
-    allow_card_exchanges: true,
-    allow_ripple_effects: true,
-    rounds_per_player: 3,
+    ripple_only: false,
     card_depth: null
   });
   const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
@@ -106,31 +104,13 @@ export function CreateRoom() {
         {showSettings && (
           <Stack gap="xs">
             <Switch
-              label="Allow Card Exchanges"
-              checked={settings.allow_card_exchanges}
+              label="Use only rippled and exchanged cards"
+              description="If enabled, players will only use cards they rippled or exchanged. If disabled, additional cards will be dealt."
+              checked={settings.ripple_only}
               onChange={(e) => setSettings(prev => ({
                 ...prev,
-                allow_card_exchanges: e.currentTarget.checked
+                ripple_only: e.currentTarget.checked
               }))}
-            />
-            <Switch
-              label="Enable Ripple Effects"
-              checked={settings.allow_ripple_effects}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                allow_ripple_effects: e.currentTarget.checked
-              }))}
-            />
-            <TextInput
-              type="number"
-              label="Rounds per Player"
-              value={settings.rounds_per_player}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                rounds_per_player: parseInt(e.target.value) || 3
-              }))}
-              min={1}
-              max={10}
             />
            <Select
              label="Card Depth"
