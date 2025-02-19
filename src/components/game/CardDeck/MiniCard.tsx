@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card as MantineCard, Text, Avatar, Stack, rem, Box, Tooltip } from '@mantine/core';
 import { motion } from 'framer-motion';
 import type { Card as CardType } from '@/core/game/types';
@@ -54,11 +55,33 @@ interface MiniCardProps {
   contributorAssignment?: PlayerAssignment; 
   playerAssignment?: PlayerAssignment; 
   playerName?: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
-export function MiniCard({ card, mood, isSelected = false, onClick, showSender = false, contributorAssignment, contributorName, playerAssignment, playerName }: MiniCardProps) {
+export function MiniCard({ 
+  card, 
+  mood, 
+  isSelected = false, 
+  onClick, 
+  showSender = false, 
+  contributorAssignment, 
+  contributorName, 
+  playerAssignment, 
+  playerName,
+  size = 'md'
+}: MiniCardProps) {
   const moodStyles = mood ? moodConfig[mood] : null;
   const IconComponent = moodStyles?.icon;
+
+  // Card dimensions based on size
+  const cardDimensions = {
+    xs: { width: '100px', height: '110px', iconSize: 16, fontSize: 'xs' },
+    sm: { width: '120px', height: '130px', iconSize: 18, fontSize: 'xs' },
+    md: { width: '150px', height: '160px', iconSize: 24, fontSize: 'sm' },
+    lg: { width: '180px', height: '190px', iconSize: 28, fontSize: 'md' },
+  };
+  
+  const { width, height, iconSize, fontSize } = cardDimensions[size];
 
   return (
     <motion.div
@@ -81,9 +104,8 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
           cursor: onClick ? 'pointer' : 'default',
           borderColor: isSelected ? moodStyles?.color : undefined,
           borderWidth: isSelected ? '2px' : '1px',
-          width: '150px', // Fixed width
-          height: '160px', // Fixed height
-          // position: 'relative'
+          width: width,
+          height: height,
         }}
         onClick={onClick}
       >
@@ -97,7 +119,7 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
                 color: moodStyles?.color
               }}
             >
-              <IconComponent size={24} />
+              <IconComponent size={iconSize} />
             </div>
           )}
 
@@ -161,7 +183,7 @@ export function MiniCard({ card, mood, isSelected = false, onClick, showSender =
          )}
 
           <Text 
-            size="sm" 
+            size={fontSize}
             fw={500} 
             ta="center" 
             mt={rem(16)}

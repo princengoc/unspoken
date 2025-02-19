@@ -1,0 +1,141 @@
+import { supabase } from './client';
+
+export type ExchangeRequestStatus = 'pending' | 'accepted' | 'declined';
+export type ExchangeRequestDirection = 'incoming' | 'outgoing';
+
+export interface ExchangeRequest {
+  id: string;
+  room_id: string;
+  from_id: string;
+  to_id: string;
+  card_id: string;
+  status: ExchangeRequestStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export const exchangeRequestsService = {
+  async createRequest(
+    roomId: string,
+    fromId: string,
+    toId: string,
+    cardId: string
+  ): Promise<ExchangeRequest> {
+    // Check if a request already exists for this player pair
+    const { data: existingRequest } = await supabase
+      .from('exchange_requests')
+      .select('*')
+      .match({ room_id: roomId, from_id: fromId, to_id: toId })
+      .single();
+
+    if (existingRequest) {
+      // Update existing request with new card
+      const { data, error } = await supabase
+        .from('exchange_requests')
+        .update({ 
+          card_id: cardId,
+          status: 'pending',
+          updated_at: new Date().toISOString()
+        })
+        .match({ room_id: roomId, from_id: fromId, to_id: toId })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } else {
+      // Create new request
+      const { data, error } = await supabase
+        .from('exchange_requests')
+        .insert([{
+          room_id: roomId,
+          from_id: fromId,
+          to_id: toId,
+          card_id: cardId,
+          status: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  },
+
+  async updateRequestStatus(
+    requestId: string,
+    status: ExchangeRequestStatus
+  ): Promise<ExchangeRequest> {
+    const { data, error } = await supabase
+      .from('exchange_requests')
+      .update({ 
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', requestId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getExchangeRequests(roomId: string, userId: string | null, direction: ExchangeRequestDirection = 'incoming'): Promise<ExchangeRequest[]> {
+    const query = supabase
+      .from('exchange_requests')
+      .select('*')
+      .eq('room_id', roomId);
+
+    if (userId !== null) {
+      if (direction === 'incoming') {
+        query.eq('to_id', userId);
+      } else {
+        query.eq('from_id', userId);
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getMatchedRequests(roomId: string): Promise<{player1: string, player2: string, player1_card: string, player2_card: string}[]> {
+    const { data, error } = await supabase.rpc('get_matched_exchange_requests', { room_id_param: roomId });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async declineAllUnmatchedRequests(roomId: string, player1: string, player2: string): Promise<void> {
+    const { error } = await supabase.rpc('decline_unmatched_requests', { 
+      room_id_param: roomId,
+      player1_param: player1,
+      player2_param: player2
+    });
+
+    if (error) throw error;
+  },
+
+  // Subscribe to exchange requests changes
+  subscribeToExchangeRequests(roomId: string, callback: (requests: ExchangeRequest[]) => void) {
+    return supabase
+      .channel(`exchange_requests:${roomId}`)
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'exchange_requests',
+          filter: `room_id=eq.${roomId}`
+        }, 
+        async () => {
+          const [outgoing, incoming] = await Promise.all([
+            this.getExchangeRequests(roomId, null, 'outgoing'),  // We'll filter client-side
+            this.getExchangeRequests(roomId, null, 'incoming')   // We'll filter client-side  
+          ]);
+          callback([...outgoing, ...incoming]);
+        }
+      )
+      .subscribe();
+  }
+};

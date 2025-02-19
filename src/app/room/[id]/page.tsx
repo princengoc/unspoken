@@ -93,7 +93,7 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
           {/* Game Phases */}
           {/* Game Phases */}
           {phase === 'setup' ? (
-            <Setup />
+            <Setup roomId={room?.id}/>
           ) : phase === 'endgame' ? (
             <Endgame roomId={room?.id}/>
           ) : (

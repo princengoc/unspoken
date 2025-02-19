@@ -21,7 +21,7 @@ export function MiniDeck({ cards, assignedMoods = {}, onSelect }: MiniDeckProps)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Group spacing="xs" position="center">
+      <Group gap="xs" justify="center">
         {cards.map((card, index) => (
           <MiniCard
             key={index}
