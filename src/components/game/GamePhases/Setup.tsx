@@ -99,7 +99,7 @@ export function Setup() {
       )}
 
       {currentMember?.status === PLAYER_STATUS.BROWSING && (
-        <Stack gap="lg">
+        <Stack gap="xs">
           {isCreator ? (
             <Transition mounted={isSetupComplete} transition="slide-up">
               {(styles) => (

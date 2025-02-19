@@ -8,6 +8,8 @@ import { IconAdjustments } from '@tabler/icons-react';
 import { useRoomHook } from '@/hooks/room/useRoomHook';
 import { RoomPasscode } from './RoomPasscode';
 import type { RoomSettings } from '@/core/game/types';
+import { GameSettingsForm } from './GameSettingsForm';
+
 
 export function CreateRoom() {
   const router = useRouter();
@@ -102,33 +104,11 @@ export function CreateRoom() {
         </Group>
 
         {showSettings && (
-          <Stack gap="xs">
-            <Switch
-              label="Use only rippled and exchanged cards"
-              description="If enabled, players will only use cards they rippled or exchanged. If disabled, additional cards will be dealt."
-              checked={settings.ripple_only}
-              onChange={(e) => setSettings(prev => ({
-                ...prev,
-                ripple_only: e.currentTarget.checked
-              }))}
-            />
-           <Select
-             label="Card Depth"
-             description="Filter cards by conversation depth level"
-             data={[
-               { value: 'all', label: 'All Depths' },
-               { value: '1', label: 'Light (Level 1)' },
-               { value: '2', label: 'Medium (Level 2)' },
-               { value: '3', label: 'Deep (Level 3)' }
-             ]}
-             value={settings.card_depth?.toString() || 'all'}
-             onChange={(value) => setSettings(prev => ({
-               ...prev,
-               card_depth: value === 'all' ? null : parseInt(value as string) as 1 | 2 | 3
-             }))}
-           />
-          </Stack>
-        )}
+          <GameSettingsForm 
+            initialSettings={settings}
+            onChange={setSettings}
+          />
+          )}
 
         <Button 
           onClick={handleCreate} 

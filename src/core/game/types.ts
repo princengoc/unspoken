@@ -58,11 +58,6 @@ export type Room = {
 
 // Keep other existing types
 export type RoomSettings = {
-  allow_card_exchanges: boolean;
-  allow_ripple_effects: boolean;
-  rounds_per_player: number;
-  card_selection_time: number;
-  base_sharing_time: number;
   card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
   ripple_only: boolean; // If true, only use rippled and exchanged cards for this round
 };

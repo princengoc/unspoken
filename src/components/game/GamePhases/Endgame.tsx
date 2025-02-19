@@ -11,6 +11,7 @@ import { SlideIn, FadeIn } from '@/components/animations/Motion';
 import { MiniCard } from '../CardDeck/MiniCard';
 import { getPlayerAssignments } from '../statusBarUtils';
 import { RoomSettings } from '@/core/game/types';
+import { GameSettingsForm } from '@/components/room/GameSettingsForm';
 
 
 type EndgameProp = {
@@ -131,39 +132,12 @@ export function Endgame({roomId}: EndgameProp) {
            <Stack gap="md">
              <Title order={4}>Play an Encore Round</Title>
              
-             <Switch
-               label="Use only rippled and exchanged cards"
-               description="If enabled, players will only use cards they rippled or exchanged. If disabled, additional cards will be dealt."
-               checked={nextRoundSettings.ripple_only}
-               onChange={(event) => {
-                const isChecked = event?.currentTarget?.checked ?? false;
-                console.log(`Ripple only is checked: ${isChecked}`);
-                setNextRoundSettings(prev => ({
-                  ...prev,
-                  ripple_only: isChecked
-                }));
-              }}
-             />
-             
-             <Select
-               label="Card Depth"
-               description={nextRoundSettings.ripple_only ? 
-                 "This setting is disabled when using only rippled cards" : 
-                 "Filter additional cards by conversation depth level"}
-               data={[
-                 { value: 'all', label: 'All Depths' },
-                 { value: '1', label: 'Light (Level 1)' },
-                 { value: '2', label: 'Medium (Level 2)' },
-                 { value: '3', label: 'Deep (Level 3)' }
-               ]}
-               value={nextRoundSettings.card_depth ? nextRoundSettings.card_depth.toString() : 'all'}
-               onChange={(value) => setNextRoundSettings(prev => ({
-                 ...prev,
-                 card_depth: value === 'all' ? null : parseInt(value as string) as 1 | 2 | 3
-               }))}
-               disabled={nextRoundSettings.ripple_only}
-             />
-             
+             <GameSettingsForm 
+             initialSettings={room?.settings || {}}
+              onChange={setNextRoundSettings}
+              rippleOnlyDescription='Use rippled cards from previous round'
+              />
+                         
              <Group justify="center" mt="sm">
                <Button
                  size="md"
