@@ -51,8 +51,8 @@ export function Speaking({ gameStateId, roomId }: SpeakingProp) {
           <>
             <Button
               onClick={currentSpeakerHasStarted ? finishSpeaking : startSpeaking}
-              fullWidth
-              size="lg"
+              justify='center'
+              size="xs"
               variant="filled"
               color={currentSpeakerHasStarted ? 'green' : 'blue'}
             >

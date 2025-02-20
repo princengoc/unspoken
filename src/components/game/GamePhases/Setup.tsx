@@ -8,8 +8,6 @@ import { CardDeck } from '../CardDeck';
 import { SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
-//import ScatterDeck from '../CardDeck/ScatterDeck';
-import { MiniDeck } from '../CardDeck/MiniDeck';
 import { ExchangeTab } from '../ExchangeRequests/ExchangeTab';
 
 type SetupProp = {
@@ -117,7 +115,7 @@ export function Setup( { roomId }: SetupProp) {
 
     {currentMember?.status === PLAYER_STATUS.BROWSING && (
       <Stack gap="xs">
-        <Tabs>
+        <Tabs defaultValue="waiting">
           <Tabs.List>
             <Tabs.Tab value="waiting" leftSection={<IconHourglass size={16} />}>Waiting</Tabs.Tab>
             <Tabs.Tab value="exchanges" leftSection={<IconExchange size={16} />}>Exchange</Tabs.Tab>
@@ -126,6 +124,12 @@ export function Setup( { roomId }: SetupProp) {
           <Tabs.Panel value="waiting" pt="md">
             {/* Existing waiting content */}
             {isCreator ? (
+              <Stack gap = "xs">
+                  <Text size="sm">
+                  {isSetupComplete
+                    ? "Everyone's ready! You can start the game."
+                    : "Waiting for other players to choose their cards... How about some Exchange?"}
+                </Text>              
               <Transition mounted={isSetupComplete} transition="slide-up">
                 {(styles) => (
                   <Button
@@ -139,28 +143,19 @@ export function Setup( { roomId }: SetupProp) {
                   </Button>
                 )}
               </Transition>
+              </Stack>
             ) : (
               <Paper p="md" radius="md">
                 <Group align="center" gap="sm">
-                  <IconHourglass size={18} />
                   <Text size="sm">
                     {isSetupComplete
-                      ? "Everyone's ready! Waiting for the room creator to start the game..."
-                      : "Waiting for other players to choose their cards..."}
+                      ? "Everyone's ready! Waiting for the room creator to start the game. You can still browse the Exchange!"
+                      : "Waiting for other players to choose their cards. How about some Exchange?"}
                   </Text>
                 </Group>
               </Paper>
             )}
 
-            {/* Discarded cards section */}
-            {cardState.discardPile.length > 0 && (
-              <>
-                <Text size="sm" c="dimmed" ta="center" mt="md">
-                  Browse discarded cards while waiting
-                </Text>
-                <MiniDeck cards={getCardsByIds(cardState.discardPile)}/>
-              </>
-            )}
           </Tabs.Panel>
 
           <Tabs.Panel value="exchanges" pt="md">

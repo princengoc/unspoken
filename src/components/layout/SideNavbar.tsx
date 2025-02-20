@@ -51,10 +51,7 @@ export function SideNavbar({
             </Indicator>
           </ActionIcon>
         )}
-      </Stack>
 
-      {/* Bottom section */}
-      <Stack gap="lg" align="center">
         {isCreator && (
           <>
             <ActionIcon variant="subtle" size="lg">
