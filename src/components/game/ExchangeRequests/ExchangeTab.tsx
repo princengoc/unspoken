@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, Loader, Stack, Alert, Group, Paper, Badge, Button, Modal, Divider, Avatar } from '@mantine/core';
 import { IconInfoCircle, IconExchange, IconArrowRight, IconArrowLeft, IconCheck, IconX, IconCards } from '@tabler/icons-react';
 import { useAuth } from '@/context/AuthProvider';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useExchanges, ExchangePair } from '@/hooks/game/useExchanges';
+import { useExchangeNotifications } from '@/hooks/game/useExchangeNotifications';
 import { MiniCard } from '../CardDeck/MiniCard';
 import { MiniDeck } from '../CardDeck/MiniDeck';
-import { Card } from '@/core/game/types';
 import { EnrichedExchangeRequest } from '@/hooks/game/useExchanges';
 
 interface ExchangeTabProps {
@@ -21,6 +21,7 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'send' | 'counter'>('send');
+  const { markAsRead } = useExchangeNotifications(roomId);
   
   const {
     exchangePairs,
@@ -34,6 +35,11 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
     players: members,
     getCardById
   });
+
+  // Mark notifications as read when tab is opened
+  useEffect(() => {
+    markAsRead();
+  }, [markAsRead]);
 
   if (loading) {
     return (
