@@ -27,6 +27,8 @@ Navbar improvements
 # Minor UIs
 
 
+getPlayerAssignment
+* [ ] player order should be by first joined in room, otherwise new player joining will cause player icons to change
 
 
 Sign up

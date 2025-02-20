@@ -91,24 +91,31 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
     direction: 'incoming' | 'outgoing', 
     pair: ExchangePair
   ) => {
-    if (!request || !request.card) return (
-      <Box>
-        <Button 
-          variant="subtle" 
-          size="sm"
-          leftSection={direction === 'outgoing' ? <IconArrowRight size={16} /> : <IconArrowLeft size={16} />}
-          onClick={() => handleExchangeAction(
-            // When request is null, use the pair parameter instead
-            direction === 'outgoing' 
-              ? exchangePairs.find(p => p.playerId === pair.playerId) as ExchangePair
-              : exchangePairs.find(p => p.playerId === pair.playerId) as ExchangePair,
-            direction === 'incoming' ? 'counter' : 'send'
-          )}
-        >
-          {direction === 'outgoing' ? 'Send Request' : 'Counter Offer'}
-        </Button>
-      </Box>
-    );
+    if (!request || !request.card) {
+      if (direction === 'outgoing') {
+        return (
+        <Box>
+          <Button 
+            variant="subtle" 
+            size="sm"
+            leftSection={<IconArrowRight size={16} />}
+            onClick={() => handleExchangeAction(exchangePairs.find(p => p.playerId === pair.playerId) as ExchangePair,'send')}
+          >
+            Send Request
+          </Button>
+        </Box>          
+        )
+      } else {
+        return (
+          <Box>
+          <Text size="sm" c="dimmed" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <IconArrowLeft size={16} />
+            Their Request Will Appear Here
+          </Text>
+        </Box>          
+        )
+      }
+    }
 
     return (
       <Stack gap="xs" align="center">

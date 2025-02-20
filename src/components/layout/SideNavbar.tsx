@@ -33,7 +33,7 @@ export function SideNavbar({
   const { members, currentMember } = useRoomMembers();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const { cardState, getCardById } = useCardsInGame();
+  const { getCardById } = useCardsInGame();
   const playerAssignments = getPlayerAssignments(members, roomId);
   
   // Get exchange data for notification badge
@@ -45,11 +45,8 @@ export function SideNavbar({
   
   const exchangeUpdatesCount = useMemo(() => {
     const pendingIncomingCount = incomingRequests.filter(req => req.status === 'pending').length;
-    const updatedOutgoingCount = outgoingRequests.filter(req => 
-      req.status === 'accepted' || req.status === 'declined'
-    ).length;
-    
-    return pendingIncomingCount + updatedOutgoingCount;
+    const pendingOutgoingCount = outgoingRequests.filter(req => req.status === 'pending').length;
+    return pendingIncomingCount + pendingOutgoingCount;
   }, [incomingRequests, outgoingRequests]);
 
   // Get appropriate phase icon
