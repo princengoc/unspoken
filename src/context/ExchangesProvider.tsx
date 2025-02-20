@@ -27,7 +27,7 @@ export interface ExchangePair {
   hasMatch: boolean;
 }
 
-// Context type definition
+// Updated context type definition with hasMatch as a boolean state
 interface ExchangesContextType {
   // Core data
   exchangePairs: ExchangePair[];
@@ -42,7 +42,9 @@ interface ExchangesContextType {
   requestExchange: (toPlayerId: string, cardId: string) => Promise<void>;
   acceptRequest: (requestId: string) => Promise<void>;
   declineRequest: (requestId: string) => Promise<void>;
-  hasMatch: (request: ExchangeRequest) => boolean;
+
+  // Overall matched state derived from exchangePairs
+  hasMatch: boolean;
 }
 
 interface ExchangesProviderProps {
@@ -50,7 +52,6 @@ interface ExchangesProviderProps {
   children: ReactNode;
 }
 
-// Create context with no default value
 const ExchangesContext = createContext<ExchangesContextType | null>(null);
 
 export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) {
@@ -62,23 +63,19 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
   const [loading, setLoading] = useState(true);
   const [subscribed, setSubscribed] = useState(false);
 
-  // Load initial data and set up subscription
   useEffect(() => {
-    if (!roomId || !user?.id) {
-      return;
-    }
+    if (!roomId || !user?.id) return;
 
     let subscription: any = null;
-    let isMounted = true; // Prevent state updates if unmounted
+    let isMounted = true;
 
-    // Initial data load
     const loadInitialData = async () => {
       try {
         const [outgoing, incoming] = await Promise.all([
           exchangeRequestsService.getExchangeRequests(roomId, user.id, 'outgoing'),
           exchangeRequestsService.getExchangeRequests(roomId, user.id, 'incoming')
         ]);
-        
+
         if (isMounted) {
           setOutgoingRequests(outgoing);
           setIncomingRequests(incoming);
@@ -86,13 +83,10 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
         }
       } catch (error) {
         console.error('Failed to load exchange requests:', error);
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
-    // Set up subscription first, so we don't miss updates
     const setupSubscription = () => {
       subscription = exchangeRequestsService.subscribeToExchangeRequests(
         roomId,
@@ -111,19 +105,15 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     setupSubscription();
     loadInitialData();
 
-    // Cleanup function
     return () => {
       isMounted = false;
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      if (subscription) subscription.unsubscribe();
     };
   }, [roomId, user?.id]);
 
-  // Enhanced requests with player and card data
+  // Enhance requests with player and card data
   const enrichedRequests = useMemo(() => {
-    const getPlayerById = (playerId: string) => 
-      members.find(p => p.id === playerId);
+    const getPlayerById = (playerId: string) => members.find(p => p.id === playerId);
 
     return {
       outgoing: outgoingRequests.map(req => ({
@@ -139,21 +129,16 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     };
   }, [outgoingRequests, incomingRequests, members, getCardById]);
 
-  // Unified exchange pairs data structure
+  // Compute exchangePairs, our single source of truth
   const exchangePairs = useMemo(() => {
     if (!user?.id) return [];
 
     const otherPlayers = members.filter(p => p.id !== user.id);
-    
     return otherPlayers.map(player => {
       const outgoing = enrichedRequests.outgoing.find(req => req.to_id === player.id);
       const incoming = enrichedRequests.incoming.find(req => req.from_id === player.id);
-      
-      const hasMatch = !!(
-        outgoing?.status === 'accepted' && 
-        incoming?.status === 'accepted'
-      );
-      
+
+      const hasMatch = !!(outgoing?.status === 'accepted' && incoming?.status === 'accepted');
       return {
         playerId: player.id,
         playerName: player.username || 'Unknown Player',
@@ -164,18 +149,16 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     });
   }, [enrichedRequests, members, user?.id]);
 
-  // Action: Create a new exchange request
+  // Derive overall boolean state from exchangePairs
+  const hasMatchState = useMemo(() => {
+    return exchangePairs.some(pair => pair.hasMatch);
+  }, [exchangePairs]);
+
   const requestExchange = useCallback(async (toPlayerId: string, cardId: string) => {
     if (!user?.id || !roomId) return;
     
     try {
-      await exchangeRequestsService.createRequest(
-        roomId,
-        user.id,
-        toPlayerId,
-        cardId
-      );
-      
+      await exchangeRequestsService.createRequest(roomId, user.id, toPlayerId, cardId);
       notifications.show({
         title: 'Request Sent',
         message: 'Exchange request has been sent.',
@@ -191,11 +174,9 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     }
   }, [roomId, user?.id]);
 
-  // Action: Accept an incoming exchange request
   const acceptRequest = useCallback(async (requestId: string) => {
     try {
       await exchangeRequestsService.updateRequestStatus(requestId, 'accepted');
-      
       notifications.show({
         title: 'Request Accepted',
         message: 'You accepted the exchange request.',
@@ -211,11 +192,9 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     }
   }, []);
 
-  // Action: Decline an incoming exchange request
   const declineRequest = useCallback(async (requestId: string) => {
     try {
       await exchangeRequestsService.updateRequestStatus(requestId, 'declined');
-      
       notifications.show({
         title: 'Request Declined',
         message: 'You declined the exchange request.',
@@ -231,38 +210,16 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     }
   }, []);
 
-  // Helper: Check if a specific request has a match
-  const hasMatch = useCallback((request: ExchangeRequest): boolean => {
-    if (request.status !== 'accepted' || !user?.id) return false;
-    
-    if (request.from_id === user.id) {
-      return incomingRequests.some(req => 
-        req.from_id === request.to_id && 
-        req.status === 'accepted'
-      );
-    } else {
-      return outgoingRequests.some(req => 
-        req.to_id === request.from_id &&
-        req.status === 'accepted'
-      );
-    }
-  }, [incomingRequests, outgoingRequests, user?.id]);
-
   const value = {
-    // Core data
     exchangePairs,
     incomingRequests: enrichedRequests.incoming,
     outgoingRequests: enrichedRequests.outgoing,
-    
-    // Status
     loading,
     isSubscribed: subscribed,
-    
-    // Actions
     requestExchange,
     acceptRequest,
     declineRequest,
-    hasMatch
+    hasMatch: hasMatchState
   };
 
   return (

@@ -2,10 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { Stack, ActionIcon, Tooltip, Indicator, Divider, Modal, Text } from '@mantine/core';
-import { IconDoorExit, IconHourglass, IconMessageCircle, IconCards, IconHelp, IconExchange } from '@tabler/icons-react';
+import { IconDoorExit, IconHourglass, IconMessageCircle, IconCards, IconCheck, IconHelp, IconExchange } from '@tabler/icons-react';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { type GamePhase } from '@/core/game/types';
-import { useAuth } from '@/context/AuthProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useExchanges } from '@/context/ExchangesProvider';
 import { PlayerAvatar } from '@/components/game/PlayerAvatar';
@@ -28,20 +27,17 @@ export function SideNavbar({
   handleLeaveRoom,
   onViewChange,
 }: SideNavbarProps) {
-  const { user } = useAuth();
   const { members, currentMember } = useRoomMembers();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const playerAssignments = getPlayerAssignments(members, roomId);
   
   // Since ExchangesProvider is at the room level, we can directly use useExchanges here
-  const { incomingRequests, outgoingRequests } = useExchanges();
+  const { incomingRequests, hasMatch } = useExchanges();
   
   const exchangeUpdatesCount = useMemo(() => {
-    const pendingIncomingCount = incomingRequests.filter(req => req.status === 'pending').length;
-    const pendingOutgoingCount = outgoingRequests.filter(req => req.status === 'pending').length;
-    return pendingIncomingCount + pendingOutgoingCount;
-  }, [incomingRequests, outgoingRequests]);
+    return incomingRequests.filter(req => req.status === 'pending').length;
+  }, [incomingRequests]);
 
   // Get appropriate phase icon
   const PhaseIcon = (() => {
@@ -89,7 +85,7 @@ export function SideNavbar({
     setProfileModalOpen(true);
   };  
 
-  const currentUserAssignment = user ? playerAssignments.get(user.id) : undefined;
+  const currentUserAssignment = currentMember ? playerAssignments.get(currentMember.id) : undefined;
 
   return (
     <>
@@ -143,14 +139,18 @@ export function SideNavbar({
 
           {/* Exchange requests with notification badge */}
           <Tooltip label={canViewExchange ? "Exchange requests" : "Exchange not available"} position="right">
-            <ActionIcon 
-              onClick={handleExchangeIconClick} 
-              variant="subtle" 
+            <ActionIcon
+              onClick={handleExchangeIconClick}
+              variant="subtle"
               size="lg"
               disabled={!canViewExchange}
               color={!canViewExchange ? 'gray' : undefined}
             >
-              {exchangeUpdatesCount > 0 && canViewExchange ? (
+              {hasMatch ? (
+                <Indicator label={<IconCheck size={12} />} inline size={16} position="top-end">
+                  <IconExchange size={20} />
+                </Indicator>
+              ) : exchangeUpdatesCount > 0 && canViewExchange ? (
                 <Indicator label={exchangeUpdatesCount} inline size={16} position="top-end">
                   <IconExchange size={20} />
                 </Indicator>

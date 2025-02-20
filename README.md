@@ -1,16 +1,6 @@
 # Current PR
 
 
-* [ ] add a notification icon when exchange have updates (eg new incoming, outgoing status changed)
-
-Navbar improvements
-* [x] add effects for buttons eg game phase (display explanations?)
-* [x] remove unnecessary player side bar
-* [x] Use stage icon for waiting, then Discard pile icon for Exchange
-
-
-
-
 # TODO
 
 * [ ] corner case handling: encore with ripple only but no exchange, no ripple cards, so no members have any cards to share. In this case:
@@ -71,8 +61,12 @@ Card backgrounds
 * [x] Implement Ripple cards
 * [x] Implment Exchange
 * [x] Ripple and Exchange cards are displayed in the Encore round. 
+* Navbar improvements
+    * [x] add effects for buttons eg game phase (display explanations?)
+    * [x] remove unnecessary player side bar
+    * [x] Use stage icon for waiting, then Discard pile icon for Exchange
+    * [x] add a notification icon when exchange have updates (eg new incoming, outgoing status changed)
+* [x] Decline all other unmatched requests once hasMatch is true (handled automatically on server)
 
 ## Bugs
-* [ ] PlayerAvatar in end game is different from profile???
-* [ ] game_state is created twice to the same room_id
-
+* [ ] render fewer hooks than expected at Exit

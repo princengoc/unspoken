@@ -108,16 +108,6 @@ export const exchangeRequestsService = {
     return data || [];
   },
 
-  async declineAllUnmatchedRequests(roomId: string, player1: string, player2: string): Promise<void> {
-    const { error } = await supabase.rpc('decline_unmatched_requests', { 
-      room_id_param: roomId,
-      player1_param: player1,
-      player2_param: player2
-    });
-
-    if (error) throw error;
-  },
-
   // Fixed subscription to exchange requests changes
   subscribeToExchangeRequests(roomId: string, userId: string, callback: (outgoing: ExchangeRequest[], incoming: ExchangeRequest[]) => void) {
     return supabase
