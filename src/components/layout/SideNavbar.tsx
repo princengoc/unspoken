@@ -11,6 +11,7 @@ import { useExchanges } from '@/hooks/game/useExchanges';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { PlayerAvatar } from '@/components/game/PlayerAvatar';
 import { getPlayerAssignments } from '@/components/game/statusBarUtils';
+import { ProfileSettings } from '@/app/auth/ProfileSettings';
 import { PLAYER_STATUS } from '@/core/game/constants';
 
 interface SideNavbarProps {
@@ -31,6 +32,7 @@ export function SideNavbar({
   const { user } = useAuth();
   const { members, currentMember } = useRoomMembers();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const { cardState, getCardById } = useCardsInGame();
   const playerAssignments = getPlayerAssignments(members, roomId);
   
@@ -91,7 +93,11 @@ export function SideNavbar({
       onViewChange?.('exchange');
     }
   };
-  
+
+  const handleAvatarClick = () => {
+    setProfileModalOpen(true);
+  };  
+
   const currentUserAssignment = user ? playerAssignments.get(user.id) : undefined;
 
   return (
@@ -121,6 +127,7 @@ export function SideNavbar({
               highlightColor="green"
               showTooltip={true}
               tooltipLabel={`${currentMember.username || 'You'}`}
+              onClick={handleAvatarClick}
             />
           )}
 
@@ -204,6 +211,16 @@ export function SideNavbar({
       >
         <Text>{getHelpText()}</Text>
       </Modal>
+
+      {/* Profile Modal */}
+      <Modal
+        opened={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        title="Profile Settings"
+        size="md"
+      >
+        <ProfileSettings />
+      </Modal>      
     </>
   );
 }

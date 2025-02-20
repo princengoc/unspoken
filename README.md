@@ -1,3 +1,16 @@
+# Current PR
+
+
+* [ ] add a notification icon when exchange have updates (eg new incoming, outgoing status changed)
+
+Navbar improvements
+* [x] add effects for buttons eg game phase (display explanations?)
+* [x] remove unnecessary player side bar
+* [x] Use stage icon for waiting, then Discard pile icon for Exchange
+
+
+
+
 # TODO
 
 * [ ] corner case handling: encore with ripple only but no exchange, no ripple cards, so no members have any cards to share. In this case:
@@ -13,14 +26,7 @@
 
 # Minor UIs
 
-Tabs
-* [ ] add a notification icon when exchange have updates (eg new incoming, outgoing status changed)
-Player side bar
-* [ ] is this needed?
-In game
-* [ ] add effects for buttons eg game phase (display explanations?)
-Navbar on left
-* [ ] Use stage icon for waiting, then Discard pile icon for Exchange
+
 
 
 Sign up
