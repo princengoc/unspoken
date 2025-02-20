@@ -20,7 +20,7 @@ type SetupProps = {
   onViewChange?: (view: SetupViewType) => void;
 }
 
-export function Setup({ roomId, initialView = 'cards', onViewChange }: SetupProps) {
+export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame();
   const { currentMember, updateMemberStatus, markMemberAsSpoken } = useRoomMembers();
   const { 
@@ -178,18 +178,7 @@ export function Setup({ roomId, initialView = 'cards', onViewChange }: SetupProp
           )}
         </Stack>
       );
-    }
-
-    // Fallback - redirect to appropriate view based on user state
-    if (currentMember?.status === PLAYER_STATUS.BROWSING) {
-      // If they've already selected a card, show waiting
-      setTimeout(() => setCurrentView('waiting'), 0);
-      return <Loader size="md" />;
-    } else if (canStartDrawCards || canStartChoosing) {
-      // If they need to draw or select cards, show cards view
-      setTimeout(() => setCurrentView('cards'), 0);
-      return <Loader size="md" />;
-    }
+    };
 
     return null;
   };

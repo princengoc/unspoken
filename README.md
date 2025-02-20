@@ -1,5 +1,7 @@
 # Current PR
 
+* [ ] in Encore, at Setup we end up somehow with "Waiting for players..." instead of displaying the Draw Cards. (Seems to be a network problem)
+
 
 # TODO
 
