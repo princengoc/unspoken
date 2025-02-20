@@ -1,6 +1,10 @@
 # Current PR
-
-* [ ] in Encore, at Setup we end up somehow with "Waiting for players..." instead of displaying the Draw Cards. (Seems to be a network problem)
+* [ ] merge game_states and rooms tables, remove game_state_id
+* [ ] performance efficiencies
+    * [ ] select exactly columns needed
+    * [ ] remove consecutive calls
+    * [ ] make startNextRound and draw cards more efficient
+* [ ] Vercel publish!
 
 
 # TODO
@@ -11,9 +15,12 @@
 * [ ] cards have two sides: question side and prompt side. Question side is most appropriate for Exchange. 
 * [ ] level 0 for playing with Bong
 
+
 # Minor game logic changes
 
+End/Start game
 * [ ] Encore: allow individual players to vote: join encore round or not. If creator wants to encore, will exclude players who voted No
+* [ ] End game: allow easy way to start a fresh game (cleared discards, reactions, etc)
 * [ ] Add timers eg when clicked start, say game starts in 30 seconds, finalize your exchange card!
 
 # Minor UIs
@@ -22,13 +29,6 @@
 getPlayerAssignment
 * [ ] player order should be by first joined in room, otherwise new player joining will cause player icons to change
 
-
-Sign up
-* [ ] signup form should require a username
-* [ ] pasword field too small
-
-In game
-* [ ] change playerAvatar to an ActionIcon so that mouse over has a clickable effect
 
 Speaking / Setup
 * [ ] Improve asthetics: eg messages have borders instead of plain text
@@ -46,7 +46,7 @@ Card backgrounds
 
 
 # Minor backend
-* [ ] merge game_states and rooms tables, remove game_state_id
+
 
 # DONE
 * [x] resume from given state
@@ -69,6 +69,14 @@ Card backgrounds
     * [x] Use stage icon for waiting, then Discard pile icon for Exchange
     * [x] add a notification icon when exchange have updates (eg new incoming, outgoing status changed)
 * [x] Decline all other unmatched requests once hasMatch is true (handled automatically on server)
+* Sign up
+    * [x] signup form should require a username
+    * [x] pasword field too small
+* [x] change playerAvatar to an ActionIcon so that mouse over has a clickable effect
+
 
 ## Bugs
 * [ ] render fewer hooks than expected at Exit
+
+## SLOW UI NOTES
+* [ ] in Encore, at Setup we end up somehow with "Waiting for players..." instead of displaying the Draw Cards. (Seems to be a network problem)

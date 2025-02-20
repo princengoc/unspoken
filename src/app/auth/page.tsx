@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
+import { useDisclosure } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
 import { Container, TextInput, Button, Title, Stack, Center, Text, PasswordInput, Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -10,7 +11,9 @@ export default function AuthPage() {
   const { user, loading, loginWithEmail, signUpWithEmail } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [visible, { toggle }] = useDisclosure(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
@@ -30,7 +33,7 @@ export default function AuthPage() {
   const handleLoginOrSignup = async () => {
     try {
       if (isSignUp) {
-        await signUpWithEmail(email, password);
+        await signUpWithEmail(email, password, username);
         notifications.show({ title: "Success", message: "Sign-up successful! Please check your email for confirmation.", color: "green" });
       } else {
         await loginWithEmail(email, password);
@@ -44,7 +47,7 @@ export default function AuthPage() {
   return (
     <Container size="xs">
       <Center>
-        <Stack align="center" spacing="md">
+        <Stack align="center" gap="md">
           <Title order={2}>{isSignUp ? "Sign Up" : "Sign In"}</Title>
 
           <TextInput
@@ -55,12 +58,23 @@ export default function AuthPage() {
             required
           />
 
+          <TextInput
+            label="Username"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+
           <PasswordInput
             label="Password"
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            visible={visible}
+            onVisibilityChange={toggle}
+            w="100%"
           />
 
           <Button fullWidth color="blue" onClick={handleLoginOrSignup}>
