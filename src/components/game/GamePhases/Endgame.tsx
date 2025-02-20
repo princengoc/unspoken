@@ -15,7 +15,7 @@ import { GameSettingsForm } from '@/components/room/GameSettingsForm';
 
 
 type EndgameProp = {
-  roomId: string
+  roomId: string | undefined
 }
 
 export function Endgame({roomId}: EndgameProp) {

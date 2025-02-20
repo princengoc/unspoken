@@ -15,13 +15,19 @@
 
 Tabs
 * [ ] add a notification icon when exchange have updates (eg new incoming, outgoing status changed)
+Player side bar
+* [ ] is this needed?
+In game
+* [ ] add effects for buttons eg game phase (display explanations?)
+Navbar on left
+* [ ] Use stage icon for waiting, then Discard pile icon for Exchange
+
 
 Sign up
 * [ ] signup form should require a username
 * [ ] pasword field too small
 
 In game
-* [ ] add effects for buttons eg game phase (display explanations?)
 * [ ] change playerAvatar to an ActionIcon so that mouse over has a clickable effect
 
 Speaking / Setup
@@ -31,12 +37,6 @@ Speaking / Setup
 Exchange tab
 * [ ] use PlayerAvatar + name instead of first initial
 
-Player side bar
-* [ ] is this needed?
-
-Navbar on left
-* [ ] Use stage icon for waiting, then Discard pile icon for Exchange
-* [ ] 
 
 Exchange card
 * [ ] Show the "from_id" avatar in the bottom corner for the speaker

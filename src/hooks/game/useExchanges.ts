@@ -1,3 +1,5 @@
+// src/hooks/game/useExchanges.ts - updated
+
 import { useState, useEffect, useCallback } from 'react';
 import { exchangeRequestsService, ExchangeRequest } from '@/services/supabase/exchangeRequests';
 import { useAuth } from '@/context/AuthProvider';
@@ -256,10 +258,12 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
     return !!match;
   };
 
+  const exchangePairs = getExchangePairs();
+
   return {
     outgoingRequests: enrichedOutgoingRequests,
     incomingRequests: enrichedIncomingRequests,
-    exchangePairs: getExchangePairs(),
+    exchangePairs,
     loading,
     requestExchange,
     acceptRequest,

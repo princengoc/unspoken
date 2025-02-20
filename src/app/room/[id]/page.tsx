@@ -1,5 +1,7 @@
+// src/app/room/[id]/page.tsx
+
 'use client';
-import { use, useEffect } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Container,
@@ -14,15 +16,16 @@ import { useGameState } from '@/context/GameStateProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { Setup } from '@/components/game/GamePhases/Setup';
 import { Speaking } from '@/components/game/GamePhases/Speaking';
-import { PlayerStatus } from '@/components/game/PlayerStatus';
 import { SideNavbar } from '@/components/layout/SideNavbar';
 import { notifications } from '@mantine/notifications';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { Endgame } from '@/components/game/GamePhases/Endgame';
 
+type SetupViewType = 'cards' | 'exchange' | 'waiting';
+
 interface RoomPageContentProps {
   roomId: string;
-  gameStateId: string
+  gameStateId: string;
 }
 
 function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
@@ -31,6 +34,7 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
   const { cardState } = useCardsInGame();
   const { members, currentMember } = useRoomMembers();
   const { room, leaveRoom } = useRoomHook(roomId);
+  const [currentSetupView, setCurrentSetupView] = useState<SetupViewType>('cards');
 
   const handleLeaveRoom = async () => {
     try {
@@ -44,6 +48,11 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
       });
     }
   };
+
+  // Use memoized callback to prevent unnecessary renders
+  const handleViewChange = useCallback((view: SetupViewType) => {
+    setCurrentSetupView(view);
+  }, []);
 
   if (!currentMember) {
     return (
@@ -65,25 +74,14 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
         roomId={roomId}
         isCreator={isCreator}
         gamePhase={phase}
-        discardPileCount={cardState.discardPile.length}
-        onDiscardPileClick={() => {}}
         handleLeaveRoom={handleLeaveRoom}
-      />
-
-      {/* Player Status on right side */}
-      <PlayerStatus
-        members={members}
-        currentUserId={currentMember.id}
-        activePlayerId={activePlayerId}
-        roomId={roomId}
-        gamePhase={phase}
+        onViewChange={phase === 'setup' ? handleViewChange : undefined}
       />
 
       {/* Main Content */}
       <Box 
         style={{ 
-          marginLeft: '60px', // Side navbar width
-          marginRight: '80px', // Player status width
+          marginLeft: '80px', // Updated sidebar width
           padding: '1rem',
           height: '100%',
           overflowY: 'auto'
@@ -91,9 +89,12 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
       >
         <Paper p="md" radius="xs" style={{ height: '100%' }}>
           {/* Game Phases */}
-          {/* Game Phases */}
           {phase === 'setup' ? (
-            <Setup roomId={room?.id}/>
+            <Setup 
+              roomId={room?.id} 
+              initialView={currentSetupView}
+              onViewChange={handleViewChange}
+            />
           ) : phase === 'endgame' ? (
             <Endgame roomId={room?.id}/>
           ) : (
