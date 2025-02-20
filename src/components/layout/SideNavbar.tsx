@@ -7,11 +7,12 @@ import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { type GamePhase } from '@/core/game/types';
 import { useAuth } from '@/context/AuthProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { useExchanges } from '@/hooks/game/useExchanges';
+import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { PlayerAvatar } from '@/components/game/PlayerAvatar';
 import { getPlayerAssignments } from '@/components/game/statusBarUtils';
 import { ProfileSettings } from '@/app/auth/ProfileSettings';
 import { PLAYER_STATUS } from '@/core/game/constants';
-import { useExchangeNotifications } from '@/hooks/game/useExchangeNotifications';
 
 interface SideNavbarProps {
   roomId: string;
@@ -32,10 +33,24 @@ export function SideNavbar({
   const { members, currentMember } = useRoomMembers();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const { cardState, getCardById } = useCardsInGame();
   const playerAssignments = getPlayerAssignments(members, roomId);
   
   // Get exchange data for notification badge
-  const { hasUnreadChanges } = useExchangeNotifications(roomId);
+  const { incomingRequests, outgoingRequests, loading: exchangesLoading } = useExchanges({
+    roomId,
+    players: members,
+    getCardById
+  });
+  
+  const exchangeUpdatesCount = useMemo(() => {
+    const pendingIncomingCount = incomingRequests.filter(req => req.status === 'pending').length;
+    const updatedOutgoingCount = outgoingRequests.filter(req => 
+      req.status === 'accepted' || req.status === 'declined'
+    ).length;
+    
+    return pendingIncomingCount + updatedOutgoingCount;
+  }, [incomingRequests, outgoingRequests]);
 
   // Get appropriate phase icon
   const PhaseIcon = (() => {
@@ -144,8 +159,8 @@ export function SideNavbar({
               disabled={!canViewExchange}
               color={!canViewExchange ? 'gray' : undefined}
             >
-              {hasUnreadChanges && canViewExchange ? (
-                <Indicator size={8} offset={4} position="top-end" color="red">
+              {exchangeUpdatesCount > 0 && canViewExchange ? (
+                <Indicator label={exchangeUpdatesCount} inline size={16} position="top-end">
                   <IconExchange size={20} />
                 </Indicator>
               ) : (

@@ -118,6 +118,7 @@ export const exchangeRequestsService = {
     if (error) throw error;
   },
 
+  // Fixed subscription to exchange requests changes
   subscribeToExchangeRequests(roomId: string, userId: string, callback: (outgoing: ExchangeRequest[], incoming: ExchangeRequest[]) => void) {
     return supabase
       .channel(`exchange_requests:${roomId}:${userId}`)

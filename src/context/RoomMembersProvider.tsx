@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { roomMembersService } from '@/services/supabase/roomMembers';
-import type { Player, PlayerStatus } from '@/core/game/types';
+import type { Card, Player, PlayerStatus } from '@/core/game/types';
 import { PLAYER_STATUS } from '@/core/game/constants';
 
 // Define context type
