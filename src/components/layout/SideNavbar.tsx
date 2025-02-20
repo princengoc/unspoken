@@ -1,14 +1,13 @@
 // src/components/layout/SideNavbar.tsx
 
 import React, { useState, useMemo } from 'react';
-import { Stack, ActionIcon, Tooltip, Indicator, Divider, Badge, Modal, Text } from '@mantine/core';
+import { Stack, ActionIcon, Tooltip, Indicator, Divider, Modal, Text } from '@mantine/core';
 import { IconDoorExit, IconHourglass, IconMessageCircle, IconCards, IconHelp, IconExchange } from '@tabler/icons-react';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { type GamePhase } from '@/core/game/types';
 import { useAuth } from '@/context/AuthProvider';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
-import { useExchanges } from '@/hooks/game/useExchanges';
-import { useCardsInGame } from '@/context/CardsInGameProvider';
+import { useExchanges } from '@/context/ExchangesProvider';
 import { PlayerAvatar } from '@/components/game/PlayerAvatar';
 import { getPlayerAssignments } from '@/components/game/statusBarUtils';
 import { ProfileSettings } from '@/app/auth/ProfileSettings';
@@ -33,15 +32,10 @@ export function SideNavbar({
   const { members, currentMember } = useRoomMembers();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const { getCardById } = useCardsInGame();
   const playerAssignments = getPlayerAssignments(members, roomId);
   
-  // Get exchange data for notification badge
-  const { incomingRequests, outgoingRequests, loading: exchangesLoading } = useExchanges({
-    roomId,
-    players: members,
-    getCardById
-  });
+  // Since ExchangesProvider is at the room level, we can directly use useExchanges here
+  const { incomingRequests, outgoingRequests } = useExchanges();
   
   const exchangeUpdatesCount = useMemo(() => {
     const pendingIncomingCount = incomingRequests.filter(req => req.status === 'pending').length;

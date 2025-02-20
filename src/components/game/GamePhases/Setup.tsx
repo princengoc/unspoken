@@ -124,8 +124,8 @@ export function Setup({ roomId, initialView = 'cards', onViewChange }: SetupProp
     }
 
     // Exchange view - only show if we're in the right phase
-    if (currentView === 'exchange' && roomId) {
-      return <ExchangeTab roomId={roomId} />;
+    if (currentView === 'exchange' ) {
+      return <ExchangeTab />;
     }
 
     // Waiting view

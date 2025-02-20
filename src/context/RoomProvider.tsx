@@ -1,3 +1,5 @@
+// src/context/RoomProvider.tsx
+
 import React, {
   createContext,
   useContext,
@@ -9,6 +11,7 @@ import React, {
 import { GameStateProvider, useGameState } from './GameStateProvider';
 import { RoomMembersProvider, useRoomMembers } from './RoomMembersProvider';
 import { CardsInGameProvider, useCardsInGame } from './CardsInGameProvider';
+import { ExchangesProvider } from './ExchangesProvider';
 import type { Room, Card, RoomSettings } from '@/core/game/types';
 import { roomsService } from '@/services/supabase/rooms';
 import { PLAYER_STATUS } from '@/core/game/constants';
@@ -28,7 +31,7 @@ interface RoomContextType {
   isSetupComplete: boolean;
   isCreator: boolean;
   startNextRound: (settings: Partial<RoomSettings>) => Promise<void>;
-  room: Room | null;  // TODO: is this a good idea to pass room around?
+  room: Room | null;
 }
 
 const RoomContext = createContext<RoomContextType | null>(null);
@@ -329,7 +332,9 @@ export function RoomProvider({ room, children }: RoomProviderProps) {
     <RoomMembersProvider roomId={room.id}>
       <CardsInGameProvider roomId={room.id}>
         <GameStateProvider roomId={room.id} gameStateId={room.game_state_id!}>
-          <RoomProviderInner room={room}>{children}</RoomProviderInner>
+          <ExchangesProvider roomId={room.id}>
+            <RoomProviderInner room={room}>{children}</RoomProviderInner>
+          </ExchangesProvider>
         </GameStateProvider>
       </CardsInGameProvider>
     </RoomMembersProvider>

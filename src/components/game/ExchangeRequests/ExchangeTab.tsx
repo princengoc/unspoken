@@ -1,39 +1,27 @@
+// src/components/game/ExchangeRequests/ExchangeTab.tsx
+
 import React, { useState } from 'react';
 import { Box, Text, Loader, Stack, Alert, Group, Paper, Badge, Button, Modal, Divider, Avatar } from '@mantine/core';
 import { IconInfoCircle, IconExchange, IconArrowRight, IconArrowLeft, IconCheck, IconX, IconCards } from '@tabler/icons-react';
-import { useAuth } from '@/context/AuthProvider';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
-import { useRoomMembers } from '@/context/RoomMembersProvider';
-import { useExchanges, ExchangePair } from '@/hooks/game/useExchanges';
 import { MiniCard } from '../CardDeck/MiniCard';
 import { MiniDeck } from '../CardDeck/MiniDeck';
-import { Card } from '@/core/game/types';
-import { EnrichedExchangeRequest } from '@/hooks/game/useExchanges';
+import { useExchanges, ExchangePair , EnrichedExchangeRequest } from '@/context/ExchangesProvider';
 
-interface ExchangeTabProps {
-  roomId: string;
-}
-
-export function ExchangeTab({ roomId }: ExchangeTabProps) {
-  const { user } = useAuth();
-  const { cardState, getCardById, getCardsByIds } = useCardsInGame();
-  const { members } = useRoomMembers();
+export function ExchangeTab() {
+  const { cardState, getCardsByIds } = useCardsInGame();
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'send' | 'counter'>('send');
   
+  // Since ExchangesProvider is at the room level, we can directly use useExchanges
   const {
     exchangePairs,
     loading,
     requestExchange,
     acceptRequest,
-    declineRequest,
-    hasMatch
-  } = useExchanges({
-    roomId,
-    players: members,
-    getCardById
-  });
+    declineRequest
+  } = useExchanges();
 
   if (loading) {
     return (

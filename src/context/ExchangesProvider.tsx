@@ -1,19 +1,21 @@
-// src/hooks/game/useExchanges.ts
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { exchangeRequestsService, ExchangeRequest } from '@/services/supabase/exchangeRequests';
 import { useAuth } from '@/context/AuthProvider';
-import { Card, Player } from '@/core/game/types';
+import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { useCardsInGame } from '@/context/CardsInGameProvider';
+import { Card } from '@/core/game/types';
 import { notifications } from '@mantine/notifications';
 
-interface UseExchangesProps {
-  roomId: string;
-  players: Player[];
-  getCardById: (cardId: string) => Card | undefined;
-}
-
+// Enriched types
 export interface EnrichedExchangeRequest extends ExchangeRequest {
-  fromPlayer?: Player;
-  toPlayer?: Player;
+  fromPlayer?: {
+    id: string;
+    username: string | null;
+  };
+  toPlayer?: {
+    id: string;
+    username: string | null;
+  };
   card?: Card;
 }
 
@@ -25,8 +27,36 @@ export interface ExchangePair {
   hasMatch: boolean;
 }
 
-export function useExchanges({ roomId, players, getCardById }: UseExchangesProps) {
+// Context type definition
+interface ExchangesContextType {
+  // Core data
+  exchangePairs: ExchangePair[];
+  incomingRequests: EnrichedExchangeRequest[];
+  outgoingRequests: EnrichedExchangeRequest[];
+  
+  // Status
+  loading: boolean;
+  isSubscribed: boolean;
+  
+  // Actions
+  requestExchange: (toPlayerId: string, cardId: string) => Promise<void>;
+  acceptRequest: (requestId: string) => Promise<void>;
+  declineRequest: (requestId: string) => Promise<void>;
+  hasMatch: (request: ExchangeRequest) => boolean;
+}
+
+interface ExchangesProviderProps {
+  roomId: string;
+  children: ReactNode;
+}
+
+// Create context with no default value
+const ExchangesContext = createContext<ExchangesContextType | null>(null);
+
+export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) {
   const { user } = useAuth();
+  const { members } = useRoomMembers();
+  const { getCardById } = useCardsInGame();
   const [outgoingRequests, setOutgoingRequests] = useState<ExchangeRequest[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<ExchangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +69,7 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
     }
 
     let subscription: any = null;
-    let isMounted = true;
+    let isMounted = true; // Prevent state updates if unmounted
 
     // Initial data load
     const loadInitialData = async () => {
@@ -93,7 +123,7 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
   // Enhanced requests with player and card data
   const enrichedRequests = useMemo(() => {
     const getPlayerById = (playerId: string) => 
-      players.find(p => p.id === playerId);
+      members.find(p => p.id === playerId);
 
     return {
       outgoing: outgoingRequests.map(req => ({
@@ -107,13 +137,13 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
         card: getCardById(req.card_id)
       }))
     };
-  }, [outgoingRequests, incomingRequests, players, getCardById]);
+  }, [outgoingRequests, incomingRequests, members, getCardById]);
 
   // Unified exchange pairs data structure
   const exchangePairs = useMemo(() => {
     if (!user?.id) return [];
 
-    const otherPlayers = players.filter(p => p.id !== user.id);
+    const otherPlayers = members.filter(p => p.id !== user.id);
     
     return otherPlayers.map(player => {
       const outgoing = enrichedRequests.outgoing.find(req => req.to_id === player.id);
@@ -132,7 +162,7 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
         hasMatch
       };
     });
-  }, [enrichedRequests, players, user?.id]);
+  }, [enrichedRequests, members, user?.id]);
 
   // Action: Create a new exchange request
   const requestExchange = useCallback(async (toPlayerId: string, cardId: string) => {
@@ -218,7 +248,7 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
     }
   }, [incomingRequests, outgoingRequests, user?.id]);
 
-  return {
+  const value = {
     // Core data
     exchangePairs,
     incomingRequests: enrichedRequests.incoming,
@@ -234,4 +264,18 @@ export function useExchanges({ roomId, players, getCardById }: UseExchangesProps
     declineRequest,
     hasMatch
   };
+
+  return (
+    <ExchangesContext.Provider value={value}>
+      {children}
+    </ExchangesContext.Provider>
+  );
+}
+
+export function useExchanges() {
+  const context = useContext(ExchangesContext);
+  if (!context) {
+    throw new Error('useExchanges must be used within an ExchangesProvider');
+  }
+  return context;
 }
