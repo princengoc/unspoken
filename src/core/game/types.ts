@@ -48,7 +48,6 @@ export type RoomMetadata = {
   updated_at: string;
   is_active: boolean;
   game_mode: GameMode;
-  game_state_id?: string;
 };
 
 export type RoomSettings = {

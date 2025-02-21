@@ -6,16 +6,16 @@ import type { RoomSettings } from '@/core/game/types';
 interface GameSettingsFormProps {
   initialSettings?: Partial<RoomSettings>;
   onChange: (settings: Partial<RoomSettings>) => void;
-  rippleOnlyDescription?: string;
+  dealExtrasDescription?: string;
 }
 
 export function GameSettingsForm({ 
   initialSettings = {}, 
   onChange,
-  rippleOnlyDescription = "If enabled, only Ripple and Exchanged cards can be used."
+  dealExtrasDescription = "If disabled, only Ripple and Exchanged cards can be used."
 }: GameSettingsFormProps) {
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
-    ripple_only: initialSettings.ripple_only || false,
+    deal_extras: initialSettings.deal_extras || true,
     card_depth: initialSettings.card_depth || null
   });
 
@@ -28,19 +28,19 @@ export function GameSettingsForm({
   return (
     <Group gap="xs" justify='flex-start'>
       <Switch
-        label="Ripple and Exchange only"
-        description={rippleOnlyDescription}
-        checked={settings.ripple_only}
+        label="Deal New Cards"
+        description={dealExtrasDescription}
+        checked={settings.deal_extras}
         onChange={(event) => {
-          handleSettingChange({ ripple_only: event.currentTarget.checked });
+          handleSettingChange({ deal_extras: event.currentTarget.checked });
         }}
       />
       
       <Select
         label="Card Depth"
-        description={settings.ripple_only ? 
-          "Need to disable ripple_only" : 
-          "Only draw cards from this level"}
+        description={!settings.deal_extras ? 
+          "Need to enable Deal New Cards" : 
+          "Only deal new cards from this level"}
         data={[
           { value: 'all', label: 'All Depths' },
           { value: '1', label: 'Light (Level 1)' },
@@ -51,7 +51,7 @@ export function GameSettingsForm({
         onChange={(value) => handleSettingChange({
           card_depth: value === 'all' ? null : parseInt(value as string) as 1 | 2 | 3
         })}
-        disabled={settings.ripple_only}
+        disabled={!settings.deal_extras}
       />
     </Group>
   );

@@ -10,32 +10,47 @@ import {
   Loader,
   Paper,
 } from '@mantine/core';
-import { useRoomHook } from '@/hooks/room/useRoomHook';
-import { RoomProvider } from '@/context/RoomProvider';
-import { useGameState } from '@/context/GameStateProvider';
-import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { FullRoomProvider } from '@/context/FullRoomProvider';
+import { RoomProvider, useRoom } from '@/context/RoomProvider';
 import { Setup } from '@/components/game/GamePhases/Setup';
 import { Speaking } from '@/components/game/GamePhases/Speaking';
 import { SideNavbar } from '@/components/layout/SideNavbar';
 import { notifications } from '@mantine/notifications';
-import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { Endgame } from '@/components/game/GamePhases/Endgame';
 
 type SetupViewType = 'cards' | 'exchange' | 'waiting';
 
-interface RoomPageContentProps {
-  roomId: string;
-  gameStateId: string;
-}
-
-function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
+/**
+ * Main content component that renders the actual room UI
+ */
+function RoomContent({ roomId }: { roomId: string }) {
   const router = useRouter();
-  const { phase, activePlayerId } = useGameState();
-  const { cardState } = useCardsInGame();
-  const { members, currentMember } = useRoomMembers();
-  const { room, leaveRoom } = useRoomHook(roomId);
+  const { room, loading, error, leaveRoom } = useRoom();
   const [currentSetupView, setCurrentSetupView] = useState<SetupViewType>('cards');
+  
+  useEffect(() => {
+    if (error) {
+      notifications.show({
+        title: 'Error',
+        message: error.message,
+        color: 'red',
+      });
+      router.push('/');
+    }
+  }, [error, router]);
+  
+  if (loading || !room) {
+    return (
+      <Container py="xl">
+        <Box ta='center'>
+          <Loader size="xl" />
+          <Text mt="md">Loading room...</Text>
+        </Box>
+      </Container>
+    );
+  }
 
+  // Handle leaving room
   const handleLeaveRoom = async () => {
     try {
       await leaveRoom();
@@ -49,97 +64,64 @@ function RoomPageContent({ roomId, gameStateId }: RoomPageContentProps) {
     }
   };
 
-  // Use memoized callback to prevent unnecessary renders
+  // Memoized callback to prevent unnecessary renders
   const handleViewChange = useCallback((view: SetupViewType) => {
     setCurrentSetupView(view);
   }, []);
 
-  if (!currentMember) {
-    return (
-      <Container size="sm" py="xl">
-        <Box ta='center'>
-          <Loader size="xl" />
-          <Text mt="md">Joining room...</Text>
-        </Box>
-      </Container>
-    );
-  }
-
-  const isCreator = currentMember.id === room?.created_by;
-
   return (
-    <Box style={{ height: '100vh', position: 'relative' }}>
-      {/* Side Navigation */}
-      <SideNavbar 
-        roomId={roomId}
-        isCreator={isCreator}
-        gamePhase={phase}
-        handleLeaveRoom={handleLeaveRoom}
-        onViewChange={phase === 'setup' ? handleViewChange : undefined}
-      />
+    <FullRoomProvider roomId={roomId}>
+      <Box style={{ height: '100vh', position: 'relative' }}>
+        {/* Side Navigation */}
+        <SideNavbar 
+          roomId={room.id}
+          gamePhase={room.phase}
+          handleLeaveRoom={handleLeaveRoom}
+          onViewChange={room.phase === 'setup' ? handleViewChange : undefined}
+        />
 
-      {/* Main Content */}
-      <Box 
-        style={{ 
-          marginLeft: '80px', // Updated sidebar width
-          padding: '1rem',
-          height: '100%',
-          overflowY: 'auto'
-        }}
-      >
-        <Paper p="md" radius="xs" style={{ height: '100%' }}>
-          {/* Game Phases */}
-          {phase === 'setup' ? (
-            <Setup 
-              roomId={room?.id} 
-              initialView={currentSetupView}
-              onViewChange={handleViewChange}
-            />
-          ) : phase === 'endgame' ? (
-            <Endgame roomId={room?.id}/>
-          ) : (
-            <Speaking gameStateId={gameStateId} roomId={room?.id} />
-          )}
-        </Paper>
+        {/* Main Content */}
+        <Box 
+          style={{ 
+            marginLeft: '80px',
+            padding: '1rem',
+            height: '100%',
+            overflowY: 'auto'
+          }}
+        >
+          <Paper p="md" radius="xs" style={{ height: '100%' }}>
+            {/* Game Phases */}
+            {room.phase === 'setup' ? (
+              <Setup 
+                roomId={room.id} 
+                initialView={currentSetupView}
+                onViewChange={handleViewChange}
+              />
+            ) : room.phase === 'endgame' ? (
+              <Endgame roomId={room.id}/>
+            ) : (
+              <Speaking roomId={room.id} />
+            )}
+          </Paper>
+        </Box>
       </Box>
-    </Box>
+    </FullRoomProvider>      
   );
 }
 
+/**
+ * Main page component that handles params and sets up providers
+ */
 interface RoomPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
-  const { room, loading, error } = useRoomHook(roomId);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (error) {
-      notifications.show({
-        title: 'Error',
-        message: error.message,
-        color: 'red',
-      });
-      router.push('/');
-    }
-  }, [error, router]);
-
-  if (loading || !room || !room?.game_state_id) {
-    return (
-      <Container py="xl">
-        <Box ta='center'>
-          <Loader size="xl" />
-          <Text mt="md">Loading room...</Text>
-        </Box>
-      </Container>
-    );
-  }
-
+  
   return (
-    <RoomProvider room={room}>
-      <RoomPageContent roomId={roomId} gameStateId={room.game_state_id} />
+    <RoomProvider roomId={roomId}>
+      <RoomContent roomId={roomId} />
     </RoomProvider>
   );
 }

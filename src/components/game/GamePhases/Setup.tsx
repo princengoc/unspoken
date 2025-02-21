@@ -1,11 +1,11 @@
 // src/components/game/GamePhases/Setup.tsx
 
 import { useState, useEffect } from 'react';
-import { Stack, Text, Group, Button, Paper, Transition, Loader } from '@mantine/core';
+import { Stack, Text, Group, Button, Paper, Transition } from '@mantine/core';
 import { notifications } from "@mantine/notifications";
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
-import { useRoom } from '@/context/RoomProvider';
+import { useFullRoom } from '@/context/FullRoomProvider';
 import { CardDeck } from '../CardDeck';
 import { SlideIn } from '@/components/animations/Motion';
 import { PLAYER_STATUS } from '@/core/game/constants';
@@ -31,7 +31,7 @@ export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
     canStartChoosing,
     isSetupComplete, 
     isCreator
-  } = useRoom();
+  } = useFullRoom();
 
   const [isDealing, setIsDealing] = useState(false);
   const [noCardsAvailable, setNoCardsAvailable] = useState(false);

@@ -19,28 +19,28 @@ type ReactionGroup = {
 };
 
 interface ReactionsFeedProps {
-  gameStateId: string;
+  roomId: string;
   speakerId: string;
   cardId: string;
   currentUserId: string;
   playerAssignments: Map<string, PlayerAssignment>;
 }
 
-export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, playerAssignments }: ReactionsFeedProps) {
+export function ReactionsFeed({ roomId, speakerId, cardId, currentUserId, playerAssignments }: ReactionsFeedProps) {
   const [reactionGroups, setReactionGroups] = useState<ReactionGroup[]>([]);
   const [ripples, setRipples] = useState<(ListenerReaction & { username?: string })[]>([]);
   const theme = useMantineTheme();
 
   // Load and subscribe to reactions
   useEffect(() => {
-    if (!gameStateId || !speakerId || !cardId) return;
+    if (!roomId || !speakerId || !cardId) return;
 
     // Initial load of reactions
     const loadReactions = async () => {
       try {
         // We're using a specific RPC to get all reactions for a card/speaker
         // This includes reactions from all listeners, not just the current user
-        const { data } = await reactionsService.getReactionsForSpeaker(gameStateId, speakerId, cardId);
+        const { data } = await reactionsService.getReactionsForSpeaker(roomId, speakerId, cardId);
         processReactions(data || []);
       } catch (error) {
         console.error('Failed to load reactions for speaker:', error);
@@ -49,9 +49,9 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
 
     loadReactions();
 
-    // Subscribe to all reactions for this game state
+    // Subscribe to all reactions for this room
     const subscription = reactionsService.subscribeToReactions(
-      gameStateId,
+      roomId,
       (allReactions) => {
         // Filter to only get reactions relevant to this speaker/card
         const relevantReactions = allReactions.filter(
@@ -64,7 +64,7 @@ export function ReactionsFeed({ gameStateId, speakerId, cardId, currentUserId, p
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameStateId, speakerId, cardId, playerAssignments]);
+  }, [roomId, speakerId, cardId, playerAssignments]);
 
   // Process and group reactions
   const processReactions = (reactions: ListenerReaction[]) => {

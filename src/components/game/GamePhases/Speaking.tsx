@@ -1,7 +1,7 @@
 import { Stack, Button, Group, Box } from '@mantine/core';
 import { motion } from 'framer-motion';
 import { useGameState } from '@/context/GameStateProvider';
-import { useRoom } from '@/context/RoomProvider';
+import { useFullRoom } from '@/context/FullRoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
 import { Card } from '../Card';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
@@ -11,22 +11,19 @@ import { useAuth } from '@/context/AuthProvider';
 import { getPlayerAssignments } from '../statusBarUtils';
 
 type SpeakingProp = {
-  gameStateId: string
-  roomId: string | undefined
+  roomId: string
 }
 
-export function Speaking({ gameStateId, roomId }: SpeakingProp) {
+export function Speaking({ roomId }: SpeakingProp) {
   const { user } = useAuth();
   const { activePlayerId } = useGameState();
-  const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useRoom();
+  const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useFullRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
 
   if (!activePlayerId) return null;
   const activeCard = getCardById(cardState.selectedCards[activePlayerId]);
   if (!activeCard) return null;
-
-  if (!roomId) return null;
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 
@@ -62,7 +59,7 @@ export function Speaking({ gameStateId, roomId }: SpeakingProp) {
             {currentSpeakerHasStarted && user && (
                  <Box mt="md">
                    <ReactionsFeed
-                     gameStateId={gameStateId}
+                     roomId={roomId}
                      speakerId={activePlayerId}
                      cardId={activeCard.id}
                      currentUserId={user.id}
@@ -76,13 +73,13 @@ export function Speaking({ gameStateId, roomId }: SpeakingProp) {
             <ListenerReactions
               speakerId={activePlayerId}
               cardId={activeCard.id}
-              gameStateId={gameStateId}
+              roomId={roomId}
             />
             {/* Show reactions to everyone if not private */}
             {user && currentSpeakerHasStarted && (
                  <Box mt="md">
                    <ReactionsFeed
-                     gameStateId={gameStateId}
+                     roomId={roomId}
                      speakerId={activePlayerId}
                      cardId={activeCard.id}
                      currentUserId={user.id}

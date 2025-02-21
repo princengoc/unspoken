@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, TextInput, Stack, Button, Switch, Group, Text, Select } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconAdjustments } from '@tabler/icons-react';
-import { useRoomHook } from '@/hooks/room/useRoomHook';
+import { useRoomAPI } from '@/hooks/room/useRoomAPI';
 import { RoomPasscode } from './RoomPasscode';
 import type { RoomSettings } from '@/core/game/types';
 import { GameSettingsForm } from './GameSettingsForm';
@@ -13,11 +13,11 @@ import { GameSettingsForm } from './GameSettingsForm';
 
 export function CreateRoom() {
   const router = useRouter();
-  const { createRoom, loading } = useRoomHook();
+  const { createRoom, loading } = useRoomAPI();
   const [name, setName] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
-    ripple_only: false,
+    deal_extras: true,
     card_depth: null
   });
   const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);

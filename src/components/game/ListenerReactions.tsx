@@ -14,17 +14,17 @@ const REACTIONS = [
 interface ListenerReactionsProps {
   speakerId: string;
   cardId: string;
-  gameStateId: string;
+  roomId: string;
 }
 
-export function ListenerReactions({ speakerId, cardId, gameStateId }: ListenerReactionsProps) {
+export function ListenerReactions({ speakerId, cardId, roomId }: ListenerReactionsProps) {
   const { user } = useAuth();
   const [isPrivate, setIsPrivate] = useState(true);
 
-  if (!user || !gameStateId) return null;
+  if (!user || !roomId) return null;
 
   const { toggleReaction, toggleRipple, hasReaction, isRippled, reactions } = useReactions({
-    gameStateId,
+    roomId,
     speakerId,
     listenerId: user.id,
     cardId

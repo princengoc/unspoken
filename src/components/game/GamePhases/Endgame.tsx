@@ -1,11 +1,12 @@
 // src/components/game/GamePhases/Endgame.tsx
 import { useEffect, useState } from 'react';
-import { Container, Stack, Title, Text, Group, Button, Paper, Switch, Select, SimpleGrid } from '@mantine/core';
+import { Container, Stack, Title, Text, Group, Button, Paper, SimpleGrid } from '@mantine/core';
 import { IconRepeat, IconArrowRight } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { motion } from 'framer-motion';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
+import { useFullRoom } from '@/context/FullRoomProvider';
 import { useRoom } from '@/context/RoomProvider';
 import { SlideIn, FadeIn } from '@/components/animations/Motion';
 import { MiniCard } from '../CardDeck/MiniCard';
@@ -19,12 +20,13 @@ type EndgameProp = {
 }
 
 export function Endgame({roomId}: EndgameProp) {
+  const { room } = useRoom();
   const { members } = useRoomMembers();
   const { cardState, getCardById } = useCardsInGame();
-  const { isCreator, startNextRound, room } = useRoom();
+  const { isCreator, startNextRound } = useFullRoom();
   const [showingCards, setShowingCards] = useState(false);
   const [nextRoundSettings, setNextRoundSettings] = useState<Partial<RoomSettings>>({
-      ripple_only: false,
+      deal_extras: true,
       card_depth: null,
   });
   const [loading, setLoading] = useState(false);
@@ -42,13 +44,13 @@ export function Endgame({roomId}: EndgameProp) {
   }, []);
 
   useEffect(() => {
-    if (room?.settings?.card_depth) {
+    if (room?.card_depth) {
       setNextRoundSettings(prev => ({
         ...prev,
-        card_depth: room?.settings?.card_depth
+        card_depth: room?.card_depth
       }));
     }
-  }, [room?.settings?.card_depth]);  
+  }, [room?.card_depth]);  
   
   // Get player to card mapping
   const playerCards = Object.entries(cardState.selectedCards).map(([playerId, cardId]) => {
@@ -133,9 +135,8 @@ export function Endgame({roomId}: EndgameProp) {
              <Title order={4}>Play an Encore Round</Title>
              
              <GameSettingsForm 
-             initialSettings={room?.settings || {}}
               onChange={setNextRoundSettings}
-              rippleOnlyDescription='Use rippled cards from previous round'
+              dealExtrasDescription='If disabled, will use cards from previous round only.'
               />
                          
              <Group justify="center" mt="sm">

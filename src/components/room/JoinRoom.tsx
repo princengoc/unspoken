@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, TextInput, Stack, Button, Text, Group, Loader } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useRoomHook } from '@/hooks/room/useRoomHook';
+import { useRoomAPI } from '@/hooks/room/useRoomAPI';
 import { roomMembersService } from '@/services/supabase/roomMembers';
 import { useAuth } from '@/context/AuthProvider';
 
 export function JoinRoom() {
   const router = useRouter();
-  const { findRoomByPasscode, joinRoom, loading: roomLoading } = useRoomHook();
+  const { findRoomByPasscode, joinRoom, loading: roomLoading } = useRoomAPI();
   const { user } = useAuth();
   const [passcode, setPasscode] = useState('');
   const [joinRequest, setJoinRequest] = useState<any | null>(null);

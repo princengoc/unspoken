@@ -11,10 +11,10 @@ import { PlayerAvatar } from '@/components/game/PlayerAvatar';
 import { getPlayerAssignments } from '@/components/game/statusBarUtils';
 import { ProfileSettings } from '@/app/auth/ProfileSettings';
 import { PLAYER_STATUS } from '@/core/game/constants';
+import { useFullRoom } from '@/context/FullRoomProvider';
 
 interface SideNavbarProps {
   roomId: string;
-  isCreator: boolean;
   gamePhase: GamePhase;
   handleLeaveRoom?: () => void;
   onViewChange?: (view: 'cards' | 'exchange' | 'waiting') => void;
@@ -22,12 +22,12 @@ interface SideNavbarProps {
 
 export function SideNavbar({
   roomId,
-  isCreator,
   gamePhase,
   handleLeaveRoom,
   onViewChange,
 }: SideNavbarProps) {
   const { members, currentMember } = useRoomMembers();
+  const { isCreator } = useFullRoom();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const playerAssignments = getPlayerAssignments(members, roomId);

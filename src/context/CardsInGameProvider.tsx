@@ -145,14 +145,12 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
   // Helper to deal new cards to a player
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
     // Get room settings card depth
-    const { data: roomData } = await supabase.from('rooms').select('settings, game_state_id').eq('id', roomId).single();
-    const roomSettings = roomData?.settings;
-    const cardDepth = roomSettings?.card_depth;
-    const rippleOnly = roomSettings?.ripple_only || false;
-    const gameStateId = roomData?.game_state_id; 
+    const { data: roomData } = await supabase.from('rooms').select('card_depth, deal_extras').eq('id', roomId).single();
+    const cardDepth = roomData?.card_depth;
+    const deal_extras = roomData?.deal_extras || true;
     
     // 1. Get rippled cards first
-    const rippledCardsIds = await reactionsService.getRippledCards(gameStateId, playerId);
+    const rippledCardsIds = await reactionsService.getRippledCards(roomId, playerId);
     console.log(`rippled Cards Ids: ${JSON.stringify(rippledCardsIds)}`);
     
     // 2. Get mutually accepted exchange cards (for encore rounds)
@@ -166,9 +164,8 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     // Combine rippled and exchange cards
     const availableCardIds = [...rippledCardsIds, ...exchangeCardIds];
 
-    // If this is a ripple-only round,
-    // only use rippled and exchanged cards
-    if (rippleOnly) {
+    // if does not deal extras, only use ripple and exchange cards
+    if (!deal_extras) {
       if (availableCardIds.length > 0) {
         await moveCardsToPlayerHand(availableCardIds, playerId);
         const availableCards = getCardsByIds(availableCardIds);

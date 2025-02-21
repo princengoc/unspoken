@@ -4,7 +4,7 @@ import { IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { roomMembersService } from '@/services/supabase/roomMembers';
 import { useAuth } from '@/context/AuthProvider';
-import { useRoomHook } from './useRoomHook';
+import { useRoomAPI } from './useRoomAPI';
 import CopyCodeButton from './CopyCodeButton';
 
 
@@ -17,7 +17,7 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [opened, setOpened] = useState(false);
-  const { findPasscodeByRoom} = useRoomHook();
+  const { findPasscodeByRoom} = useRoomAPI();
 
   const [roomPasscode, setRoomPasscode] = useState<string | null>(null);
 

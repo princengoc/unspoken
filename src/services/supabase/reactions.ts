@@ -1,13 +1,11 @@
 // src/services/supabase/reactions.ts
-
 import { supabase } from './client';
-import type { Card } from '@/core/game/types';
 
 export type ReactionType = 'inspiring' | 'resonates' | 'metoo';
 
 export interface ListenerReaction {
   id: string;
-  gameStateId: string;
+  roomId: string;
   speakerId: string;
   listenerId: string;
   cardId: string;
@@ -18,7 +16,7 @@ export interface ListenerReaction {
 
 export const reactionsService = {
   async toggleReaction(
-    gameStateId: string,
+    roomId: string,
     speakerId: string,
     listenerId: string,
     cardId: string,
@@ -30,7 +28,7 @@ export const reactionsService = {
       .from('reactions')
       .select('*')
       .match({
-        game_state_id: gameStateId,
+        room_id: roomId,
         speaker_id: speakerId,
         listener_id: listenerId,
         card_id: cardId,
@@ -44,7 +42,7 @@ export const reactionsService = {
         .from('reactions')
         .delete()
         .match({
-          game_state_id: gameStateId,
+          room_id: roomId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -55,7 +53,7 @@ export const reactionsService = {
       await supabase
         .from('reactions')
         .insert([{
-          game_state_id: gameStateId,
+          room_id: roomId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -66,7 +64,7 @@ export const reactionsService = {
   },
 
   async toggleRipple(
-    gameStateId: string,
+    roomId: string,
     speakerId: string,
     listenerId: string,
     cardId: string
@@ -76,7 +74,7 @@ export const reactionsService = {
       .from('reactions')
       .select('*')
       .match({
-        game_state_id: gameStateId,
+        room_id: roomId,
         speaker_id: speakerId,
         listener_id: listenerId,
         card_id: cardId,
@@ -90,7 +88,7 @@ export const reactionsService = {
         .from('reactions')
         .delete()
         .match({
-          game_state_id: gameStateId,
+          room_id: roomId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -101,7 +99,7 @@ export const reactionsService = {
       await supabase
         .from('reactions')
         .insert([{
-          game_state_id: gameStateId,
+          room_id: roomId,
           speaker_id: speakerId,
           listener_id: listenerId,
           card_id: cardId,
@@ -111,14 +109,14 @@ export const reactionsService = {
   },
 
   async getPlayerReactions(
-    gameStateId: string,
+    roomId: string,
     listenerId: string
   ): Promise<ListenerReaction[]> {
     const { data } = await supabase
       .from('reactions')
       .select('*')
       .match({
-        game_state_id: gameStateId,
+        room_id: roomId,
         listener_id: listenerId
       });
 
@@ -126,14 +124,14 @@ export const reactionsService = {
   },
 
   async getRippledCards(
-    gameStateId: string,
+    roomId: string,
     playerId: string
   ): Promise<string[]> {
     const { data: reactions } = await supabase
       .from('reactions')
       .select('card_id')
       .match({
-        game_state_id: gameStateId,
+        room_id: roomId,
         listener_id: playerId,
         ripple_marked: true
       });
@@ -146,7 +144,7 @@ export const reactionsService = {
   },
 
   async getReactionsForSpeaker(
-    gameStateId: string,
+    roomId: string,
     speakerId: string,
     cardId: string
   ): Promise<{ data: ListenerReaction[] }> {
@@ -154,7 +152,7 @@ export const reactionsService = {
       .from('reactions')
       .select('*')
       .match({
-        game_state_id: gameStateId,
+        room_id: roomId,
         speaker_id: speakerId,
         card_id: cardId
       });
@@ -167,7 +165,7 @@ export const reactionsService = {
     return { 
       data: data.map(item => ({
         id: item.id,
-        gameStateId: item.game_state_id,
+        roomId: item.room_id,
         speakerId: item.speaker_id,
         listenerId: item.listener_id,
         cardId: item.card_id,
@@ -179,27 +177,27 @@ export const reactionsService = {
   },
 
   subscribeToReactions(
-    gameStateId: string,
+    roomId: string,
     callback: (reactions: ListenerReaction[]) => void
   ) {
     return supabase
-      .channel(`reactions:${gameStateId}`)
+      .channel(`reactions:${roomId}`)
       .on('postgres_changes', 
         { 
           event: '*', 
           schema: 'public', 
           table: 'reactions',
-          filter: `game_state_id=eq.${gameStateId}`
+          filter: `room_id=eq.${roomId}`
         }, 
         async () => {
           const { data } = await supabase
             .from('reactions')
             .select('*')
-            .eq('game_state_id', gameStateId);
+            .eq('room_id', roomId);
 
           const mappedData = (data || []).map(item => ({
             id: item.id,
-            gameStateId: item.game_state_id,
+            roomId: item.room_id,
             speakerId: item.speaker_id,
             listenerId: item.listener_id,
             cardId: item.card_id,

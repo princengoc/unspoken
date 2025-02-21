@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { reactionsService, type ListenerReaction, type ReactionType } from '@/services/supabase/reactions';
 
 interface UseReactionsProps {
-  gameStateId: string;
+  roomId: string;
   speakerId: string;
   listenerId: string;
   cardId: string;
 }
 
 export function useReactions({ 
-  gameStateId,
+  roomId,
   speakerId,
   listenerId,
   cardId 
@@ -17,11 +17,11 @@ export function useReactions({
   const [reactions, setReactions] = useState<ListenerReaction[]>([]);
 
   useEffect(() => {
-    if (!gameStateId || !listenerId) return;
+    if (!roomId || !listenerId) return;
 
     const loadReactions = async () => {
       try {
-        const data = await reactionsService.getPlayerReactions(gameStateId, listenerId);
+        const data = await reactionsService.getPlayerReactions(roomId, listenerId);
         setReactions(data);
       } catch (error) {
         console.error('Failed to load reactions:', error);
@@ -31,7 +31,7 @@ export function useReactions({
     loadReactions();
 
     const subscription = reactionsService.subscribeToReactions(
-      gameStateId,
+      roomId,
       (updatedReactions) => {
         setReactions(updatedReactions);
       }
@@ -40,11 +40,11 @@ export function useReactions({
     return () => {
       subscription.unsubscribe();
     };
-  }, [gameStateId, listenerId]);
+  }, [roomId, listenerId]);
 
 
   const toggleReaction = async (type: ReactionType, isPrivate: boolean = true) => {
-    if (!gameStateId || !speakerId || !listenerId || !cardId) return;
+    if (!roomId || !speakerId || !listenerId || !cardId) return;
     // optimistically update
     setReactions((prev) => {
       const alreadyReacted = prev.some(r => r.type === type && r.speakerId === speakerId && r.cardId === cardId);
@@ -54,7 +54,7 @@ export function useReactions({
             ...prev,
             {
               id: '',  // Placeholder, will be updated by Supabase
-              gameStateId, 
+              roomId, 
               speakerId, 
               listenerId, 
               cardId, 
@@ -66,7 +66,7 @@ export function useReactions({
     });
   
     try {
-      await reactionsService.toggleReaction(gameStateId, speakerId, listenerId, cardId, type, isPrivate);
+      await reactionsService.toggleReaction(roomId, speakerId, listenerId, cardId, type, isPrivate);
     } catch (error) {
       console.error('Failed to toggle reaction:', error);
     }
@@ -74,7 +74,7 @@ export function useReactions({
   
 
   const toggleRipple = async () => {
-    if (!gameStateId || !speakerId || !listenerId || !cardId) return;
+    if (!roomId || !speakerId || !listenerId || !cardId) return;
 
     setReactions((prev) => {
       const alreadyRippled = prev.some(r => r.rippleMarked && r.speakerId === speakerId && r.cardId === cardId);
@@ -86,7 +86,7 @@ export function useReactions({
     });
 
     try {
-      await reactionsService.toggleRipple(gameStateId, speakerId, listenerId, cardId);
+      await reactionsService.toggleRipple(roomId, speakerId, listenerId, cardId);
     } catch (error) {
       console.error('Failed to toggle ripple:', error);
     }

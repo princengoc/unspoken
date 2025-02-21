@@ -17,7 +17,8 @@ export const roomsService = {
       card_depth: settings?.card_depth ?? null, 
       deal_extras: settings?.deal_extras ?? null
     };
-    
+
+    // after insertion room now has id, needs to be returned
     const { data: room, error } = await supabase
       .from('rooms')
       .insert([roomData])
@@ -29,17 +30,7 @@ export const roomsService = {
     // Add creator to room_members
     await roomMembersService.addNewMember(room.id, createdBy);
 
-    // Fetch the updated room with game_state_id
-    const { data: updatedRoom, error: fetchError } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', room.id)
-      .single();
-      
-    if (fetchError) throw fetchError;
-    if (!updatedRoom) throw new Error('Failed to fetch updated room');
-
-    return updatedRoom as Room;
+    return room as Room;
   },
 
   async join(roomId: string, playerId: string): Promise<Room> {
