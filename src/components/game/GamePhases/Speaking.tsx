@@ -1,6 +1,5 @@
 import { Stack, Button, Group, Box } from '@mantine/core';
 import { motion } from 'framer-motion';
-import { useGameState } from '@/context/GameStateProvider';
 import { useFullRoom } from '@/context/FullRoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
 import { Card } from '../Card';
@@ -9,6 +8,7 @@ import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { ReactionsFeed } from '../ReactionsFeed';
 import { useAuth } from '@/context/AuthProvider';
 import { getPlayerAssignments } from '../statusBarUtils';
+import { useRoom } from '@/context/RoomProvider';
 
 type SpeakingProp = {
   roomId: string
@@ -16,13 +16,13 @@ type SpeakingProp = {
 
 export function Speaking({ roomId }: SpeakingProp) {
   const { user } = useAuth();
-  const { activePlayerId } = useGameState();
+  const { room } = useRoom();
   const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useFullRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
 
-  if (!activePlayerId) return null;
-  const activeCard = getCardById(cardState.selectedCards[activePlayerId]);
+  if (!room?.active_player_id) return null;
+  const activeCard = getCardById(cardState.selectedCards[room.active_player_id]);
   if (!activeCard) return null;
 
   const playerAssignments = getPlayerAssignments(members, roomId);
@@ -60,7 +60,7 @@ export function Speaking({ roomId }: SpeakingProp) {
                  <Box mt="md">
                    <ReactionsFeed
                      roomId={roomId}
-                     speakerId={activePlayerId}
+                     speakerId={room.active_player_id}
                      cardId={activeCard.id}
                      currentUserId={user.id}
                      playerAssignments={playerAssignments}
@@ -71,7 +71,7 @@ export function Speaking({ roomId }: SpeakingProp) {
         ) : (
           <>
             <ListenerReactions
-              speakerId={activePlayerId}
+              speakerId={room.active_player_id}
               cardId={activeCard.id}
               roomId={roomId}
             />

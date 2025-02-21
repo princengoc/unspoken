@@ -15,7 +15,7 @@ interface UseRoomReturn {
 // Manages the room creation and joining and searching: all operations before we have a Room object
 export function useRoomAPI(): UseRoomReturn {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const createRoom = async (name: string, settings?: Partial<RoomSettings>): Promise<Room> => {
