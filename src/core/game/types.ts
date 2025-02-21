@@ -35,15 +35,11 @@ export type JoinRequest = {
 
 // Core game state without player info
 export type GameState = {
-  id: string;
-  room_id: string;
   phase: GamePhase;
-  currentRound: number;
-  activePlayerId: string | null;
+  active_player_id: string | null;
 };
 
-// Room without player info
-export type Room = {
+export type RoomMetadata = {
   id: string;
   passcode: string;
   created_by: string;
@@ -53,14 +49,14 @@ export type Room = {
   is_active: boolean;
   game_mode: GameMode;
   game_state_id?: string;
-  settings?: RoomSettings;
 };
 
-// Keep other existing types
 export type RoomSettings = {
   card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
-  ripple_only: boolean; // If true, only use rippled and exchanged cards for this round
+  deal_extras: boolean; // If true, deal extra cards from cards table, otherwise, use ripples and exchanges only
 };
+
+export type Room = RoomMetadata & RoomSettings & GameState;
 
 export type Card = {
   id: string;
@@ -100,3 +96,13 @@ export const mergeCardsWithDeduplication = (existingCards: Card[], newCards: Car
   return Array.from(uniqueCards.values());
 };
 
+// Functions to deconstruct a room
+export function extractMetadata(room: Room): RoomMetadata {
+  const { id, passcode, created_by, name, created_at, updated_at, is_active, game_mode } = room;
+  return { id, passcode, created_by, name, created_at, updated_at, is_active, game_mode };
+}
+
+export function extractGameState(room: Room): GameState {
+  const { phase, active_player_id } = room;
+  return { phase, active_player_id };
+}
