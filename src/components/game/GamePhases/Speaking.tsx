@@ -80,7 +80,7 @@ export function Speaking({ roomId }: SpeakingProp) {
                  <Box mt="md">
                    <ReactionsFeed
                      roomId={roomId}
-                     speakerId={activePlayerId}
+                     speakerId={room.active_player_id}
                      cardId={activeCard.id}
                      currentUserId={user.id}
                      playerAssignments={playerAssignments}

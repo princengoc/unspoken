@@ -78,9 +78,9 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
       await roomsService.updateRoom(room.id, updates);
     } catch (err) {
       // ❗ Rollback on error
-      console.error(`Update settings error: ${JSON.stringify(err)}`);
+      console.error(`Update room error: ${JSON.stringify(err)}`);
       setRoom(previousRoom); // Revert to previous state
-      setError(err instanceof Error ? err : new Error('Failed to update room settings'));
+      setError(err instanceof Error ? err : new Error(`Failed to update room: ${JSON.stringify(err)} with updates: ${JSON.stringify(updates)}`));
       throw err;
     }
   }, [room, user]);

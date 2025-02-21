@@ -28,6 +28,25 @@ function RoomContent({ roomId }: { roomId: string }) {
   const { room, loading, error, leaveRoom } = useRoom();
   const [currentSetupView, setCurrentSetupView] = useState<SetupViewType>('cards');
   
+  // Handle leaving room
+  const handleLeaveRoom = async () => {
+    try {
+      await leaveRoom();
+      router.push('/');
+    } catch (err) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to leave room',
+        color: 'red',
+      });
+    }
+  };
+
+  // Memoized callback to prevent unnecessary renders
+  const handleViewChange = useCallback((view: SetupViewType) => {
+    setCurrentSetupView(view);
+  }, []);
+
   useEffect(() => {
     if (error) {
       notifications.show({
@@ -49,25 +68,6 @@ function RoomContent({ roomId }: { roomId: string }) {
       </Container>
     );
   }
-
-  // Handle leaving room
-  const handleLeaveRoom = async () => {
-    try {
-      await leaveRoom();
-      router.push('/');
-    } catch (err) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to leave room',
-        color: 'red',
-      });
-    }
-  };
-
-  // Memoized callback to prevent unnecessary renders
-  const handleViewChange = useCallback((view: SetupViewType) => {
-    setCurrentSetupView(view);
-  }, []);
 
   return (
     <FullRoomProvider roomId={roomId}>
