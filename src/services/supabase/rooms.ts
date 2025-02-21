@@ -1,7 +1,6 @@
 import { supabase } from './client';
-import { type Room, type RoomSettings, DEFAULT_PLAYER, GamePhase } from '@/core/game/types';
+import { type Room, type RoomSettings, GamePhase } from '@/core/game/types';
 import { roomMembersService } from './roomMembers';
-import { gameStatesService } from './gameStates';
 
 export const roomsService = {
   async create(name: string, createdBy: string, settings?: Partial<RoomSettings>): Promise<Room> {
@@ -13,14 +12,10 @@ export const roomsService = {
       passcode,
       game_mode: 'irl',
       is_active: true,
-      settings: {
-        allow_card_exchanges: true,
-        allow_ripple_effects: true,
-        rounds_per_player: 3,
-        card_selection_time: 30,
-        base_sharing_time: 120,
-        ...settings
-      }
+      phase: 'setup' as GamePhase, 
+      active_player_id: null,
+      card_depth: settings?.card_depth ?? null, 
+      deal_extras: settings?.deal_extras ?? null
     };
     
     const { data: room, error } = await supabase
@@ -31,22 +26,8 @@ export const roomsService = {
     
     if (error) throw error;
 
-    // Create initial game state
-    const initialState = {
-      room_id: room.id,
-      phase: 'setup' as GamePhase,
-      activePlayerId: null,
-      cardsInPlay: [],
-      discardPile: [],
-      currentRound: 1,
-      totalRounds: 3
-    };
-    
-    await gameStatesService.create(initialState);
-
     // Add creator to room_members
     await roomMembersService.addNewMember(room.id, createdBy);
-    await roomMembersService.updatePlayerState(room.id, createdBy, DEFAULT_PLAYER);
 
     // Fetch the updated room with game_state_id
     const { data: updatedRoom, error: fetchError } = await supabase
@@ -62,7 +43,7 @@ export const roomsService = {
   },
 
   async join(roomId: string, playerId: string): Promise<Room> {
-    // First check if room exists and is active
+
     const { data: room, error: findError } = await supabase
       .from('rooms')
       .select()
@@ -86,7 +67,7 @@ export const roomsService = {
       await roomMembersService.addNewMember(roomId, playerId);
     }
     
-    return room;
+    return room as Room;
   },
 
   async get(roomId: string): Promise<Room> {
@@ -102,17 +83,14 @@ export const roomsService = {
     return data as Room;
   },
 
-  async updateSettings(roomId: string, settings: Partial<RoomSettings>): Promise<Room> {
-    const { data, error } = await supabase
+  async updateRoom(roomId: string, updates: Partial<Room>): Promise<void> {
+    const { error } = await supabase
       .from('rooms')
-      .update({ settings })
-      .eq('id', roomId)
-      .select()
-      .single();
-    
+      .update(updates)
+      .eq('id', roomId);
+  
     if (error) throw error;
-    return data as Room;
-  },
+  },  
 
   async findPasscodeByRoom(roomId: string): Promise<string | null> {
     const { data, error } = await supabase
