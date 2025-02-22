@@ -15,8 +15,9 @@ interface RoomMembersContextType {
   isCurrentMemberReady: boolean;
   
   // Actions
-  updateMemberStatus: (memberId: string, status: PlayerStatus) => Promise<void>;
-  markMemberAsSpoken: (memberId: string, hasSpoken: boolean) => Promise<void>;
+  updateMember: (memberId: string, updates: Partial<Player>) => Promise<void>;
+  resetAllPlayers: () => Promise<void>;
+  updateAllExcept: (exceptPlayerId: string, allStatus: PlayerStatus, exceptStatus: PlayerStatus) => Promise<void>;
 }
 
 const RoomMembersContext = createContext<RoomMembersContextType | null>(null);
@@ -70,29 +71,53 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
   const isCurrentMemberReady = currentMember?.status === PLAYER_STATUS.BROWSING;
 
   // Member state update actions
-  const updateMemberStatus = async (memberId: string, status: PlayerStatus) => {
+  const updateMember = async (memberId: string, updates: Partial<Player>) => {
     try {
-      await roomMembersService.updatePlayerState(roomId, memberId, { status });
+      // optimistic update
       setMembers(prev => 
-        prev.map(m => m.id === memberId ? { ...m, status } : m)
+        prev.map(m => m.id === memberId ? { ...m, updates } : m)
       );
+      await roomMembersService.updatePlayerState(roomId, memberId, updates);
     } catch (error) {
-      console.error('Failed to update member status:', error);
+      console.error('Failed to update member:', error);
       throw error;
     }
   };
 
-  const markMemberAsSpoken = async (memberId: string, hasSpoken: boolean) => {
-    try {
-      await roomMembersService.updatePlayerState(roomId, memberId, { hasSpoken });
+  // reset to start new round
+  const resetAllPlayers = async () => {
+    try { 
+      // optimistic update
       setMembers(prev => 
-        prev.map(m => m.id === memberId ? { ...m, hasSpoken } : m)
-      );
+        prev.map(m => ({
+          ...m,
+          hasSpoken: false,
+          status: PLAYER_STATUS.CHOOSING
+        }))
+      );            
+      await roomMembersService.resetAllPlayers(roomId);       
     } catch (error) {
-      console.error('Failed to mark member as spoken:', error);
+      console.error('Failed to reset player status:', error);
       throw error;
     }
-  };
+  }
+
+ const updateAllExcept = async (exceptPlayerId: string, allStatus: PlayerStatus, exceptStatus: PlayerStatus) => {
+  try { 
+    // optimistic update
+    setMembers(prev => 
+      prev.map(m => ({
+        ...m,
+        hasSpoken: false,
+        status: PLAYER_STATUS.CHOOSING
+        }))
+      );
+    await roomMembersService.updateAllPlayerStatusExceptOne(roomId, exceptPlayerId, allStatus, exceptStatus)    
+    } catch (error) {
+      console.error('Failed to update all except:', error);
+      throw error;
+    }
+ }
 
   const value = {
     // State
@@ -104,8 +129,9 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
     isCurrentMemberReady,
     
     // Actions
-    updateMemberStatus,
-    markMemberAsSpoken,
+    updateMember,
+    resetAllPlayers, 
+    updateAllExcept
   };
 
   return (

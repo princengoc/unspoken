@@ -114,18 +114,24 @@ export const cardsInRoomsService = {
     }
   }, 
 
-  async markCardAsSelected(roomId: string, cardId: string, playerId: string): Promise<void> {
-    const { error } = await supabase
-      .from(CARDS_IN_ROOMS_DB)
-      .update({ in_player_selected: true, player_id: playerId })
-      .filter('room_id', 'eq', roomId)
-      .filter('card_id', 'eq', cardId);
+  async selectCardAmong(
+    roomId: string,
+    selectedCardId: string,
+    playerId: string,
+    discardCardIds: string[]
+  ): Promise<void> {
+    const { error } = await supabase.rpc('select_card_among', {
+      p_room_id: roomId,
+      p_selected_card_id: selectedCardId,
+      p_player_id: playerId,
+      p_discard_card_ids: discardCardIds
+    });
   
     if (error) {
-      console.error('Error marking card as selected:', error);
+      console.error('Error selecting card and discarding others:', error);
       throw error;
     }
-  },
+  },  
   
   // Move multiple cards into a player's hand (eg ripple, exchange updates)
   async moveCardsToPlayerHand(roomId: string, cardIds: string[], playerId: string): Promise<void> {

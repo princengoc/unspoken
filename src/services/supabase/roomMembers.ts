@@ -1,6 +1,6 @@
 import { PLAYER_STATUS } from '@/core/game/constants';
 import { supabase } from './client';
-import { type Player, type JoinRequest, DEFAULT_PLAYER } from '@/core/game/types';
+import { type Player, type JoinRequest, DEFAULT_PLAYER, PlayerStatus } from '@/core/game/types';
 
 export const roomMembersService = {
   async createJoinRequest(roomId: string, userId: string): Promise<JoinRequest> {
@@ -151,6 +151,38 @@ export const roomMembersService = {
       throw error;
     }
   }, 
+
+  // reset all states as choosing and not spoken for new game
+  async resetAllPlayers(roomId: string): Promise<void> {
+    const { error } = await supabase
+      .from('room_members')
+      .update({ status: PLAYER_STATUS.CHOOSING, hasSpoken: false })
+      .eq('room_id', roomId);
+  
+    if (error) {
+      console.error('Error resetting all players:', error);
+      throw error;
+    }
+  },  
+
+  async updateAllPlayerStatusExceptOne(
+    roomId: string,
+    exceptPlayerId: string,
+    allStatus: PlayerStatus,
+    exceptStatus: PlayerStatus
+  ): Promise<void> {
+    const { error } = await supabase.rpc('update_all_player_status_except_one', {
+      p_room_id: roomId,
+      p_except_user_id: exceptPlayerId,
+      p_all_status: allStatus,
+      p_except_status: exceptStatus
+    });
+  
+    if (error) {
+      console.error('Error updating all player statuses except one:', error);
+      throw error;
+    }
+  },  
 
   // Subscription for player state changes
   subscribeToRoomMembers(roomId: string, callback: (players: Player[]) => void) {

@@ -50,15 +50,15 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
     members,
     currentMember,
     isAllMembersReady,
-    updateMemberStatus,
-    markMemberAsSpoken,
+    updateMember,
+    resetAllPlayers, 
+    updateAllExcept
   } = useRoomMembers();
 
   const {
     cardState,
     dealCardsToPlayer,
-    moveCardsToDiscard,
-    markCardAsSelected, 
+    selectCardAmong,
     emptyPlayerHand
   } = useCardsInGame();
 
@@ -115,9 +115,8 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
         : [];
               
         await Promise.all([
-          updateMemberStatus(currentMemberId, PLAYER_STATUS.BROWSING),
-          moveCardsToDiscard(cardsNotChosenIds),
-          markCardAsSelected(cardId, currentMemberId),
+          updateMember(currentMemberId, { status: PLAYER_STATUS.BROWSING }),
+          selectCardAmong(cardId, currentMemberId, cardsNotChosenIds)
         ]);
       } catch (error) {
         console.error('Failed to complete setup:', error);
@@ -128,9 +127,8 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
       currentMemberId,
       currentMemberPlayerHand,
       room.phase,
-      updateMemberStatus,
-      moveCardsToDiscard,
-      markCardAsSelected,
+      updateMember,
+      selectCardAmong
     ]
   );
 
@@ -143,8 +141,12 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
     }
     try {
       await Promise.all([
-        updateMemberStatus(currentMemberId, PLAYER_STATUS.LISTENING),
-        markMemberAsSpoken(currentMemberId, true), 
+        updateMember(currentMemberId, 
+          {
+            hasSpoken: true, 
+            status: PLAYER_STATUS.LISTENING
+          }
+        ),
         emptyPlayerHand(currentMemberId)
       ]);
       setFinishSpeakingPending(true);
@@ -156,8 +158,7 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
     currentMemberId,
     isActiveSpeaker,
     currentMemberSelectedCardId,
-    updateMemberStatus,
-    markMemberAsSpoken,
+    updateMember,
     emptyPlayerHand
   ]);
 
@@ -190,12 +191,7 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
   const startSpeaking = useCallback(async () => {
     if (!currentMemberId || room.phase !== 'speaking') return;
     try {
-      await Promise.all([
-        updateMemberStatus(currentMemberId, PLAYER_STATUS.SPEAKING),
-        ...members
-          .filter((m) => m.id !== currentMemberId)
-          .map((m) => updateMemberStatus(m.id, PLAYER_STATUS.LISTENING)),
-      ]);
+      await updateAllExcept(currentMemberId, PLAYER_STATUS.LISTENING, PLAYER_STATUS.SPEAKING);
       setCurrentSpeakerHasStarted(true);
     } catch (error) {
       console.error('Failed to start speaking:', error);
@@ -204,7 +200,7 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
   }, [
     currentMemberId,
     members,
-    updateMemberStatus,
+    updateAllExcept,
     setCurrentSpeakerHasStarted,    
   ]);
 
@@ -268,11 +264,7 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
       // Reset player statuses and spoken flags
       console.log(`Members before update: ${JSON.stringify(members)}`);
       await Promise.all([
-        ...members.flatMap(member => [
-          updateMemberStatus(member.id, PLAYER_STATUS.CHOOSING),
-          markMemberAsSpoken(member.id, false),
-          emptyPlayerHand(member.id)
-        ]),
+        resetAllPlayers(),
         // Update room settings for the next round
         updateRoom(settings)
       ]);
@@ -285,9 +277,7 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
     currentMemberId,
     isCreator,
     members,
-    updateMemberStatus,
-    markMemberAsSpoken,
-    emptyPlayerHand,
+    resetAllPlayers,
     updateRoom
   ]);
 
