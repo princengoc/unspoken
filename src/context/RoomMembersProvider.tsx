@@ -102,23 +102,27 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
     }
   }
 
- const updateAllExcept = async (exceptPlayerId: string, allStatus: PlayerStatus, exceptStatus: PlayerStatus) => {
-  try { 
-    // optimistic update
-    setMembers(prev => 
-      prev.map(m => ({
-        ...m,
-        hasSpoken: false,
-        status: PLAYER_STATUS.CHOOSING
-        }))
+  const updateAllExcept = async (
+    exceptPlayerId: string, 
+    allStatus: PlayerStatus, 
+    exceptStatus: PlayerStatus
+  ) => {
+    try {
+      // Optimistic update
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === exceptPlayerId 
+            ? { ...m, status: exceptStatus } 
+            : { ...m, status: allStatus }
+        )
       );
-    await roomMembersService.updateAllPlayerStatusExceptOne(roomId, exceptPlayerId, allStatus, exceptStatus)    
+      await roomMembersService.updateAllPlayerStatusExceptOne(roomId, exceptPlayerId, allStatus, exceptStatus);
     } catch (error) {
       console.error('Failed to update all except:', error);
       throw error;
     }
- }
-
+  };
+  
   const value = {
     // State
     members,
