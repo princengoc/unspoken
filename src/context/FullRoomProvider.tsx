@@ -45,7 +45,7 @@ interface FullRoomProviderProps {
 }
 
 function FullRoomProviderInner({ children }: {children: ReactNode}) {
-  const { room, updateRoom } = useRoom();
+  const { room, updateRoom, finishSpeaking: roomFinishSpeaking, startNextRound: roomStartNextRound } = useRoom();
 
   if (!room) return; 
 
@@ -61,13 +61,12 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
   const {
     cardState,
     dealCardsToPlayer,
-    selectCardAmong,
+    completePlayerSetup,
     emptyPlayerHand
   } = useCardsInGame();
 
   const [currentSpeakerHasStarted, setCurrentSpeakerHasStarted] = useState(false);
   // Flag to signal that finishSpeaking has completed its database and state updates
-  const [finishSpeakingPending, setFinishSpeakingPending] = useState(false);
   const [startNextRoundPending, setStartNextRoundPending] = useState(false);
 
   // Destructure currentMember values for easier dependency management
@@ -109,87 +108,33 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
   }, [members]);
 
   // complete setup phase for currentMember (they chose a card)
+  // TODO: remove the callback, remove currentMemberId just use user.id from useAuth, and room.phase is checked server-sid
   const completeSetup = useCallback(
     async (cardId: string) => {
       if (!currentMemberId || room.phase !== 'setup') return;
       try {
-        const cardsNotChosenIds = currentMemberPlayerHand 
-        ? currentMemberPlayerHand.filter( c => c !== cardId)
-        : [];
-              
-        await Promise.all([
-          updateMember(currentMemberId, { status: PLAYER_STATUS.BROWSING }),
-          selectCardAmong(cardId, currentMemberId, cardsNotChosenIds)
-        ]);
+        await completePlayerSetup(currentMemberId, cardId);
       } catch (error) {
         console.error('Failed to complete setup:', error);
         throw error;
       }
     },
-    [
-      currentMemberId,
-      currentMemberPlayerHand,
-      room.phase,
-      updateMember,
-      selectCardAmong
-    ]
+    [currentMemberId, room?.phase, completePlayerSetup]
   );
 
+  // TODO: simplify callback: only dependent on user.id
   const finishSpeaking = useCallback(async () => {
     if (!currentMemberId || !isActiveSpeaker) {
-      console.log(`Calling finishSpeaking but member ID is ${currentMemberId} and ${isActiveSpeaker} \n
-        Members status: ${members}
-        `);
+      console.log(`Invalid finishSpeaking call: member ID ${currentMemberId}, isActiveSpeaker ${isActiveSpeaker}`);
       return;
     }
     try {
-      await Promise.all([
-        updateMember(currentMemberId, 
-          {
-            hasSpoken: true, 
-            status: PLAYER_STATUS.LISTENING
-          }
-        ),
-        emptyPlayerHand(currentMemberId)
-      ]);
-      setFinishSpeakingPending(true);
+      await roomFinishSpeaking(currentMemberId);
     } catch (error) {
       console.error('Failed to finish speaking:', error);
       throw error;
     }
-  }, [
-    currentMemberId,
-    isActiveSpeaker,
-    currentMemberSelectedCardId,
-    updateMember,
-    emptyPlayerHand
-  ]);
-
-  // after async updates of finishSpeaking and states have been re-rendered
-  // we now get and set next speaker
-  useEffect(() => {
-    if (finishSpeakingPending) {
-      const nextSpeaker = getRandomNotSpokenMember(); 
-      if (nextSpeaker) {
-        updateRoom({active_player_id: nextSpeaker.id})
-        .then(() =>
-          {
-            console.log(`finishSpeaking: set next speaker. Members status: ${JSON.stringify(members)}`); 
-          }
-        )
-        .catch((err) => console.error(`Error setting next speaker ${JSON.stringify(err)}`));
-      } else {
-        const updates = {
-          phase: 'endgame' as GamePhase, 
-          active_player_id: null
-        };
-        updateRoom(updates)
-        .catch((err) => console.error(`Error udpateRoom at endgame ${JSON.stringify(err)}`));
-      } 
-    }
-    // optimistically runs ahead so that we trigger the above async calls only once (even if they fail)
-    setFinishSpeakingPending(false); 
-  }, [finishSpeakingPending, members, getRandomNotSpokenMember, updateRoom]);
+  }, [currentMemberId, isActiveSpeaker, roomFinishSpeaking]);
 
   const startSpeaking = useCallback(async () => {
     if (!currentMemberId || room.phase !== 'speaking') return;
@@ -262,36 +207,14 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
       console.warn('Only the room creator can start the next round.');
       return;
     }
-
+  
     try {
-      // Reset player statuses and spoken flags
-      console.log(`Members before update: ${JSON.stringify(members)}`);
-      await Promise.all([
-        resetAllPlayers(),
-        // Update room settings for the next round
-        updateRoom(settings)
-      ]);
-      setStartNextRoundPending(true);
+      await roomStartNextRound(currentMemberId, settings);
     } catch (error) {
       console.error('Failed to start next round:', error);
       throw error;
     }
-  }, [
-    currentMemberId,
-    isCreator,
-    members,
-    resetAllPlayers,
-    updateRoom
-  ]);
-
-  useEffect(() => {
-    if (startNextRoundPending) {
-      updateRoom({phase: 'setup' as GamePhase});
-      console.log(`Members after startNextRoundPending: ${JSON.stringify(members)}`);
-    }
-    // reset flag
-    setStartNextRoundPending(false);
-  }, [startNextRoundPending, updateRoom]);
+  }, [currentMemberId, isCreator, roomStartNextRound]);
 
   const value = {
     completeSetup,

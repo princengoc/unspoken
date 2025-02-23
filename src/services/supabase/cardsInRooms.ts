@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { CardState } from '@/core/game/types';
+import { CardState, GamePhase } from '@/core/game/types';
 import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
 
 const CARDS_IN_ROOMS_DB = 'cards_in_rooms';
@@ -97,21 +97,19 @@ export const cardsInRoomsService = {
     };
   },
 
-  async selectCardAmong(
+  async completePlayerSetup(
     roomId: string,
-    selectedCardId: string,
     playerId: string,
-    discardCardIds: string[]
+    selectedCardId: string
   ): Promise<void> {
-    const { error } = await supabase.rpc('select_card_among', {
+    const { error } = await supabase.rpc('complete_player_setup', {
       p_room_id: roomId,
-      p_selected_card_id: selectedCardId,
       p_player_id: playerId,
-      p_discard_card_ids: discardCardIds
+      p_selected_card_id: selectedCardId
     });
   
     if (error) {
-      console.error('Error selecting card and discarding others:', error);
+      console.error('Error completing player setup:', error);
       throw error;
     }
   }

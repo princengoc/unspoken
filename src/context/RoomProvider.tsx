@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import { useAuth } from '@/context/AuthProvider';
 import { roomsService } from '@/services/supabase/rooms';
 import { roomMembersService } from '@/services/supabase/roomMembers';
-import type { Room, GameState } from '@/core/game/types';
+import type { Room, GameState, GamePhase } from '@/core/game/types';
 
 // Context Type
 interface RoomContextType {
@@ -13,6 +13,8 @@ interface RoomContextType {
   error: Error | null;
   leaveRoom: () => Promise<void>;
   updateRoom: (updates: Partial<Room>) => Promise<void>;
+  finishSpeaking: (speakerId: string) => Promise<void>;
+  startNextRound: (creatorId: string, settings: Partial<RoomSettings>) => Promise<void>;
 }
 
 interface RoomProviderProps {
@@ -99,13 +101,48 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
     }
   }, [room, user]);
 
+  const finishSpeaking = useCallback(async (speakerId: string) => {
+    if (!room?.id) throw new Error('No active room');
+    
+    try {
+      const { next_phase, next_speaker_id } = await roomsService.finishSpeaking(room.id, speakerId);
+      
+      // Optimistically update room state before the subscription effect
+      setRoom(prev => prev ? {
+        ...prev,
+        phase: next_phase,
+        active_player_id: next_speaker_id
+      } : null);
+  
+    } catch (error) {
+      console.error('Failed to finish speaking:', error);
+      throw error;
+    }
+  }, [room?.id]);
+
+  const startNextRound = useCallback(async (creatorId: string, settings: Partial<RoomSettings>) => {
+    if (!room?.id) throw new Error('No active room');
+    
+    const nextPhase = await roomsService.startNextRound(room.id, creatorId, settings);
+    
+    // Optimistically update room state
+    setRoom(prev => prev ? {
+      ...prev,
+      phase: nextPhase as GamePhase,
+      active_player_id: null,
+      ...settings
+    } : null);
+  }, [room?.id]);  
+
   const value = useMemo(() => ({
     room,
     loading,
     error,
     updateRoom,
-    leaveRoom
-  }), [room, loading, error, updateRoom, leaveRoom]);
+    leaveRoom, 
+    finishSpeaking, 
+    startNextRound
+  }), [room, loading, error, updateRoom, leaveRoom, finishSpeaking, startNextRound]);
 
   return (
     <RoomContext.Provider value={value}>

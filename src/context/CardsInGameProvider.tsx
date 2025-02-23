@@ -12,7 +12,7 @@ interface CardsInGameContextType {
   getCardsByIds: (cardIds: string[]) => Card[];
   
   // Operations
-  selectCardAmong: (selectedCardId: string, playerId: string, discardCardIds: string[]) => Promise<void>;
+  completePlayerSetup: (playerId: string, selectedCardId: string) => Promise<void>;
   emptyPlayerHand: (playerId: string) => Promise<void>; // convenient function to reset cards_in_game state: empty all cards in player hand to discard
   
   // Card dealing helper that includes fetching new cards
@@ -107,14 +107,14 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     cardIds.map(id => cardDictionary.get(id)).filter((card): card is Card => !!card);
 
   // Card operations
-
-  const selectCardAmong = async (
-    selectedCardId: string,
-    playerId: string,
-    discardCardIds: string[]
-  ): Promise<void> => {
-    await cardsInRoomsService.selectCardAmong(roomId, selectedCardId, playerId, discardCardIds);
-  };
+  const completePlayerSetup = async (playerId: string, selectedCardId: string) => {
+    try {
+      await cardsInRoomsService.completePlayerSetup(roomId, playerId, selectedCardId);
+    } catch (error) {
+      console.error('Failed to complete player setup:', error);
+      throw error;
+    }
+  }
 
   const emptyPlayerHand = async (playerId: string) => {
     const player_hand = cardState.playerHands[playerId]; 
@@ -143,7 +143,7 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     cardState,
     getCardById,
     getCardsByIds,
-    selectCardAmong,
+    completePlayerSetup,
     emptyPlayerHand,
     dealCardsToPlayer,
     hasSelected

@@ -112,6 +112,41 @@ export const roomsService = {
     return data;
   },  
 
+  /* Game specific phase changes */
+
+  async finishSpeaking(
+    roomId: string,
+    speakerId: string
+  ): Promise<{ next_phase: GamePhase; next_speaker_id: string | null }> {
+    const { data, error } = await supabase.rpc('finish_speaking', {
+      p_room_id: roomId,
+      p_current_speaker_id: speakerId
+    });
+  
+    if (error) throw error;
+  
+    return {
+      next_phase: data[0].next_phase as GamePhase,
+      next_speaker_id: data[0].next_speaker_id || null
+    };
+  },  
+
+  async startNextRound(
+    roomId: string, 
+    creatorId: string,
+    settings: Partial<RoomSettings>
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc('start_next_round', {
+      p_room_id: roomId,
+      p_creator_id: creatorId,
+      p_deal_extras: settings.deal_extras ?? true,
+      p_card_depth: settings.card_depth
+    });
+  
+    if (error) throw error;
+    return data;
+  },  
+
   subscribeToRoom(roomId: string, callback: (room: Room) => void) {
     return supabase
       .channel(`rooms:${roomId}`)
