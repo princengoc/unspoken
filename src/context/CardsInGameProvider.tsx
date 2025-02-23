@@ -146,63 +146,25 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     }
   };
   
-  // Helper to deal new cards to a player
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
-    // Get room settings card depth
-    const { data: roomData } = await supabase.from('rooms').select('card_depth, deal_extras').eq('id', roomId).single();
-    const cardDepth = roomData?.card_depth;
-    const deal_extras = roomData?.deal_extras || true;
-    
-    // 1. Get rippled cards first
-    const rippledCardsIds = await reactionsService.getRippledCards(roomId, playerId);
-    console.log(`rippled Cards Ids: ${JSON.stringify(rippledCardsIds)}`);
-    
-    // 2. Get mutually accepted exchange cards (for encore rounds)
-    // We need useExchanges hook, but we can't use hooks inside this function
-    // So we'll use the service directly
-    const { data: matchedExchanges } = await supabase.rpc('get_matched_exchange_requests', { room_id_param: roomId });
-    const exchangeCardIds = (matchedExchanges as MatchedExchange[] || [])
-      .filter(match => match.player1 === playerId || match.player2 === playerId)
-      .map(match => match.player1 === playerId ? match.player2_card : match.player1_card);
-    
-    // Combine rippled and exchange cards
-    const availableCardIds = [...rippledCardsIds, ...exchangeCardIds];
-
-    // if does not deal extras, only use ripple and exchange cards
-    if (!deal_extras) {
-      if (availableCardIds.length > 0) {
-        await moveCardsToPlayerHand(availableCardIds, playerId);
-        const availableCards = getCardsByIds(availableCardIds);
-        return availableCards;
-      } else {
-        // Player has no rippled cards in a ripple-only round
-        // Return empty array, this player will skip card selection
-        return [];
-      }
-    }
-        
-    // Get random cards from the cards table
-    const { data: randomCards } = await supabase.rpc('get_random_cards', {
-      limit_count: INITIAL_CARDS_PER_PLAYER,
-      exclude_ids: cardState.roomPile, 
-      depth: cardDepth
+    // server-side function does all the hard work of coordinating across different tables
+    // eg room settings, cards_in_rooms etc
+    const { data: availableCardIds, error } = await supabase.rpc('deal_cards_to_player', {
+      p_room_id: roomId, 
+      p_player_id: playerId, 
+      p_cards_per_player: INITIAL_CARDS_PER_PLAYER
     });
 
-    if (!randomCards?.length) {
-      throw new Error('No cards available to deal');
+    if (error) {
+      console.error(`Deal Cards error: ${JSON.stringify(error)}`, error);
+      throw error;
     }
-    
-    // Add cards to the game and player's hand
-    await Promise.all(
-        [
-            addNewCardsToPlayer(randomCards.map((c: Card) => c.id), playerId), 
-            moveCardsToPlayerHand(availableCardIds, playerId)
-        ]
-    )
+
+    // TODO: need to check if we need to update card dictionary
 
     // return all the cards in player's hand
     const availableCards = getCardsByIds(availableCardIds);
-    return [...randomCards, ...availableCards];
+    return availableCards; 
   };
 
   const hasSelected = (playerId: string): boolean => {
