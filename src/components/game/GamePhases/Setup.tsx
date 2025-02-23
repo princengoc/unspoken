@@ -22,7 +22,7 @@ type SetupProps = {
 
 export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame();
-  const { currentMember, updateMemberStatus, markMemberAsSpoken } = useRoomMembers();
+  const { currentMember, updateMember } = useRoomMembers();
   const { 
     handleCardSelection, 
     initiateSpeakingPhase,
@@ -56,11 +56,10 @@ export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
       // mark the player as ready and spoken immediately
       if (cards.length === 0) {
         setNoCardsAvailable(true);
-        await Promise.all([
-          updateMemberStatus(currentMember.id, PLAYER_STATUS.BROWSING),
-          markMemberAsSpoken(currentMember.id, true)
-        ]);
-        console.log(`No cards available, marked member as spoken: ${currentMember}`);            
+        await updateMember(currentMember.id, {
+          status: PLAYER_STATUS.BROWSING, 
+          hasSpoken: true
+        });
       }
     } catch (error) {
       notifications.show({
