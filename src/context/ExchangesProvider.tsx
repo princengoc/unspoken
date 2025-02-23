@@ -6,31 +6,19 @@ import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { Card } from '@/core/game/types';
 import { notifications } from '@mantine/notifications';
 
-// Enriched types
+// Enriched types: keep track of the other player relative to current user
+// and the Card
 export interface EnrichedExchangeRequest extends ExchangeRequest {
-  fromPlayer?: {
-    id: string;
-    username: string | null;
-  };
-  toPlayer?: {
+  otherPlayer?: {
     id: string;
     username: string | null;
   };
   card?: Card;
 }
 
-export interface ExchangePair {
-  playerId: string;
-  playerName: string;
-  outgoingRequest: EnrichedExchangeRequest | null;
-  incomingRequest: EnrichedExchangeRequest | null;
-  hasMatch: boolean;
-}
-
-// Updated context type definition with hasMatch as a boolean state
+// Updated context type definition
 interface ExchangesContextType {
-  // Core data
-  exchangePairs: ExchangePair[];
+  // Split into clear incoming/outgoing
   incomingRequests: EnrichedExchangeRequest[];
   outgoingRequests: EnrichedExchangeRequest[];
   
@@ -43,7 +31,7 @@ interface ExchangesContextType {
   acceptRequest: (requestId: string) => Promise<void>;
   declineRequest: (requestId: string) => Promise<void>;
 
-  // Overall matched state derived from exchangePairs
+  // Helper method to check if we have any matches
   hasMatch: boolean;
 }
 
@@ -118,41 +106,22 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
     return {
       outgoing: outgoingRequests.map(req => ({
         ...req,
-        toPlayer: getPlayerById(req.to_id),
+        otherPlayer: getPlayerById(req.to_id),
         card: getCardById(req.card_id)
       })),
       incoming: incomingRequests.map(req => ({
         ...req,
-        fromPlayer: getPlayerById(req.from_id),
+        otherPlayer: getPlayerById(req.from_id),
         card: getCardById(req.card_id)
       }))
     };
   }, [outgoingRequests, incomingRequests, members, getCardById]);
 
-  // Compute exchangePairs, our single source of truth
-  const exchangePairs = useMemo(() => {
-    if (!user?.id) return [];
-
-    const otherPlayers = members.filter(p => p.id !== user.id);
-    return otherPlayers.map(player => {
-      const outgoing = enrichedRequests.outgoing.find(req => req.to_id === player.id);
-      const incoming = enrichedRequests.incoming.find(req => req.from_id === player.id);
-
-      const hasMatch = !!(outgoing?.status === 'matched' && incoming?.status === 'matched');
-      return {
-        playerId: player.id,
-        playerName: player.username || 'Unknown Player',
-        outgoingRequest: outgoing || null,
-        incomingRequest: incoming || null,
-        hasMatch
-      };
-    });
-  }, [enrichedRequests, members, user?.id]);
-
-  // Derive overall boolean state from exchangePairs
+  // Derive overall match state - if any exchange is matched
   const hasMatchState = useMemo(() => {
-    return exchangePairs.some(pair => pair.hasMatch);
-  }, [exchangePairs]);
+    return [...enrichedRequests.incoming, ...enrichedRequests.outgoing]
+      .some(req => req.status === 'matched');
+  }, [enrichedRequests]);
 
   const requestExchange = useCallback(async (toPlayerId: string, cardId: string) => {
     if (!user?.id || !roomId) return;
@@ -211,7 +180,6 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
   }, []);
 
   const value = {
-    exchangePairs,
     incomingRequests: enrichedRequests.incoming,
     outgoingRequests: enrichedRequests.outgoing,
     loading,
