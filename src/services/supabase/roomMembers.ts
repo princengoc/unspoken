@@ -152,19 +152,6 @@ export const roomMembersService = {
     }
   }, 
 
-  // reset all states as choosing and not spoken for new game
-  async resetAllPlayers(roomId: string): Promise<void> {
-    const { error } = await supabase
-      .from('room_members')
-      .update({ status: PLAYER_STATUS.CHOOSING, hasSpoken: false })
-      .eq('room_id', roomId);
-  
-    if (error) {
-      console.error('Error resetting all players:', error);
-      throw error;
-    }
-  },  
-
   async updateAllPlayerStatusExceptOne(
     roomId: string,
     exceptPlayerId: string,

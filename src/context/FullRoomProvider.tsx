@@ -8,7 +8,6 @@ import React, {
   useState,
   ReactNode,
   useCallback,
-  useEffect,
 } from 'react';
 import { useRoom } from './RoomProvider';
 import { RoomMembersProvider, useRoomMembers } from './RoomMembersProvider';
@@ -25,9 +24,8 @@ interface FullRoomContextType {
   initiateSpeakingPhase: () => Promise<void>;
   dealCards: (playerId: string) => Promise<Card[]>;
 
-  // TODO: overhaul the transition to be more specific to the front-end button
-  // eg: finishSpeaking: --> get next speaker, update everyone's statuses, broadcast. Seems like should be done SERVER-SIDE. 
   // TODO: simplify these booleans as needed for the Setup/Speaking/Endgame components
+  // Remove unnecessary callbacks
   canStartDrawCards: boolean;
   canStartChoosing: boolean;
   currentSpeakerHasStarted: boolean;
@@ -53,8 +51,6 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
     members,
     currentMember,
     isAllMembersReady,
-    updateMember,
-    resetAllPlayers, 
     updateAllExcept
   } = useRoomMembers();
 
@@ -62,19 +58,13 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
     cardState,
     dealCardsToPlayer,
     completePlayerSetup,
-    emptyPlayerHand
   } = useCardsInGame();
 
   const [currentSpeakerHasStarted, setCurrentSpeakerHasStarted] = useState(false);
-  // Flag to signal that finishSpeaking has completed its database and state updates
-  const [startNextRoundPending, setStartNextRoundPending] = useState(false);
 
   // Destructure currentMember values for easier dependency management
   const currentMemberId = currentMember?.id;
   const currentMemberStatus = currentMember?.status;
-  const currentMemberSelectedCardId = currentMemberId && cardState.selectedCards[currentMemberId] !== undefined
-    ? cardState.selectedCards[currentMemberId]
-    : null;
 
     const currentMemberPlayerHand = currentMemberId && cardState.playerHands[currentMemberId] !== undefined
     ? cardState.playerHands[currentMemberId]

@@ -16,7 +16,6 @@ interface RoomMembersContextType {
   
   // Actions
   updateMember: (memberId: string, updates: Partial<Player>) => Promise<void>;
-  resetAllPlayers: () => Promise<void>;
   updateAllExcept: (exceptPlayerId: string, allStatus: PlayerStatus, exceptStatus: PlayerStatus) => Promise<void>;
 }
 
@@ -84,24 +83,6 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
     }
   };
 
-  // reset to start new round
-  const resetAllPlayers = async () => {
-    try { 
-      // optimistic update
-      setMembers(prev => 
-        prev.map(m => ({
-          ...m,
-          hasSpoken: false,
-          status: PLAYER_STATUS.CHOOSING
-        }))
-      );            
-      await roomMembersService.resetAllPlayers(roomId);       
-    } catch (error) {
-      console.error('Failed to reset player status:', error);
-      throw error;
-    }
-  }
-
   const updateAllExcept = async (
     exceptPlayerId: string, 
     allStatus: PlayerStatus, 
@@ -134,7 +115,6 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
     
     // Actions
     updateMember,
-    resetAllPlayers, 
     updateAllExcept
   };
 

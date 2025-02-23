@@ -61,20 +61,6 @@ export const cardsInRoomsService = {
 
   /* Operations to make specific changes to the cards_in_rooms */
 
-  // Move a list of cards to the discard pile 
-  async moveCardsToDiscard(roomId: string, cardIds: string[]): Promise<void> {
-    const { error } = await supabase
-      .from(CARDS_IN_ROOMS_DB)
-      .update({ in_play: false, in_player_hand: false }) // keep player_id will keep the selectedCards, enables history tracking
-      .filter('room_id', 'eq', roomId)
-      .in('card_id', cardIds);
-  
-    if (error) {
-      console.error('Error moving cards to discard:', error);
-      throw error;
-    }
-  }, 
-
   async dealCardsToPlayer(roomId: string, playerId: string): Promise<{
     cardIds: string[], 
     newState: CardState

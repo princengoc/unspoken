@@ -13,7 +13,6 @@ interface CardsInGameContextType {
   
   // Operations
   completePlayerSetup: (playerId: string, selectedCardId: string) => Promise<void>;
-  emptyPlayerHand: (playerId: string) => Promise<void>; // convenient function to reset cards_in_game state: empty all cards in player hand to discard
   
   // Card dealing helper that includes fetching new cards
   dealCardsToPlayer: (playerId: string) => Promise<Card[]>;
@@ -115,13 +114,6 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
       throw error;
     }
   }
-
-  const emptyPlayerHand = async (playerId: string) => {
-    const player_hand = cardState.playerHands[playerId]; 
-    if (player_hand) {
-      cardsInRoomsService.moveCardsToDiscard(roomId, player_hand);
-    }
-  };
   
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
     // Get both dealt cards and new state
@@ -144,7 +136,6 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     getCardById,
     getCardsByIds,
     completePlayerSetup,
-    emptyPlayerHand,
     dealCardsToPlayer,
     hasSelected
   };
