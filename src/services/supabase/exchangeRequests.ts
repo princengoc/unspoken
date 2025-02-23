@@ -1,7 +1,7 @@
 import { MatchedExchange } from '@/core/game/types';
 import { supabase } from './client';
 
-export type ExchangeRequestStatus = 'pending' | 'accepted' | 'declined';
+export type ExchangeRequestStatus = 'pending' | 'accepted' | 'declined' | 'matched' | 'auto-declined';
 export type ExchangeRequestDirection = 'incoming' | 'outgoing';
 
 export interface ExchangeRequest {
@@ -16,51 +16,29 @@ export interface ExchangeRequest {
 }
 
 export const exchangeRequestsService = {
+  
+  // TODO: front-end should NOT allow replacement of requested cards
+  // only one request can be made per pair per room: (room_id, from_id, to_id) is unique
   async createRequest(
     roomId: string,
     fromId: string,
     toId: string,
     cardId: string
   ): Promise<ExchangeRequest> {
-    // Check if a request already exists for this player pair
-    const { data: existingRequest } = await supabase
+    const { data, error } = await supabase
       .from('exchange_requests')
-      .select('*')
-      .match({ room_id: roomId, from_id: fromId, to_id: toId })
+      .insert([{
+        room_id: roomId,
+        from_id: fromId,
+        to_id: toId,
+        card_id: cardId,
+        status: 'pending'
+      }])
+      .select()
       .single();
 
-    if (existingRequest) {
-      // Update existing request with new card
-      const { data, error } = await supabase
-        .from('exchange_requests')
-        .update({ 
-          card_id: cardId,
-          status: 'pending',
-          updated_at: new Date().toISOString()
-        })
-        .match({ room_id: roomId, from_id: fromId, to_id: toId })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } else {
-      // Create new request
-      const { data, error } = await supabase
-        .from('exchange_requests')
-        .insert([{
-          room_id: roomId,
-          from_id: fromId,
-          to_id: toId,
-          card_id: cardId,
-          status: 'pending'
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    }
+    if (error) throw error;
+    return data;
   },
 
   async updateRequestStatus(
@@ -69,10 +47,7 @@ export const exchangeRequestsService = {
   ): Promise<ExchangeRequest> {
     const { data, error } = await supabase
       .from('exchange_requests')
-      .update({ 
-        status,
-        updated_at: new Date().toISOString()
-      })
+      .update({ status })
       .eq('id', requestId)
       .select()
       .single();
@@ -96,13 +71,6 @@ export const exchangeRequestsService = {
     }
 
     const { data, error } = await query;
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async getMatchedRequests(roomId: string): Promise<MatchedExchange[]> {
-    const { data, error } = await supabase.rpc('get_matched_exchange_requests', { room_id_param: roomId });
 
     if (error) throw error;
     return data || [];

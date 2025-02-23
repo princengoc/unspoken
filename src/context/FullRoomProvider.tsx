@@ -25,6 +25,9 @@ interface FullRoomContextType {
   initiateSpeakingPhase: () => Promise<void>;
   dealCards: (playerId: string) => Promise<Card[]>;
 
+  // TODO: overhaul the transition to be more specific to the front-end button
+  // eg: finishSpeaking: --> get next speaker, update everyone's statuses, broadcast. Seems like should be done SERVER-SIDE. 
+  // TODO: simplify these booleans as needed for the Setup/Speaking/Endgame components
   canStartDrawCards: boolean;
   canStartChoosing: boolean;
   currentSpeakerHasStarted: boolean;

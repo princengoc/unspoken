@@ -138,7 +138,7 @@ export function ExchangesProvider({ roomId, children }: ExchangesProviderProps) 
       const outgoing = enrichedRequests.outgoing.find(req => req.to_id === player.id);
       const incoming = enrichedRequests.incoming.find(req => req.from_id === player.id);
 
-      const hasMatch = !!(outgoing?.status === 'accepted' && incoming?.status === 'accepted');
+      const hasMatch = !!(outgoing?.status === 'matched' && incoming?.status === 'matched');
       return {
         playerId: player.id,
         playerName: player.username || 'Unknown Player',

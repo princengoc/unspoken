@@ -7,6 +7,7 @@ import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { MiniCard } from '../CardDeck/MiniCard';
 import { MiniDeck } from '../CardDeck/MiniDeck';
 import { useExchanges, ExchangePair , EnrichedExchangeRequest } from '@/context/ExchangesProvider';
+import { ExchangeRequestStatus } from '@/services/supabase/exchangeRequests';
 
 export function ExchangeTab() {
   const { cardState, getCardsByIds } = useCardsInGame();
@@ -65,13 +66,17 @@ export function ExchangeTab() {
   };
 
   // Helper to get status badge color
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: ExchangeRequestStatus) => {
     switch (status) {
-      case 'accepted': return 'green';
-      case 'declined': return 'red';
-      default: return 'blue';
+      case 'matched': return 'green';
+      case 'accepted': return 'blue';
+      case 'declined':
+      case 'auto-declined': 
+        return 'red';
+      default: return 'yellow';
     }
   };
+  
 
   // Render a card request section (either incoming or outgoing)
   const renderRequestCard = (
@@ -158,6 +163,14 @@ export function ExchangeTab() {
             Accept
           </Button>
         </Group>
+      );
+    }
+
+    if (pair.incomingRequest?.status === 'auto-declined') {
+      return (
+        <Text size="sm" c="dimmed">
+          Request auto-declined due to another match
+        </Text>
       );
     }
 
