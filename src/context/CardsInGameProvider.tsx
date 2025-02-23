@@ -1,9 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { cardsInRoomsService } from '@/services/supabase/cardsInRooms';
 import { supabase } from '@/services/supabase/client';
-import { reactionsService } from '@/services/supabase/reactions';
-import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
-import type { Card, CardState, MatchedExchange } from '@/core/game/types';
+import type { Card, CardState } from '@/core/game/types';
 
 interface CardsInGameContextType {
   // Card states
@@ -14,10 +12,6 @@ interface CardsInGameContextType {
   getCardsByIds: (cardIds: string[]) => Card[];
   
   // Operations
-  addNewCards: (cardIds: string[]) => Promise<void>;
-  addNewCardsToPlayer: (cardIds: string[], playerId: string) => Promise<void>;
-  moveCardsToDiscard: (cardIds: string[]) => Promise<void>;
-  moveCardsToPlayerHand: (cardIds: string[], playerId: string) => Promise<void>;
   selectCardAmong: (selectedCardId: string, playerId: string, discardCardIds: string[]) => Promise<void>;
   emptyPlayerHand: (playerId: string) => Promise<void>; // convenient function to reset cards_in_game state: empty all cards in player hand to discard
   
@@ -113,19 +107,6 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     cardIds.map(id => cardDictionary.get(id)).filter((card): card is Card => !!card);
 
   // Card operations
-  const addNewCards = async (cardIds: string[]) => {
-    await cardsInRoomsService.addNewCards(roomId, cardIds);
-    await updateCardDictionary(cardIds);
-  };
-
-  const addNewCardsToPlayer = async (cardIds: string[], playerId: string) => {
-    await cardsInRoomsService.addNewCardsToPlayer(roomId, cardIds, playerId);
-    await updateCardDictionary(cardIds);
-  };
-
-  const moveCardsToDiscard = async (cardIds: string[]) => {
-    await cardsInRoomsService.moveCardsToDiscard(roomId, cardIds);
-  };
 
   const selectCardAmong = async (
     selectedCardId: string,
@@ -133,10 +114,6 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     discardCardIds: string[]
   ): Promise<void> => {
     await cardsInRoomsService.selectCardAmong(roomId, selectedCardId, playerId, discardCardIds);
-  };
-  
-  const moveCardsToPlayerHand = async (cardIds: string[], playerId: string) => {
-    await cardsInRoomsService.moveCardsToPlayerHand(roomId, cardIds, playerId);
   };
 
   const emptyPlayerHand = async (playerId: string) => {
@@ -147,24 +124,15 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
   };
   
   const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
-    // server-side function does all the hard work of coordinating across different tables
-    // eg room settings, cards_in_rooms etc
-    const { data: availableCardIds, error } = await supabase.rpc('deal_cards_to_player', {
-      p_room_id: roomId, 
-      p_player_id: playerId, 
-      p_cards_per_player: INITIAL_CARDS_PER_PLAYER
-    });
+    // Get both dealt cards and new state
+    const { cardIds, newState } = 
+      await cardsInRoomsService.dealCardsToPlayer(roomId, playerId);
 
-    if (error) {
-      console.error(`Deal Cards error: ${JSON.stringify(error)}`, error);
-      throw error;
-    }
-
-    // TODO: need to check if we need to update card dictionary
-
-    // return all the cards in player's hand
-    const availableCards = getCardsByIds(availableCardIds);
-    return availableCards; 
+    // update the card dictionary to keep getCardsByIds fresh
+    await updateCardDictionary(newState.roomPile);
+    setCardState(newState);
+  
+    return getCardsByIds(cardIds);
   };
 
   const hasSelected = (playerId: string): boolean => {
@@ -175,10 +143,6 @@ export function CardsInGameProvider({ roomId, children }: CardsInGameProviderPro
     cardState,
     getCardById,
     getCardsByIds,
-    addNewCards,
-    addNewCardsToPlayer,
-    moveCardsToDiscard,
-    moveCardsToPlayerHand,
     selectCardAmong,
     emptyPlayerHand,
     dealCardsToPlayer,

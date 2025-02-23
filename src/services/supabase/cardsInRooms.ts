@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { CardState } from '@/core/game/types';
+import { INITIAL_CARDS_PER_PLAYER } from '@/core/game/constants';
 
 const CARDS_IN_ROOMS_DB = 'cards_in_rooms';
 
@@ -60,46 +61,6 @@ export const cardsInRoomsService = {
 
   /* Operations to make specific changes to the cards_in_rooms */
 
-  // Add multiple new cards to a room
-  async addNewCards(roomId: string, cardIds: string[]): Promise<void> {
-    if (cardIds.length === 0) return;
-
-    const cardsToInsert = cardIds.map(cardId => ({
-      card_id: cardId,
-      room_id: roomId,
-    }));
-
-    const { error } = await supabase.from(CARDS_IN_ROOMS_DB).insert(cardsToInsert);
-
-    if (error) {
-      console.error('Error adding new cards:', error);
-      throw error;
-    }
-  },
-
-  // Add cards then assign them to player hand straight away
-  async addNewCardsToPlayer(roomId: string, cardIds: string[], playerId: string): Promise<void> {
-    if (cardIds.length === 0) return; // Prevent unnecessary DB query
-  
-    const cardsToInsert = cardIds.map(cardId => ({
-      card_id: cardId,
-      room_id: roomId,
-      player_id: playerId,
-      in_play: true,         // The card is in play
-      in_player_hand: true,  // The card is in the player's hand
-      in_player_selected: false, // Default state: not selected yet
-    }));
-  
-    const { error } = await supabase
-      .from(CARDS_IN_ROOMS_DB)
-      .insert(cardsToInsert);
-  
-    if (error) {
-      console.error('Error dealing cards to player:', error);
-      throw error;
-    }
-  },  
-
   // Move a list of cards to the discard pile 
   async moveCardsToDiscard(roomId: string, cardIds: string[]): Promise<void> {
     const { error } = await supabase
@@ -113,6 +74,28 @@ export const cardsInRoomsService = {
       throw error;
     }
   }, 
+
+  async dealCardsToPlayer(roomId: string, playerId: string): Promise<{
+    cardIds: string[], 
+    newState: CardState
+  }> {
+    // Server-side function does dealing and coordinating updates across multiple tables
+    const { data: dealtCardIds, error } = await supabase.rpc('deal_cards_to_player', {
+      p_room_id: roomId,
+      p_player_id: playerId,
+      p_cards_per_player: INITIAL_CARDS_PER_PLAYER
+    });
+
+    if (error) throw error;
+
+    // Fetch the new state immediately after dealing
+    const newState = await this.fetchCurrentCardState(roomId);
+
+    return { 
+      cardIds: dealtCardIds as string[],
+      newState 
+    };
+  },
 
   async selectCardAmong(
     roomId: string,
@@ -131,22 +114,6 @@ export const cardsInRoomsService = {
       console.error('Error selecting card and discarding others:', error);
       throw error;
     }
-  },  
-  
-  // Move multiple cards into a player's hand (eg ripple, exchange updates)
-  async moveCardsToPlayerHand(roomId: string, cardIds: string[], playerId: string): Promise<void> {
-    if (cardIds.length === 0) return; // Prevent unnecessary DB query
-  
-    const { error } = await supabase
-      .from(CARDS_IN_ROOMS_DB)
-      .update({ in_player_hand: true, player_id: playerId })
-      .filter('room_id', 'eq', roomId)
-      .in('card_id', cardIds);
-  
-    if (error) {
-      console.error('Error moving cards to player hand:', error);
-      throw error;
-    }
-  },
+  }
 
 };
