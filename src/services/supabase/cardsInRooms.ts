@@ -74,6 +74,8 @@ export const cardsInRoomsService = {
 
     if (error) throw error;
 
+    console.log(`Dealt card IDs: ${JSON.stringify(dealtCardIds)}`);
+
     // Fetch the new state immediately after dealing
     const newState = await this.fetchCurrentCardState(roomId);
 

@@ -51,7 +51,7 @@ export const roomsService = {
     if (memberExists) {
       // Update existing member's status
       await roomMembersService.updatePlayerState(roomId, playerId, { 
-        isOnline: true,
+        is_online: true,
       })
     } else {
       // Add new member

@@ -84,13 +84,16 @@ export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
         // Show waiting view + selected card
         return (
           <Stack gap="md">
+            { selectedCard && (
             <Paper p="md" radius="md" withBorder mb="md">
               <Stack gap="xs" align="center">
                 <Text size="md" fw={500}>Your Selected Card:</Text>
-                <Text size="lg" ta="center" py="md">{selectedCard!.content}</Text>
+                <Text size="lg" ta="center" py="md">{selectedCard.content}</Text>
                 <Text size="sm" c="dimmed">This is the card you'll share during your turn</Text>
               </Stack>
-            </Paper>
+            </Paper> 
+            )
+            }
             
             {isCreator ? (
               <Stack gap="xs">
@@ -131,7 +134,7 @@ export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
       case 'done':
       default: 
         // Handle edge case - shouldn't happen in setup
-        return <div>Done shouldn't happen in setup. Something is wrong, try refreshing.</div>;
+        return <div>Loading...</div>;
     }    
   }
 

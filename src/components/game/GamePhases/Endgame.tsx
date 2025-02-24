@@ -136,7 +136,7 @@ export function Endgame({roomId}: EndgameProp) {
              
              <GameSettingsForm 
               onChange={setNextRoundSettings}
-              dealExtrasDescription='If disabled, will use cards from previous round only.'
+              dealExtrasDescription='If disabled, will use cards from previous round only when available.'
               />
                          
              <Group justify="center" mt="sm">

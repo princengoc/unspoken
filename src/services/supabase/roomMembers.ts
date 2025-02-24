@@ -57,8 +57,8 @@ export const roomMembersService = {
         .insert([{
           room_id: request.room_id,
           user_id: request.user_id,
-          hasSpoken: false,
-          isOnline: true,
+          has_spoken: false,
+          is_online: true,
         }]);
 
       if (memberError) throw memberError;
@@ -96,8 +96,8 @@ export const roomMembersService = {
       .from('room_members')
       .select(`
         user_id,
-        isOnline,
-        hasSpoken,
+        is_online,
+        has_spoken,
         profiles(username)
       `)
       .eq('room_id', roomId);
@@ -107,8 +107,8 @@ export const roomMembersService = {
     return data.map(member => ({
       id: member.user_id,
       username: (member as any).profiles?.username || "Unknown", 
-      isOnline: member.isOnline,
-      hasSpoken: member.hasSpoken,
+      is_online: member.is_online,
+      has_spoken: member.has_spoken,
     }));
   },
   

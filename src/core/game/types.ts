@@ -18,13 +18,13 @@ export type DerivedPlayerStatus =
 export type Player = {
   id: string;
   username: string | null;
-  isOnline: boolean;
-  hasSpoken: boolean;
+  is_online: boolean;
+  has_spoken: boolean;
 };
 
 export const DEFAULT_PLAYER: Omit<Player, 'id' | 'username'> = {
-  isOnline: true,   // Defaulting to online when joining
-  hasSpoken: false,
+  is_online: true,   // Defaulting to online when joining
+  has_spoken: false,
 };
 
 

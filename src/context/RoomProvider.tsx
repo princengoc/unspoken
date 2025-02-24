@@ -93,7 +93,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
     if (!room?.id || !user?.id) return;
 
     try {
-      await roomMembersService.updatePlayerState(room.id, user.id, { isOnline: false });
+      await roomMembersService.updatePlayerState(room.id, user.id, { is_online: false });
       setRoom(null);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to leave room');

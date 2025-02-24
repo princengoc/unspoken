@@ -57,9 +57,11 @@ function derivePlayerStatus(
   const playerHand = cardState.playerHands[playerId];
   const hasSelectedCard = cardState.selectedCards[playerId];
 
-  if (!playerHand?.length) return 'drawing';
-  if (!hasSelectedCard) return 'choosing';
-  return 'browsing';
+  if (hasSelectedCard) {
+    return 'browsing';
+  } else {
+    return (!playerHand?.length) ? 'drawing' : 'choosing'; 
+  }
 }
 
 function allMembersHaveSelectedCards(
@@ -91,7 +93,7 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
   // Destructure currentMember values for easier dependency management
   const currentMemberId = currentMember?.id!;
   const isCreator = currentMemberId === room.created_by;  
-  const hasSpoken = currentMember?.hasSpoken ?? false; 
+  const hasSpoken = currentMember?.has_spoken ?? false; 
   const isActiveSpeaker = currentMemberId === room.active_player_id && !hasSpoken;
   
   const currentMemberStatus = useMemo(() => 
