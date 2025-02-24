@@ -70,8 +70,7 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
     
     setLoading(true);
     try {
-      await roomMembersService.handleJoinRequest(requestId, status, user.id);
-      
+      await roomMembersService.handleJoinRequest(requestId, status, user.id);      
       notifications.show({
         title: 'Success',
         message: `Request to join room from ${user.id} is ${status}`,

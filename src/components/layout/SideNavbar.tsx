@@ -50,15 +50,19 @@ export function SideNavbar({
 
   // Get help text based on current phase
   const getHelpText = () => {
-    switch (gamePhase) {
-      case 'setup':
-        return "Setup Phase: Select a card to share with the group. You can also exchange cards with other players. Once everyone is ready, the game will begin.";
+    switch (currentMemberStatus) {
+      case 'drawing':
+      case 'choosing':
+        return "Explore your cards one by one, letting each spark a feeling or memory. Use tags to capture what resonates—there’s no right or wrong, only what feels true. When ready, revisit them all and choose the one you feel drawn to share.";
+      case 'browsing': 
+        return "While others choose their cards, explore the exchange board. Here you can make small invitations in the Encore round—\"If you share your story, I will share mine\"—that can spark deeper connections. The game begins when everyone is ready."
       case 'speaking':
-        return "Speaking Phase: Each player shares their chosen card. When it's your turn, click 'Start Sharing' to begin. Listeners can react to what you share. Click 'Finish Sharing' when done.";
-      case 'endgame':
-        return "Game Complete: Review what everyone shared. The room creator can start an encore round with rippled cards from the previous round.";
+        return "Share the story your card evokes. Click **Start Sharing** to begin, and **Finish Sharing** when your story feels complete.";
+      case 'listening':
+        return "Someone is sharing. If their words resonate, send a private emoji—like a heart or spark—to show how you feel. Or send a Ripple to say, \"You have inspired me to share my story on this card later.\"";
+      case 'done': 
       default:
-        return "Select a card to share with the group. You can exchange cards with other players.";
+        return "How to play: Explore and tag your cards, then choose one to share. Take turns sharing stories while others listen and react with emojis. Send a **Ripple** if inspired to share later. While waiting, browse the exchange board.";
     }
   };
 
@@ -191,9 +195,9 @@ export function SideNavbar({
       <Modal
         opened={helpModalOpen}
         onClose={() => setHelpModalOpen(false)}
-        title={`${gamePhase.charAt(0).toUpperCase() + gamePhase.slice(1)} Phase`}
+        title={`${gamePhase.charAt(0).toUpperCase() + gamePhase.slice(1)} Phase - ${currentMemberStatus.charAt(0).toUpperCase() + currentMemberStatus.slice(1)}`}
       >
-        <Text>{getHelpText()}</Text>
+        <Text c="dimmed">{getHelpText()}</Text>
       </Modal>
 
       {/* Profile Modal */}

@@ -28,7 +28,7 @@ const CopyCodeButton: React.FC<CopyCodeButtonProps> = ({ roomPasscode, setOpened
       {({ copied, copy }) => (
         <Button
           variant="light"
-          color={copied ? 'teal' : 'blue'}
+          opacity={copied ? 0.7 : 1}  // slightly fade when copied
           leftSection={copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
           onClick={() => {
             copy();

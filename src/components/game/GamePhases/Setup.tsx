@@ -1,7 +1,7 @@
 // src/components/game/GamePhases/Setup.tsx
 
 import { useState, useEffect } from 'react';
-import { Stack, Text, Group, Button, Paper, Transition } from '@mantine/core';
+import { Stack, Text, Group, Button, Paper } from '@mantine/core';
 import { IconCheck, IconHourglass } from '@tabler/icons-react';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useFullRoom } from '@/context/FullRoomProvider';
@@ -10,6 +10,7 @@ import { SlideIn } from '@/components/animations/Motion';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { ExchangeTab } from '../ExchangeRequests/ExchangeTab';
 import { SetupViewType } from '@/core/game/types';
+import { MiniCard } from '../CardDeck/MiniCard';
 
 type SetupProps = {
   roomId: string | undefined;
@@ -85,41 +86,33 @@ export function Setup({ initialView = 'cards', onViewChange }: SetupProps) {
         return (
           <Stack gap="md">
             { selectedCard && (
-            <Paper p="md" radius="md" withBorder mb="md">
               <Stack gap="xs" align="center">
                 <Text size="md" fw={500}>Your Selected Card:</Text>
-                <Text size="lg" ta="center" py="md">{selectedCard.content}</Text>
+                  <MiniCard
+                    card={selectedCard}
+                    size='lg'
+                  />
                 <Text size="sm" c="dimmed">This is the card you'll share during your turn</Text>
               </Stack>
-            </Paper> 
             )
             }
             
             {isCreator ? (
-              <Stack gap="xs">
-                <Text size="sm">
-                  {isSetupComplete
-                    ? "Everyone's ready! You can start the game."
-                    : "Waiting for other players to choose their cards..."}
-                </Text>              
-                <Transition mounted={isSetupComplete} transition="slide-up">
-                  {(styles) => (
-                    <Button
-                      style={styles}
-                      fullWidth
-                      size="lg"
-                      onClick={initiateSpeakingPhase}
-                      leftSection={<IconCheck size={18} />}
-                    >
-                      Start Game
-                    </Button>
-                  )}
-                </Transition>
-              </Stack>
+                <Button
+                  fullWidth
+                  size="lg"
+                  onClick={initiateSpeakingPhase}
+                  disabled={!isSetupComplete}
+                  leftSection={isSetupComplete ? <IconCheck size={18} /> : < IconHourglass size={18} />}
+                >
+                {isSetupComplete
+                  ? "Start the game!"
+                  : "Players choosing cards..."}
+                </Button>
             ) : (
               <Paper p="md" radius="md">
                 <Group align="center" gap="sm">
-                  <IconHourglass size={20} />
+                {isSetupComplete ? <IconCheck size={18} /> : < IconHourglass size={18} />}
                   <Text size="sm">
                     {isSetupComplete
                       ? "Everyone's ready! Waiting for the room creator to start the game."
