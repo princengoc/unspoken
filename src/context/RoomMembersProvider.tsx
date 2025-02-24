@@ -1,22 +1,15 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/context/AuthProvider';
 import { roomMembersService } from '@/services/supabase/roomMembers';
-import type { Card, Player, PlayerStatus } from '@/core/game/types';
-import { PLAYER_STATUS } from '@/core/game/constants';
+import type { Player } from '@/core/game/types';
 
 // Define context type
 interface RoomMembersContextType {
   // State
   members: Player[];
   currentMember: Player | null;
-  
-  // Status checks
-  isAllMembersReady: boolean;
-  isCurrentMemberReady: boolean;
-  
   // Actions
   updateMember: (memberId: string, updates: Partial<Player>) => Promise<void>;
-  updateAllExcept: (exceptPlayerId: string, allStatus: PlayerStatus, exceptStatus: PlayerStatus) => Promise<void>;
 }
 
 const RoomMembersContext = createContext<RoomMembersContextType | null>(null);
@@ -62,13 +55,6 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
   // Keep track of current member
   const currentMember = members.find(m => m.id === user?.id) || null;
 
-  // Derived states
-  const isAllMembersReady = members.every(
-    member => member.status === PLAYER_STATUS.BROWSING
-  );
-  
-  const isCurrentMemberReady = currentMember?.status === PLAYER_STATUS.BROWSING;
-
   // Member state update actions
   const updateMember = async (memberId: string, updates: Partial<Player>) => {
     try {
@@ -82,40 +68,13 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
       throw error;
     }
   };
-
-  const updateAllExcept = async (
-    exceptPlayerId: string, 
-    allStatus: PlayerStatus, 
-    exceptStatus: PlayerStatus
-  ) => {
-    try {
-      // Optimistic update
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === exceptPlayerId 
-            ? { ...m, status: exceptStatus } 
-            : { ...m, status: allStatus }
-        )
-      );
-      await roomMembersService.updateAllPlayerStatusExceptOne(roomId, exceptPlayerId, allStatus, exceptStatus);
-    } catch (error) {
-      console.error('Failed to update all except:', error);
-      throw error;
-    }
-  };
   
   const value = {
     // State
     members,
-    currentMember,
-    
-    // Status checks
-    isAllMembersReady,
-    isCurrentMemberReady,
-    
+    currentMember,    
     // Actions
     updateMember,
-    updateAllExcept
   };
 
   return (

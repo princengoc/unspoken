@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useMe
 import { useAuth } from '@/context/AuthProvider';
 import { roomsService } from '@/services/supabase/rooms';
 import { roomMembersService } from '@/services/supabase/roomMembers';
-import type { Room, GameState, GamePhase } from '@/core/game/types';
+import type { Room, GameState, GamePhase, RoomSettings } from '@/core/game/types';
 
 // Context Type
 interface RoomContextType {
@@ -15,6 +15,7 @@ interface RoomContextType {
   updateRoom: (updates: Partial<Room>) => Promise<void>;
   finishSpeaking: (speakerId: string) => Promise<void>;
   startNextRound: (creatorId: string, settings: Partial<RoomSettings>) => Promise<void>;
+  startSpeakingPhase: (creatorId: string) => Promise<void>;
 }
 
 interface RoomProviderProps {
@@ -120,6 +121,25 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
     }
   }, [room?.id]);
 
+  const startSpeakingPhase = useCallback(async (creatorId: string) => {
+    if (!room?.id) throw new Error('No active room');
+    
+    try {
+      const { next_phase, first_speaker_id } = await roomsService.startSpeakingPhase(room.id, creatorId);
+      
+      // Optimistically update room state before the subscription effect
+      setRoom(prev => prev ? {
+        ...prev,
+        phase: next_phase,
+        active_player_id: first_speaker_id
+      } : null);
+  
+    } catch (error) {
+      console.error('Failed to start speaking phase:', error);
+      throw error;
+    }
+  }, [room?.id]);  
+
   const startNextRound = useCallback(async (creatorId: string, settings: Partial<RoomSettings>) => {
     if (!room?.id) throw new Error('No active room');
     
@@ -141,8 +161,9 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
     updateRoom,
     leaveRoom, 
     finishSpeaking, 
-    startNextRound
-  }), [room, loading, error, updateRoom, leaveRoom, finishSpeaking, startNextRound]);
+    startNextRound, 
+    startSpeakingPhase
+  }), [room, loading, error, updateRoom, leaveRoom, finishSpeaking, startNextRound, startSpeakingPhase]);
 
   return (
     <RoomContext.Provider value={value}>

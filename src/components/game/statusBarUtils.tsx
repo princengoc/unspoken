@@ -6,26 +6,9 @@ import {
   IconButterfly,
   IconCheese,
   IconHorseToy,
-  IconMicrophone, IconBook, IconDots, IconX, IconEar
 } from '@tabler/icons-react';
 
-import type { GamePhase, Player, PlayerStatus } from '@/core/game/types';
-import { PLAYER_STATUS } from '@/core/game/constants';
-
-export const statusIcon = (status: PlayerStatus) => {
-  switch (status) {
-    case PLAYER_STATUS.BROWSING:
-      return <IconBook size={14} color="black" />;
-    case PLAYER_STATUS.CHOOSING:
-      return <IconDots size={14} color="white" />;
-    case PLAYER_STATUS.SPEAKING:
-      return <IconMicrophone size={14} color="black" />;
-    case PLAYER_STATUS.LISTENING: 
-      return <IconEar size={14} color="black" />;
-    default:
-      return <IconX size={14} color="gray" />;
-  }
-};
+import type { Player } from '@/core/game/types';
 
 // Seeded random number generator for consistent assignments
 export function mulberry32(a: number) {
@@ -103,11 +86,3 @@ export function getPlayerAssignments(members: Player[], roomId: string): Map<str
   return assignment;
 }
 
-// Helper function to determine if a player should be on the left side, meaning they are done with the current game phase
-export function shouldBeOnLeft(player: Player, gamePhase: GamePhase): boolean {
-  if (gamePhase === 'setup') {
-    return player.status === PLAYER_STATUS.BROWSING;
-  } else {
-    return player.hasSpoken || player.status === PLAYER_STATUS.SPEAKING;
-  }
-}

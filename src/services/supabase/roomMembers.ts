@@ -1,6 +1,5 @@
-import { PLAYER_STATUS } from '@/core/game/constants';
 import { supabase } from './client';
-import { type Player, type JoinRequest, DEFAULT_PLAYER, PlayerStatus } from '@/core/game/types';
+import { type Player, type JoinRequest, DEFAULT_PLAYER} from '@/core/game/types';
 
 export const roomMembersService = {
   async createJoinRequest(roomId: string, userId: string): Promise<JoinRequest> {
@@ -58,7 +57,6 @@ export const roomMembersService = {
         .insert([{
           room_id: request.room_id,
           user_id: request.user_id,
-          status: PLAYER_STATUS.CHOOSING,
           hasSpoken: false,
           isOnline: true,
         }]);
@@ -99,7 +97,6 @@ export const roomMembersService = {
       .select(`
         user_id,
         isOnline,
-        status,
         hasSpoken,
         profiles(username)
       `)
@@ -111,7 +108,6 @@ export const roomMembersService = {
       id: member.user_id,
       username: (member as any).profiles?.username || "Unknown", 
       isOnline: member.isOnline,
-      status: member.status,
       hasSpoken: member.hasSpoken,
     }));
   },
@@ -152,25 +148,6 @@ export const roomMembersService = {
     }
   }, 
 
-  async updateAllPlayerStatusExceptOne(
-    roomId: string,
-    exceptPlayerId: string,
-    allStatus: PlayerStatus,
-    exceptStatus: PlayerStatus
-  ): Promise<void> {
-    const { error } = await supabase.rpc('update_all_player_status_except_one', {
-      p_room_id: roomId,
-      p_except_user_id: exceptPlayerId,
-      p_all_status: allStatus,
-      p_except_status: exceptStatus
-    });
-  
-    if (error) {
-      console.error('Error updating all player statuses except one:', error);
-      throw error;
-    }
-  },  
-
   // Subscription for player state changes
   subscribeToRoomMembers(roomId: string, callback: (players: Player[]) => void) {
     return supabase
@@ -190,7 +167,6 @@ export const roomMembersService = {
       .subscribe();
   },
 
-  // Keep existing join request subscription
   subscribeToJoinRequests(roomId: string, callback: (requests: JoinRequest[]) => void) {
     return supabase
       .channel(`joinroom_requests:${roomId}`)

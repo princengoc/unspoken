@@ -9,13 +9,6 @@ export const DEFAULT_GAME_CONFIG = {
 export const DEFAULT_TOTAL_ROUNDS = 1;
 export const INITIAL_CARDS_PER_PLAYER = 3;
 
-export const PLAYER_STATUS = {
-  CHOOSING: 'choosing',
-  BROWSING: 'browsing',
-  SPEAKING: 'speaking',
-  LISTENING: 'listening'
-} as const;
-
 export type ReactionIcon = 'sparkles' | 'heart' | 'bulb';
 
 export const REACTIONS = [

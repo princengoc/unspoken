@@ -131,6 +131,24 @@ export const roomsService = {
     };
   },  
 
+  // called by room creator to start speaking phase, picks a random speaker and do all state transitions
+  async startSpeakingPhase(
+    roomId: string,
+    creatorId: string
+  ): Promise<{ next_phase: GamePhase; first_speaker_id: string | null }> {
+    const { data, error } = await supabase.rpc('start_speaking_phase', {
+      p_room_id: roomId,
+      p_creator_id: creatorId
+    });
+
+    if (error) throw error;
+
+    return {
+      next_phase: data[0].next_phase as GamePhase,
+      first_speaker_id: data[0].first_speaker_id || null
+    };
+  },
+
   async startNextRound(
     roomId: string, 
     creatorId: string,

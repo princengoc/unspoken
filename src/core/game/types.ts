@@ -1,23 +1,27 @@
 // src/core/game/types.ts
-import { PLAYER_STATUS } from "./constants";
-
 export type GamePhase = 'setup' | 'speaking' | 'endgame';
-export type PlayerStatus = (typeof PLAYER_STATUS)[keyof typeof PLAYER_STATUS];
 export type JoinRequestStatus = 'pending' | 'approved' | 'rejected';
 export type GameMode = 'irl' | 'remote';
+
+export type DerivedPlayerStatus = 
+  | 'drawing'     // No cards in hand
+  | 'choosing'    // Has cards but hasn't selected
+  | 'browsing'    // Has selected card
+  | 'speaking'    // Is active speaker
+  | 'listening'   // Not active speaker during speaking phase
+  | 'done';       // Has spoken
+
 
 // Core player state
 export type Player = {
   id: string;
   username: string | null;
   isOnline: boolean;
-  status: PlayerStatus;
   hasSpoken: boolean;
 };
 
 export const DEFAULT_PLAYER: Omit<Player, 'id' | 'username'> = {
   isOnline: true,   // Defaulting to online when joining
-  status: PLAYER_STATUS.CHOOSING,
   hasSpoken: false,
 };
 
