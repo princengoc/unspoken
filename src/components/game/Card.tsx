@@ -4,8 +4,8 @@ import type { Card as CardType } from '@/core/game/types';
 
 interface GameCardProps {
   card: CardType;
-  index: number;
-  total: number;
+  index?: number | null;
+  total?: number | null;
   showExchange?: boolean;
   selected?: boolean;
   showSender?: boolean;
@@ -13,10 +13,12 @@ interface GameCardProps {
   onExchange?: () => void;
 }
 
+
+// TODO: add props like Minicard to allow showing of player icons in corners
 export function GameCard({ 
   card, 
-  index, 
-  total, 
+  index = null, 
+  total = null, 
   showExchange = false,
   selected = false,
   showSender = false,
@@ -42,9 +44,11 @@ export function GameCard({
       <Stack gap="xs">
         {/* Card Header */}
         <Group justify="space-between">
+          {index && total && 
           <Badge variant="light" size="md">
             {index + 1}/{total}
           </Badge>
+          }
           {showExchange && onExchange && (
             <Tooltip label="Exchange this card">
               <Button 

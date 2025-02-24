@@ -1,4 +1,4 @@
-import { Stack, Button, Group, Box } from '@mantine/core';
+import { Stack, Button, Group, Box, Text } from '@mantine/core';
 import { motion } from 'framer-motion';
 import { useFullRoom } from '@/context/FullRoomProvider';
 import { ListenerReactions } from '../ListenerReactions';
@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthProvider';
 import { getPlayerAssignments } from '../statusBarUtils';
 import { useRoom } from '@/context/RoomProvider';
 import { useDisclosure } from '@mantine/hooks';
+import { PlayerAvatar } from '../PlayerAvatar';
 
 type SpeakingProp = {
   roomId: string
@@ -65,11 +66,20 @@ export function Speaking({ roomId }: SpeakingProp) {
               {isSpeaking ? 'Finish Speaking' : 'Start Speaking'}
             </Button>      
         ) : (
+          <Stack>
+            <Group>
+              <PlayerAvatar
+                 assignment={playerAssignments.get(room.active_player_id)!}
+                 size="xs"
+                 showTooltip={false}
+               /> <span>is sharing</span>
+            </Group>
             <ListenerReactions
               speakerId={room.active_player_id}
               cardId={activeCard.id}
               roomId={roomId}
             />
+          </Stack>
         )}
 
         <Box mt="md">

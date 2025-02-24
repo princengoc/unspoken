@@ -42,15 +42,17 @@ function derivePlayerStatus(
   playerId: string | undefined,
   cardState: CardState,
   room: Room,
-  hasSpoken: boolean
 ): DerivedPlayerStatus {
   if (!playerId) return 'done';
 
   // In speaking phase
   if (room.phase === 'speaking') {
     if (playerId === room.active_player_id) return 'speaking';
-    if (hasSpoken) return 'done';
     return 'listening';
+  }
+
+  if (room.phase === 'endgame') {
+    return 'done';
   }
 
   // In setup phase
@@ -101,9 +103,8 @@ function FullRoomProviderInner({ children }: {children: ReactNode}) {
       currentMember?.id,
       cardState,
       room,
-      hasSpoken
     ),
-    [currentMember?.id, cardState, room, hasSpoken]
+    [currentMember?.id, cardState, room]
   );
 
   const isSetupComplete = useMemo(() => 

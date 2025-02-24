@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Stack, ActionIcon, Tooltip, Indicator, Divider, Modal, Text } from '@mantine/core';
-import { IconDoorExit, IconHourglass, IconMessageCircle, IconCards, IconCheck, IconHelp, IconExchange } from '@tabler/icons-react';
+import { IconDoorExit, IconHourglass, IconRipple, IconMessageCircle, IconCards, IconCheck, IconHelp, IconExchange, IconCirclesRelation, IconIkosaedr, IconCell } from '@tabler/icons-react';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
 import { SetupViewType, type GamePhase } from '@/core/game/types';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
@@ -53,16 +53,28 @@ export function SideNavbar({
     switch (currentMemberStatus) {
       case 'drawing':
       case 'choosing':
-        return "Explore your cards one by one, letting each spark a feeling or memory. Use tags to capture what resonates—there’s no right or wrong, only what feels true. When ready, revisit them all and choose the one you feel drawn to share.";
-      case 'browsing': 
-        return "While others choose their cards, explore the exchange board. Here you can make small invitations in the Encore round—\"If you share your story, I will share mine\"—that can spark deeper connections. The game begins when everyone is ready."
+        return (
+          <>Explore your cards one by one, letting each spark a feeling or memory. Use tags <IconCirclesRelation size={14}/> <IconIkosaedr size={14}/> <IconCell size={14} /> to capture what resonates. There is no right or wrong, only what feels true. When ready, revisit them all and choose the one you feel drawn to share.</>
+        );
+      case 'browsing':
+        return (
+          <>While others choose their cards, explore the exchange board. Here you can make small invitations in the <strong>Encore</strong> round—<em>"If you share your story, I will share mine"</em>—that can spark deeper connections. The game begins when everyone is ready.</>
+        );
       case 'speaking':
-        return "Share the story your card evokes. Click **Start Sharing** to begin, and **Finish Sharing** when your story feels complete.";
+        return (
+          <>Share the story your card evokes. Click <strong>Start Sharing</strong> to begin, and <strong>Finish Sharing</strong> when your story feels complete.</>
+        );
       case 'listening':
-        return "Someone is sharing. If their words resonate, send a private emoji—like a heart or spark—to show how you feel. Or send a Ripple to say, \"You have inspired me to share my story on this card later.\"";
-      case 'done': 
+        return (
+          <>Someone is sharing. If their words resonate, send a private emoji—like a heart or spark—to show how you feel. Or send a <IconRipple size={14}/> <strong>Ripple</strong> to say, <em>"You have inspired me to share my story on this card later."</em></>
+        );
+      case 'done':
       default:
-        return "How to play: Explore and tag your cards, then choose one to share. Take turns sharing stories while others listen and react with emojis. Send a **Ripple** if inspired to share later. While waiting, browse the exchange board.";
+        return (
+          <>
+            As the game winds down, it's time for <strong>Encore</strong>—a chance to share the stories sparked along the way. Use cards received through exchanges or respond to a <IconRipple size={14}/> <strong>Ripple</strong> that moved you. There’s no pressure—only an invitation to continue the conversation if it feels right.
+          </>
+        );
     }
   };
 
@@ -197,7 +209,9 @@ export function SideNavbar({
         onClose={() => setHelpModalOpen(false)}
         title={`${gamePhase.charAt(0).toUpperCase() + gamePhase.slice(1)} Phase - ${currentMemberStatus.charAt(0).toUpperCase() + currentMemberStatus.slice(1)}`}
       >
-        <Text c="dimmed">{getHelpText()}</Text>
+        <Text c="dimmed">
+          {getHelpText()}
+        </Text>
       </Modal>
 
       {/* Profile Modal */}

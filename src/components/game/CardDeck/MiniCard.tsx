@@ -93,7 +93,7 @@ export function MiniCard({
           '0 0 2px rgba(0, 0, 0, 0.1)'
         ]
       } : {}}
-      transition={{ duration: 0.1, repeat: isSelected ? Infinity : 0, repeatType: "reverse" }}
+      transition={{ duration: 0.3, repeat: isSelected ? Infinity : 0, repeatType: "reverse" }}
     >
       <MantineCard
         shadow="sm"
