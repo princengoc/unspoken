@@ -7,6 +7,45 @@
 * [ ] Vercel publish!
 
 
+# Refactor
+
+* TODO: isOnline --> is_online (room_members) + front-end code changes
+* TODO: check selectedCard in room_members field: is this needed? 
+
+## Change game logic: no more listen-only. 
+* Setup state can be determined by server status to ensure resume. 
+* deal_extras: if already has ripple and exchange, if disabled, will not draw new cards. (For now, always set to true)
+
+* GLOBAL phase
+    - SETUP
+    - SPEAKING
+    - ENDGAME
+
+* NO NEED for player status (choosing etc) for game logic decisions. Can STILL KEEP for front-end visualization (?) 
+
+SETUP
+- each player must have a selected card
+- has no cards in hand, no cards selected, not spoken --> DRAW --> cards in hand
+- cards in hand, no cards selected, not spoken --> DISPLAY CARDS TO CHOOSE --> cards selected
+- cards selected, not spoken --> ALLOW VIEW OF EXCHANGE
+- for creator: if everyone is ready --> START GAME --> SWITCH TO SPEAKING
+
+SPEAKING
+- choose next speaker: if active_player_id is null, someone not yet spoken --> SET active_player_id; otherwise --> ENDGAME
+- active_player_id: speaker: start speaking button available (no effect). Hit again --> stop speaking --> mark as spoken; set active_player_is_null, choose next speaker --> REPEAT LOOP until ENDGAME
+
+ENDGAME: same as current logic. 
+
+
+
+
+
+
+
+
+
+
+
 # TODO
 
 * [ ] corner case handling: encore with ripple only but no exchange, no ripple cards, so no members have any cards to share. In this case:
