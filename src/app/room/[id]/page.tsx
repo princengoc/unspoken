@@ -88,7 +88,6 @@ function RoomContent({ roomId }: { roomId: string }) {
             overflowY: 'auto'
           }}
         >
-          <Paper p="md" radius="xs" style={{ height: '100%' }}>
             {/* Game Phases */}
             {room.phase === 'setup' ? (
               <Setup 
@@ -101,7 +100,6 @@ function RoomContent({ roomId }: { roomId: string }) {
             ) : (
               <Speaking roomId={room.id} />
             )}
-          </Paper>
         </Box>
       </Box>
     </FullRoomProvider>      

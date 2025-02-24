@@ -20,10 +20,18 @@ export default function Home() {
   return (
     <Container size="sm" py="xl">
       <Stack gap="xl">
-        <Stack gap="xs" ta="center">
-          <Title order={1}>Welcome to Deeper</Title>
-          <Text c="dimmed">Create or join a room to start playing</Text>
-        </Stack>
+        <Stack gap="md" ta="center" align="center" mt="xl">
+        <Title order={1}>
+          Unspoken
+        </Title>
+        <Text size="lg" c="gray.6" fw={500}>
+          Stories waiting to be told
+        </Text>
+        <Text size="md" c="gray.7" maw={450}>
+          A card game designed to spark meaningful conversations. Because the best talks don't just happen, they start with the right question.
+        </Text>
+      </Stack>
+
 
         <Group justify="center" gap="md">
           <Button 

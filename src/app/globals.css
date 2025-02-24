@@ -1,6 +1,17 @@
 @import '@mantine/core/styles.css';
 
-body {
-  background-color: #f8f9fa;
+/* Base styles */
+html, body {
+  background-color: #F5F0FF;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }

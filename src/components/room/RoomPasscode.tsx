@@ -35,8 +35,8 @@ export function RoomPasscode({ passcode, onContinue }: RoomPasscodeProps) {
             {({ copied, copy }) => (
               <Button
                 variant="light"
-                color={copied ? 'teal' : 'blue'}
                 leftSection={copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                opacity={copied ? 0.7 : 1}  // optional: slightly fade when copied
                 onClick={copy}
               >
                 {copied ? 'Copied!' : 'Copy Code'}
