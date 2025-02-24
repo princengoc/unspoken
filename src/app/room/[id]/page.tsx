@@ -17,8 +17,7 @@ import { Speaking } from '@/components/game/GamePhases/Speaking';
 import { SideNavbar } from '@/components/layout/SideNavbar';
 import { notifications } from '@mantine/notifications';
 import { Endgame } from '@/components/game/GamePhases/Endgame';
-
-type SetupViewType = 'cards' | 'exchange' | 'waiting';
+import { SetupViewType } from '@/core/game/types';
 
 /**
  * Main content component that renders the actual room UI

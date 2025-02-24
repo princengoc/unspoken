@@ -3,6 +3,8 @@ export type GamePhase = 'setup' | 'speaking' | 'endgame';
 export type JoinRequestStatus = 'pending' | 'approved' | 'rejected';
 export type GameMode = 'irl' | 'remote';
 
+export type SetupViewType = 'cards' | 'exchange';
+
 export type DerivedPlayerStatus = 
   | 'drawing'     // No cards in hand
   | 'choosing'    // Has cards but hasn't selected

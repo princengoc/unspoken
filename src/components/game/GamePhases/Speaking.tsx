@@ -9,6 +9,7 @@ import { ReactionsFeed } from '../ReactionsFeed';
 import { useAuth } from '@/context/AuthProvider';
 import { getPlayerAssignments } from '../statusBarUtils';
 import { useRoom } from '@/context/RoomProvider';
+import { useDisclosure } from '@mantine/hooks';
 
 type SpeakingProp = {
   roomId: string
@@ -17,15 +18,24 @@ type SpeakingProp = {
 export function Speaking({ roomId }: SpeakingProp) {
   const { user } = useAuth();
   const { room } = useRoom();
-  const { isActiveSpeaker, currentSpeakerHasStarted, startSpeaking, finishSpeaking } = useFullRoom();
+  const { isActiveSpeaker, finishSpeaking } = useFullRoom();
+  
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
+  const [isSpeaking, { toggle }] = useDisclosure(false);  
 
   if (!room?.active_player_id) return null;
   const activeCard = getCardById(cardState.selectedCards[room.active_player_id]);
   if (!activeCard) return null;
 
   const playerAssignments = getPlayerAssignments(members, roomId);
+
+  const handleSpeakButtonClick = () => {
+    if (isSpeaking) {
+      finishSpeaking();
+    }
+    toggle();
+  };  
 
   return (
     <Stack gap="md">
@@ -45,50 +55,32 @@ export function Speaking({ roomId }: SpeakingProp) {
         transition={{ duration: 0.3, delay: 0.2 }}
       >
         {isActiveSpeaker ? (
-          <>
             <Button
-              onClick={currentSpeakerHasStarted ? finishSpeaking : startSpeaking}
-              justify='center'
+              onClick={handleSpeakButtonClick}
+              justify="center"
               size="xs"
               variant="filled"
-              color={currentSpeakerHasStarted ? 'green' : 'blue'}
+              color={isSpeaking ? 'green' : 'blue'}
             >
-              {currentSpeakerHasStarted ? 'Finish Sharing' : 'Start Sharing'}
-            </Button>
-            {/* Show reactions to the speaker */}
-            {currentSpeakerHasStarted && user && (
-                 <Box mt="md">
-                   <ReactionsFeed
-                     roomId={roomId}
-                     speakerId={room.active_player_id}
-                     cardId={activeCard.id}
-                     currentUserId={user.id}
-                     playerAssignments={playerAssignments}
-                   />
-                 </Box>
-               )}            
-          </>
+              {isSpeaking ? 'Finish Speaking' : 'Start Speaking'}
+            </Button>      
         ) : (
-          <>
             <ListenerReactions
               speakerId={room.active_player_id}
               cardId={activeCard.id}
               roomId={roomId}
             />
-            {/* Show reactions to everyone if not private */}
-            {user && currentSpeakerHasStarted && (
-                 <Box mt="md">
-                   <ReactionsFeed
-                     roomId={roomId}
-                     speakerId={room.active_player_id}
-                     cardId={activeCard.id}
-                     currentUserId={user.id}
-                     playerAssignments={playerAssignments}
-                   />
-                 </Box>
-               )}            
-          </>
         )}
+
+        <Box mt="md">
+          <ReactionsFeed
+            roomId={roomId}
+            speakerId={room.active_player_id}
+            cardId={activeCard.id}
+            currentUserId={user.id}
+            playerAssignments={playerAssignments}
+          />
+        </Box>        
       </motion.div>
     </Stack>
   );

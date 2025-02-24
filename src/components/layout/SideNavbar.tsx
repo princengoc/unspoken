@@ -4,20 +4,19 @@ import React, { useState, useMemo } from 'react';
 import { Stack, ActionIcon, Tooltip, Indicator, Divider, Modal, Text } from '@mantine/core';
 import { IconDoorExit, IconHourglass, IconMessageCircle, IconCards, IconCheck, IconHelp, IconExchange } from '@tabler/icons-react';
 import { JoinRequests } from '@/hooks/room/JoinRequests';
-import { type GamePhase } from '@/core/game/types';
+import { SetupViewType, type GamePhase } from '@/core/game/types';
 import { useRoomMembers } from '@/context/RoomMembersProvider';
 import { useExchanges } from '@/context/ExchangesProvider';
 import { PlayerAvatar } from '@/components/game/PlayerAvatar';
 import { getPlayerAssignments } from '@/components/game/statusBarUtils';
 import { ProfileSettings } from '@/app/auth/ProfileSettings';
-import { PLAYER_STATUS } from '@/core/game/constants';
 import { useFullRoom } from '@/context/FullRoomProvider';
 
 interface SideNavbarProps {
   roomId: string;
   gamePhase: GamePhase;
   handleLeaveRoom?: () => void;
-  onViewChange?: (view: 'cards' | 'exchange' | 'waiting') => void;
+  onViewChange?: (view: SetupViewType) => void;
 }
 
 export function SideNavbar({
@@ -27,7 +26,7 @@ export function SideNavbar({
   onViewChange,
 }: SideNavbarProps) {
   const { members, currentMember } = useRoomMembers();
-  const { isCreator } = useFullRoom();
+  const { isCreator, currentMemberStatus } = useFullRoom();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const playerAssignments = getPlayerAssignments(members, roomId);
@@ -63,19 +62,16 @@ export function SideNavbar({
     }
   };
 
-  // Handle phase icon click to toggle between waiting and main view in setup
-  // Only enable certain actions when in setup phase and when appropriate
-  const canViewExchange = currentMember?.status === PLAYER_STATUS.BROWSING;
-  const canViewWaiting = currentMember?.status === PLAYER_STATUS.BROWSING;
+  // can view exchange only at browsing
+  const canViewExchange = currentMemberStatus === 'browsing';
 
   const handlePhaseIconClick = () => {
-    if (canViewWaiting) {
-      onViewChange?.('waiting');
-    }
+      onViewChange?.('cards');
   };
 
   // Handle exchange icon click
   const handleExchangeIconClick = () => {
+    
     if (canViewExchange) {
       onViewChange?.('exchange');
     }
@@ -122,16 +118,13 @@ export function SideNavbar({
           
           {/* Phase indicator - clickable in setup phase when appropriate */}
           <Tooltip 
-            label={canViewWaiting ? "View waiting status" : `Current phase: ${gamePhase}`} 
+            label={`Current phase: ${gamePhase}`} 
             position="right"
           >
             <ActionIcon 
               variant="subtle" 
               size="xl"
               onClick={handlePhaseIconClick}
-              style={{ cursor: canViewWaiting ? 'pointer' : 'default' }}
-              disabled={!canViewWaiting}
-              color={!canViewWaiting ? 'gray' : undefined}
             >
               <PhaseIcon size={24} />
             </ActionIcon>
@@ -194,7 +187,7 @@ export function SideNavbar({
         </Stack>
       </Stack>
 
-      {/* Help Modal - Fix HTML hierarchy issue */}
+      {/* Help Modal */}
       <Modal
         opened={helpModalOpen}
         onClose={() => setHelpModalOpen(false)}

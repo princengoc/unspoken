@@ -9,8 +9,7 @@ import { CardDeck } from '../CardDeck';
 import { SlideIn } from '@/components/animations/Motion';
 import { useCardsInGame } from '@/context/CardsInGameProvider';
 import { ExchangeTab } from '../ExchangeRequests/ExchangeTab';
-
-type SetupViewType = 'cards' | 'exchange';
+import { SetupViewType } from '@/core/game/types';
 
 type SetupProps = {
   roomId: string | undefined;
