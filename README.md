@@ -3,55 +3,13 @@
 * [ ] Endgame edits: 
     * [x] do NOT allow multiple encore. 
     * [ ] properly close the room. 
-* [ ] Improve explanation texts. 
+* [x] Improve explanation texts. 
 * [ ] Vercel publish!
-
-# Refactor
-
-## Change game logic: no more listen-only. 
-* Setup state can be determined by server status to ensure resume. 
-* deal_extras: if already has ripple and exchange, if disabled, will not draw new cards. (For now, always set to true)
-
-* GLOBAL phase
-    - SETUP
-    - SPEAKING
-    - ENDGAME
-
-* NO NEED for player status (choosing etc) for game logic decisions. Can STILL KEEP for front-end visualization (?) 
-
-SETUP
-- each player must have a selected card
-- has no cards in hand, no cards selected, not spoken --> DRAW --> cards in hand
-- cards in hand, no cards selected, not spoken --> DISPLAY CARDS TO CHOOSE --> cards selected
-- cards selected, not spoken --> ALLOW VIEW OF EXCHANGE
-- for creator: if everyone is ready --> START GAME --> SWITCH TO SPEAKING
-
-SPEAKING
-- choose next speaker: if active_player_id is null, someone not yet spoken --> SET active_player_id; otherwise --> ENDGAME
-- active_player_id: speaker: start speaking button available (no effect). Hit again --> stop speaking --> mark as spoken; set active_player_is_null, choose next speaker --> REPEAT LOOP until ENDGAME
-
-ENDGAME: same as current logic. 
-
-
-
-
-
-
-
-
-
-
 
 # TODO
 
-* [ ] corner case handling: encore with ripple only but no exchange, no ripple cards, so no members have any cards to share. In this case:
-    - draw random cards into the discard pile if it's empty
-    - 
 * [ ] cards have two sides: question side and prompt side. Question side is most appropriate for Exchange. 
 * [ ] level 0 for playing with Bong
-
-
-# Minor game logic changes
 
 End/Start game
 * [ ] Encore: allow individual players to vote: join encore round or not. If creator wants to encore, will exclude players who voted No
@@ -60,18 +18,11 @@ End/Start game
 
 # Minor UIs
 
-
 getPlayerAssignment
 * [ ] player order should be by first joined in room, otherwise new player joining will cause player icons to change
 
-
-Speaking / Setup
-* [ ] Improve asthetics: eg messages have borders instead of plain text
-* [ ] More explanation texts, eg, at Start Sharing: encourage speaker to talk about stuff, encourage listening to react
-
 Exchange tab
 * [ ] use PlayerAvatar + name instead of first initial
-
 
 Exchange card
 * [ ] Show the "from_id" avatar in the bottom corner for the speaker
@@ -79,9 +30,10 @@ Exchange card
 Card backgrounds
 * [ ] Display backgrounds consistent to the mood assigned
 
+Card
+* [ ] Main card display corner icons like Minicard
 
-# Minor backend
-
+# Bugs
 
 # DONE
 * [x] resume from given state
@@ -113,8 +65,6 @@ Card backgrounds
     * [x] select exactly columns needed
     * [x] remove consecutive calls
     * [x] make startNextRound and draw cards more efficient
+* [x] corner case handling: encore with ripple only but no exchange, no ripple cards, so no members have any cards to share. 
 
-## Bugs
 
-## SLOW UI NOTES
-* [ ] in Encore, at Setup we end up somehow with "Waiting for players..." instead of displaying the Draw Cards. (Seems to be a network problem)
