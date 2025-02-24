@@ -1,16 +1,12 @@
 # Current PR
-* [ ] merge game_states and rooms tables, remove game_state_id
-* [ ] performance efficiencies
-    * [ ] select exactly columns needed
-    * [ ] remove consecutive calls
-    * [ ] make startNextRound and draw cards more efficient
+
+* [ ] Endgame edits: 
+    * [x] do NOT allow multiple encore. 
+    * [ ] properly close the room. 
+* [ ] Improve explanation texts. 
 * [ ] Vercel publish!
 
-
 # Refactor
-
-* TODO: isOnline --> is_online (room_members) + front-end code changes
-* TODO: check selectedCard in room_members field: is this needed? 
 
 ## Change game logic: no more listen-only. 
 * Setup state can be determined by server status to ensure resume. 
@@ -112,10 +108,13 @@ Card backgrounds
     * [x] signup form should require a username
     * [x] pasword field too small
 * [x] change playerAvatar to an ActionIcon so that mouse over has a clickable effect
-
+* [x] merge game_states and rooms tables, remove game_state_id
+* [x] performance efficiencies
+    * [x] select exactly columns needed
+    * [x] remove consecutive calls
+    * [x] make startNextRound and draw cards more efficient
 
 ## Bugs
-* [ ] render fewer hooks than expected at Exit
 
 ## SLOW UI NOTES
 * [ ] in Encore, at Setup we end up somehow with "Waiting for players..." instead of displaying the Draw Cards. (Seems to be a network problem)

@@ -15,7 +15,8 @@ export const roomsService = {
       phase: 'setup' as GamePhase, 
       active_player_id: null,
       card_depth: settings?.card_depth ?? null, 
-      deal_extras: settings?.deal_extras ?? null
+      deal_extras: settings?.deal_extras ?? true, 
+      is_encore: settings?.is_encore ?? false,
     };
 
     // after insertion room now has id, needs to be returned

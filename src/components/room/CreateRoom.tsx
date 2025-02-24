@@ -18,7 +18,8 @@ export function CreateRoom() {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
     deal_extras: true,
-    card_depth: null
+    card_depth: null, 
+    is_encore: false
   });
   const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
   const [roomPasscode, setRoomPasscode] = useState<string | null>(null);

@@ -28,6 +28,7 @@ export function Endgame({roomId}: EndgameProp) {
   const [nextRoundSettings, setNextRoundSettings] = useState<Partial<RoomSettings>>({
       deal_extras: true,
       card_depth: null,
+      is_encore: true
   });
   const [loading, setLoading] = useState(false);
   
@@ -129,7 +130,8 @@ export function Endgame({roomId}: EndgameProp) {
           </motion.div>
         )}
         
-        {isCreator && (
+        {/* Only allow start next game for creator AND game is not already encore */}
+        {isCreator && !(room?.is_encore) && (
          <Paper p="md" radius="md" withBorder mt="md">
            <Stack gap="md">
              <Title order={4}>Play an Encore Round</Title>
@@ -163,13 +165,21 @@ export function Endgame({roomId}: EndgameProp) {
          </Paper>
         )}
         
-        {!isCreator && (
+        {!isCreator && (room?.is_encore) && (
           <Paper p="md" radius="md">
             <Text ta="center">
-              Waiting for room creator to start an encore or end the game...
+              Encore ended. Thanks for playing!
             </Text>
           </Paper>
         )}
+
+        {!isCreator && !(room?.is_encore) && (
+          <Paper p="md" radius="md">
+            <Text ta="center">
+              Thnks for playing! Waiting for room creator to Encore or End Game. 
+            </Text>
+          </Paper>
+        )}        
       </Stack>
     </Container>
   );
