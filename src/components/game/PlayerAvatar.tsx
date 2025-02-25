@@ -1,22 +1,22 @@
-import React from 'react';
-import { Avatar, Indicator, Tooltip } from '@mantine/core';
-import { type PlayerAssignment } from './statusBarUtils';
+import React from "react";
+import { Avatar, Indicator, Tooltip } from "@mantine/core";
+import { type PlayerAssignment } from "./statusBarUtils";
 
 interface PlayerAvatarProps {
   // Required props
   assignment: PlayerAssignment;
-  
+
   // Optional styling and behavior
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: "xs" | "sm" | "md" | "lg";
   opacity?: number;
   highlighted?: boolean;
   highlightColor?: string;
   onClick?: () => void;
-  
+
   // Optional tooltip
   showTooltip?: boolean;
   tooltipLabel?: string;
-  
+
   // Optional indicator
   showIndicator?: boolean;
   indicatorIcon?: React.ReactNode;
@@ -31,35 +31,39 @@ interface PlayerAvatarProps {
 export function PlayerAvatar({
   // Required props
   assignment,
-  
+
   // Optional styling
-  size = 'md',
+  size = "md",
   opacity = 1,
   highlighted = false,
-  highlightColor = 'green',
+  highlightColor = "green",
   onClick,
-  
+
   // Optional tooltip
   showTooltip = false,
-  tooltipLabel = '',
-  
+  tooltipLabel = "",
+
   // Optional indicator
   showIndicator = false,
   indicatorIcon = null,
-  indicatorColor = 'yellow',
+  indicatorColor = "yellow",
   indicatorProcessing = false,
-  
 }: PlayerAvatarProps) {
   const { Icon, bgColor } = assignment;
-  
+
   // Determine icon size based on avatar size
   const getIconSize = (avatarSize: string): number => {
     switch (avatarSize) {
-      case 'xs': return 12;
-      case 'sm': return 16;
-      case 'md': return 20;
-      case 'lg': return 24;
-      default: return 20;
+      case "xs":
+        return 12;
+      case "sm":
+        return 16;
+      case "md":
+        return 20;
+      case "lg":
+        return 24;
+      default:
+        return 20;
     }
   };
 
@@ -69,12 +73,12 @@ export function PlayerAvatar({
       size={size}
       styles={(theme) => ({
         root: {
-          border: highlighted ? `2px solid ${highlightColor}` : 'none',
-          boxSizing: 'content-box',
-          padding: highlighted ? '2px' : '0',
-          cursor: onClick ? 'pointer' : 'default',
-          transition: 'all 0.2s ease',
-        }
+          border: highlighted ? `2px solid ${highlightColor}` : "none",
+          boxSizing: "content-box",
+          padding: highlighted ? "2px" : "0",
+          cursor: onClick ? "pointer" : "default",
+          transition: "all 0.2s ease",
+        },
       })}
       style={{
         backgroundColor: bgColor,
@@ -82,10 +86,7 @@ export function PlayerAvatar({
       }}
       onClick={onClick}
     >
-      <Icon
-        size={getIconSize(size)}
-        color="white"
-      />
+      <Icon size={getIconSize(size)} color="white" />
     </Avatar>
   );
 
@@ -101,12 +102,16 @@ export function PlayerAvatar({
     >
       {avatar}
     </Indicator>
-  ) : avatar;
+  ) : (
+    avatar
+  );
 
   // Apply tooltip if needed
   return showTooltip ? (
     <Tooltip label={tooltipLabel} position="top" withArrow>
       {avatarWithIndicator}
     </Tooltip>
-  ) : avatarWithIndicator;
+  ) : (
+    avatarWithIndicator
+  );
 }

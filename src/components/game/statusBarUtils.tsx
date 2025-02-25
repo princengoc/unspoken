@@ -6,13 +6,13 @@ import {
   IconButterfly,
   IconCheese,
   IconHorseToy,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
-import type { Player } from '@/core/game/types';
+import type { Player } from "@/core/game/types";
 
 // Seeded random number generator for consistent assignments
 export function mulberry32(a: number) {
-  return function() {
+  return function () {
     let t = (a += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -30,14 +30,13 @@ export function shuffleArray<T>(array: T[], seed: number): T[] {
   return arr;
 }
 
-export const hashCode = (str: string): number =>{
+export const hashCode = (str: string): number => {
   if (!str) {
-    return 0
+    return 0;
   } else {
-    str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    str.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   }
-}
-  
+};
 
 // Available icons and colors for player avatars
 export const PLAYER_ICONS = [
@@ -51,30 +50,33 @@ export const PLAYER_ICONS = [
 ] as const;
 
 export const PLAYER_COLORS = [
-  '#A3E635', // Light green
-  '#60A5FA', // Light blue
-  '#FBBF24', // Yellow
-  '#F87171', // Red
-  '#34D399', // Teal
-  '#6B7280', // Gray
-  '#F472B6', // Pink
-  '#FCD34D', // Light yellow
+  "#A3E635", // Light green
+  "#60A5FA", // Light blue
+  "#FBBF24", // Yellow
+  "#F87171", // Red
+  "#34D399", // Teal
+  "#6B7280", // Gray
+  "#F472B6", // Pink
+  "#FCD34D", // Light yellow
 ] as const;
 
 export type PlayerAssignment = {
-  Icon: typeof PLAYER_ICONS[number];
-  bgColor: typeof PLAYER_COLORS[number];
+  Icon: (typeof PLAYER_ICONS)[number];
+  bgColor: (typeof PLAYER_COLORS)[number];
 };
 
 // Get consistent player assignments for a room
-export function getPlayerAssignments(members: Player[], roomId: string): Map<string, PlayerAssignment> {
+export function getPlayerAssignments(
+  members: Player[],
+  roomId: string,
+): Map<string, PlayerAssignment> {
   const seedValue = hashCode(roomId);
   const shuffledIcons = shuffleArray([...PLAYER_ICONS], seedValue);
   const shuffledColors = shuffleArray([...PLAYER_COLORS], seedValue + 1);
-  
+
   // Sort players by ID for consistent assignment
   const sortedMembers = [...members].sort((a, b) => a.id.localeCompare(b.id));
-  
+
   const assignment = new Map<string, PlayerAssignment>();
   sortedMembers.forEach((player, index) => {
     assignment.set(player.id, {
@@ -82,7 +84,6 @@ export function getPlayerAssignments(members: Player[], roomId: string): Map<str
       bgColor: shuffledColors[index % shuffledColors.length],
     });
   });
-  
+
   return assignment;
 }
-

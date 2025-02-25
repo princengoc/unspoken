@@ -1,8 +1,8 @@
 // src/app/profile/page.tsx
-'use client';
+"use client";
 
-import { Container } from '@mantine/core';
-import { ProfileSettings } from '../auth/ProfileSettings';
+import { Container } from "@mantine/core";
+import { ProfileSettings } from "../auth/ProfileSettings";
 
 export default function ProfilePage() {
   return (

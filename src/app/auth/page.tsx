@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { useDisclosure } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
-import { 
-  Container, 
-  TextInput, 
-  Button, 
-  Title, 
-  Stack, 
-  Center, 
-  Text, 
-  PasswordInput, 
-  Loader 
+import {
+  Container,
+  TextInput,
+  Button,
+  Title,
+  Stack,
+  Center,
+  Text,
+  PasswordInput,
+  Loader,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
@@ -49,10 +49,18 @@ export default function AuthPage() {
         setSignedUp(true);
       } else {
         await loginWithEmail(email, password);
-        notifications.show({ title: "Logged in", message: "Welcome back!", color: "blue" });
+        notifications.show({
+          title: "Logged in",
+          message: "Welcome back!",
+          color: "blue",
+        });
       }
     } catch (error) {
-      notifications.show({ title: "Error", message: error.message, color: "red" });
+      notifications.show({
+        title: "Error",
+        message: error.message,
+        color: "red",
+      });
     }
   };
 
@@ -63,7 +71,9 @@ export default function AuthPage() {
         <Center style={{ height: "100vh" }}>
           <Stack align="center" gap="md">
             <Title order={2}>Check your email</Title>
-            <Text>Please verify your email to complete the sign-up process.</Text>
+            <Text>
+              Please verify your email to complete the sign-up process.
+            </Text>
           </Stack>
         </Center>
       </Container>
@@ -110,12 +120,14 @@ export default function AuthPage() {
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
 
-          <Text 
-            size="sm" 
-            onClick={() => setIsSignUp(!isSignUp)} 
+          <Text
+            size="sm"
+            onClick={() => setIsSignUp(!isSignUp)}
             style={{ cursor: "pointer", textDecoration: "underline" }}
           >
-            {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            {isSignUp
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
           </Text>
         </Stack>
       </Center>

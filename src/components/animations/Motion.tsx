@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
 interface FadeInProps {
   children: ReactNode;
@@ -23,22 +23,22 @@ export function FadeIn({ children, delay = 0, className }: FadeInProps) {
 
 interface SlideInProps {
   children: ReactNode;
-  direction?: 'left' | 'right' | 'up' | 'down';
+  direction?: "left" | "right" | "up" | "down";
   delay?: number;
   className?: string;
 }
 
-export function SlideIn({ 
-  children, 
-  direction = 'right', 
+export function SlideIn({
+  children,
+  direction = "right",
   delay = 0,
-  className 
+  className,
 }: SlideInProps) {
   const directionMap = {
     left: { x: -100, y: 0 },
     right: { x: 100, y: 0 },
     up: { x: 0, y: -100 },
-    down: { x: 0, y: 100 }
+    down: { x: 0, y: 100 },
   };
 
   return (
@@ -46,11 +46,11 @@ export function SlideIn({
       initial={directionMap[direction]}
       animate={{ x: 0, y: 0 }}
       exit={directionMap[direction]}
-      transition={{ 
-        type: 'spring',
+      transition={{
+        type: "spring",
         stiffness: 500,
         damping: 30,
-        delay 
+        delay,
       }}
       className={className}
     >
@@ -71,11 +71,11 @@ export function ScaleIn({ children, delay = 0, className }: ScaleInProps) {
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.8, opacity: 0 }}
-      transition={{ 
-        type: 'spring',
+      transition={{
+        type: "spring",
         stiffness: 500,
         damping: 30,
-        delay 
+        delay,
       }}
       className={className}
     >

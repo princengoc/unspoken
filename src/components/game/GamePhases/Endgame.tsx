@@ -1,38 +1,47 @@
 // src/components/game/GamePhases/Endgame.tsx
-import { useEffect, useState } from 'react';
-import { Container, Stack, Title, Text, Group, Button, Paper, SimpleGrid } from '@mantine/core';
-import { IconRepeat, IconArrowRight } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
-import { motion } from 'framer-motion';
-import { useRoomMembers } from '@/context/RoomMembersProvider';
-import { useCardsInGame } from '@/context/CardsInGameProvider';
-import { useFullRoom } from '@/context/FullRoomProvider';
-import { useRoom } from '@/context/RoomProvider';
-import { SlideIn, FadeIn } from '@/components/animations/Motion';
-import { MiniCard } from '../CardDeck/MiniCard';
-import { getPlayerAssignments } from '../statusBarUtils';
-import { RoomSettings } from '@/core/game/types';
-import { GameSettingsForm } from '@/components/room/GameSettingsForm';
-
+import { useEffect, useState } from "react";
+import {
+  Container,
+  Stack,
+  Title,
+  Text,
+  Group,
+  Button,
+  Paper,
+  SimpleGrid,
+} from "@mantine/core";
+import { IconRepeat, IconArrowRight } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { motion } from "framer-motion";
+import { useRoomMembers } from "@/context/RoomMembersProvider";
+import { useCardsInGame } from "@/context/CardsInGameProvider";
+import { useFullRoom } from "@/context/FullRoomProvider";
+import { useRoom } from "@/context/RoomProvider";
+import { SlideIn, FadeIn } from "@/components/animations/Motion";
+import { MiniCard } from "../CardDeck/MiniCard";
+import { getPlayerAssignments } from "../statusBarUtils";
+import { RoomSettings } from "@/core/game/types";
+import { GameSettingsForm } from "@/components/room/GameSettingsForm";
 
 type EndgameProp = {
-  roomId: string | undefined
-}
+  roomId: string;
+};
 
-export function Endgame({roomId}: EndgameProp) {
+export function Endgame({ roomId }: EndgameProp) {
   const { room } = useRoom();
   const { members } = useRoomMembers();
   const { cardState, getCardById } = useCardsInGame();
   const { isCreator, startNextRound } = useFullRoom();
   const [showingCards, setShowingCards] = useState(false);
-  const [nextRoundSettings, setNextRoundSettings] = useState<Partial<RoomSettings>>({
-      deal_extras: true,
-      card_depth: null,
-      is_encore: true
+  const [nextRoundSettings, setNextRoundSettings] = useState<
+    Partial<RoomSettings>
+  >({
+    deal_extras: true,
+    card_depth: null,
+    is_encore: true,
   });
   const [loading, setLoading] = useState(false);
-  
-  if (!roomId) return null;  
+
   const playerAssignments = getPlayerAssignments(members, roomId);
 
   useEffect(() => {
@@ -40,66 +49,72 @@ export function Endgame({roomId}: EndgameProp) {
     const timer = setTimeout(() => {
       setShowingCards(true);
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (room?.card_depth) {
-      setNextRoundSettings(prev => ({
+      setNextRoundSettings((prev) => ({
         ...prev,
-        card_depth: room?.card_depth
+        card_depth: room?.card_depth,
       }));
     }
-  }, [room?.card_depth]);  
-  
-  // Get player to card mapping
-  const playerCards = Object.entries(cardState.selectedCards).map(([playerId, cardId]) => {
-    const player = members.find(m => m.id === playerId);
-    const card = getCardById(cardId);
+  }, [room?.card_depth]);
 
-    const contributorId = card?.contributor_id;
-    const contributor = contributorId 
-      ? members.find(m => m.id === contributorId) 
-      : undefined;    
-    return { 
-      playerId, 
-      playerName: player?.username || "Unknown Player", 
-      playerAssignments: playerAssignments.get(playerId),
-      card, 
-      contributorName: contributor?.username, 
-      contributorAssignment: contributorId ? playerAssignments.get(contributorId) : undefined
-    };
-  });
+  // Get player to card mapping
+  const playerCards = Object.entries(cardState.selectedCards).map(
+    ([playerId, cardId]) => {
+      const player = members.find((m) => m.id === playerId);
+      const card = getCardById(cardId);
+
+      const contributorId = card?.contributor_id;
+      const contributor = contributorId
+        ? members.find((m) => m.id === contributorId)
+        : undefined;
+      return {
+        playerId,
+        playerName: player?.username || "Unknown Player",
+        playerAssignments: playerAssignments.get(playerId),
+        card,
+        contributorName: contributor?.username,
+        contributorAssignment: contributorId
+          ? playerAssignments.get(contributorId)
+          : undefined,
+      };
+    },
+  );
 
   const handleStartEncore = async () => {
     if (!isCreator) return;
-    
+
     setLoading(true);
     try {
       await startNextRound(nextRoundSettings);
       notifications.show({
-        title: 'Success',
-        message: 'Encore round started!',
-        color: 'green'
+        title: "Success",
+        message: "Encore round started!",
+        color: "green",
       });
     } catch (error) {
-      console.error('Failed to start encore:', error);
+      console.error("Failed to start encore:", error);
       notifications.show({
-        title: 'Error',
-        message: 'Failed to start encore round',
-        color: 'red'
+        title: "Error",
+        message: "Failed to start encore round",
+        color: "red",
       });
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   return (
     <Container size="lg" py="md">
       <Stack gap="xs">
         <FadeIn>
-          <Title order={2} ta="center">Game Complete</Title>
+          <Title order={2} ta="center">
+            Game Complete
+          </Title>
           <Text ta="center" size="md" c="dimmed">
             Here's what everyone shared:
           </Text>
@@ -111,75 +126,88 @@ export function Endgame({roomId}: EndgameProp) {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="xs" verticalSpacing='xs'>
-                {playerCards.map(({ playerId, playerName, playerAssignments, card, contributorAssignment, contributorName }, index) => (
-                card && (
-                  <SlideIn key={playerId} delay={index * 0.1}>
-                        <MiniCard
-                          card={card}
-                          showSender={true}
-                          playerAssignment={playerAssignments}
-                          playerName={playerName}
-                          contributorAssignment={contributorAssignment}
-                          contributorName={contributorName}
-                        />
-                  </SlideIn>
-                )
-              ))}
+            <SimpleGrid
+              cols={{ base: 2, sm: 3, md: 4 }}
+              spacing="xs"
+              verticalSpacing="xs"
+            >
+              {playerCards.map(
+                (
+                  {
+                    playerId,
+                    playerName,
+                    playerAssignments,
+                    card,
+                    contributorAssignment,
+                    contributorName,
+                  },
+                  index,
+                ) =>
+                  card && (
+                    <SlideIn key={playerId} delay={index * 0.1}>
+                      <MiniCard
+                        card={card}
+                        showSender={true}
+                        playerAssignment={playerAssignments}
+                        playerName={playerName}
+                        contributorAssignment={contributorAssignment}
+                        contributorName={contributorName}
+                      />
+                    </SlideIn>
+                  ),
+              )}
             </SimpleGrid>
           </motion.div>
         )}
-        
+
         {/* Only allow start next game for creator AND game is not already encore */}
-        {isCreator && !(room?.is_encore) && (
-         <Paper p="md" radius="md" withBorder mt="md">
-           <Stack gap="md">
-             <Title order={4}>Play an Encore Round</Title>
-             
-             <GameSettingsForm 
-              onChange={setNextRoundSettings}
-              dealExtrasDescription='If disabled, will use cards from previous round only when available.'
+        {isCreator && !room?.is_encore && (
+          <Paper p="md" radius="md" withBorder mt="md">
+            <Stack gap="md">
+              <Title order={4}>Play an Encore Round</Title>
+
+              <GameSettingsForm
+                onChange={setNextRoundSettings}
+                dealExtrasDescription="If disabled, will use cards from previous round only when available."
               />
-                         
-             <Group justify="center" mt="sm">
-               <Button
-                 size="md"
-                 leftSection={<IconRepeat size={18} />}
-                 onClick={handleStartEncore}
-                 color="indigo"
-                 loading={loading}
-               >
-                 Start Encore Round
-               </Button>
-               <Button
-                 size="md"
-                 rightSection={<IconArrowRight size={18} />}
-                 variant="outline"
-                 color="gray"
-                 onClick={() => window.location.href = '/'}
-               >
-                 Exit Game
-               </Button>
-             </Group>
-           </Stack>
-         </Paper>
-        )}
-        
-        {!isCreator && (room?.is_encore) && (
-          <Paper p="md" radius="md">
-            <Text ta="center">
-              Encore ended. Thanks for playing!
-            </Text>
+
+              <Group justify="center" mt="sm">
+                <Button
+                  size="md"
+                  leftSection={<IconRepeat size={18} />}
+                  onClick={handleStartEncore}
+                  color="indigo"
+                  loading={loading}
+                >
+                  Start Encore Round
+                </Button>
+                <Button
+                  size="md"
+                  rightSection={<IconArrowRight size={18} />}
+                  variant="outline"
+                  color="gray"
+                  onClick={() => (window.location.href = "/")}
+                >
+                  Exit Game
+                </Button>
+              </Group>
+            </Stack>
           </Paper>
         )}
 
-        {!isCreator && !(room?.is_encore) && (
+        {!isCreator && room?.is_encore && (
+          <Paper p="md" radius="md">
+            <Text ta="center">Encore ended. Thanks for playing!</Text>
+          </Paper>
+        )}
+
+        {!isCreator && !room?.is_encore && (
           <Paper p="md" radius="md">
             <Text ta="center">
-              Thnks for playing! Waiting for room creator to Encore or End Game. 
+              Thnks for playing! Waiting for room creator to Encore or End Game.
             </Text>
           </Paper>
-        )}        
+        )}
       </Stack>
     </Container>
   );

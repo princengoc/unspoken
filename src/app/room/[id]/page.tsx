@@ -1,22 +1,17 @@
 // src/app/room/[id]/page.tsx
 
-'use client';
-import { use, useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Container,
-  Box,
-  Text,
-  Loader,
-} from '@mantine/core';
-import { FullRoomProvider } from '@/context/FullRoomProvider';
-import { RoomProvider, useRoom } from '@/context/RoomProvider';
-import { Setup } from '@/components/game/GamePhases/Setup';
-import { Speaking } from '@/components/game/GamePhases/Speaking';
-import { SideNavbar } from '@/components/layout/SideNavbar';
-import { notifications } from '@mantine/notifications';
-import { Endgame } from '@/components/game/GamePhases/Endgame';
-import { SetupViewType } from '@/core/game/types';
+"use client";
+import { use, useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Container, Box, Text, Loader } from "@mantine/core";
+import { FullRoomProvider } from "@/context/FullRoomProvider";
+import { RoomProvider, useRoom } from "@/context/RoomProvider";
+import { Setup } from "@/components/game/GamePhases/Setup";
+import { Speaking } from "@/components/game/GamePhases/Speaking";
+import { SideNavbar } from "@/components/layout/SideNavbar";
+import { notifications } from "@mantine/notifications";
+import { Endgame } from "@/components/game/GamePhases/Endgame";
+import { SetupViewType } from "@/core/game/types";
 
 /**
  * Main content component that renders the actual room UI
@@ -24,12 +19,13 @@ import { SetupViewType } from '@/core/game/types';
 function RoomContent({ roomId }: { roomId: string }) {
   const router = useRouter();
   const { room, loading, error, leaveRoom } = useRoom();
-  const [currentSetupView, setCurrentSetupView] = useState<SetupViewType>('cards');
-  
+  const [currentSetupView, setCurrentSetupView] =
+    useState<SetupViewType>("cards");
+
   // Handle leaving room
   const handleLeaveRoom = async () => {
     await leaveRoom();
-    router.push('/');
+    router.push("/");
   };
 
   // Memoized callback to prevent unnecessary renders
@@ -40,18 +36,18 @@ function RoomContent({ roomId }: { roomId: string }) {
   useEffect(() => {
     if (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: error.message,
-        color: 'red',
+        color: "red",
       });
-      router.push('/');
+      router.push("/");
     }
   }, [error, router]);
-  
+
   if (loading || !room) {
     return (
       <Container py="xl">
-        <Box ta='center'>
+        <Box ta="center">
           <Loader size="xl" />
           <Text mt="md">Loading room...</Text>
         </Box>
@@ -61,39 +57,39 @@ function RoomContent({ roomId }: { roomId: string }) {
 
   return (
     <FullRoomProvider roomId={roomId}>
-      <Box style={{ height: '100vh', position: 'relative' }}>
+      <Box style={{ height: "100vh", position: "relative" }}>
         {/* Side Navigation */}
-        <SideNavbar 
+        <SideNavbar
           roomId={room.id}
           gamePhase={room.phase}
           handleLeaveRoom={handleLeaveRoom}
-          onViewChange={room.phase === 'setup' ? handleViewChange : undefined}
+          onViewChange={room.phase === "setup" ? handleViewChange : undefined}
         />
 
         {/* Main Content */}
-        <Box 
-          style={{ 
-            marginLeft: '80px',
-            padding: '1rem',
-            height: '100%',
-            overflowY: 'auto'
+        <Box
+          style={{
+            marginLeft: "80px",
+            padding: "1rem",
+            height: "100%",
+            overflowY: "auto",
           }}
         >
-            {/* Game Phases */}
-            {room.phase === 'setup' ? (
-              <Setup 
-                roomId={room.id} 
-                initialView={currentSetupView}
-                onViewChange={handleViewChange}
-              />
-            ) : room.phase === 'endgame' ? (
-              <Endgame roomId={room.id}/>
-            ) : (
-              <Speaking roomId={room.id} />
-            )}
+          {/* Game Phases */}
+          {room.phase === "setup" ? (
+            <Setup
+              roomId={room.id}
+              initialView={currentSetupView}
+              onViewChange={handleViewChange}
+            />
+          ) : room.phase === "endgame" ? (
+            <Endgame roomId={room.id} />
+          ) : (
+            <Speaking roomId={room.id} />
+          )}
         </Box>
       </Box>
-    </FullRoomProvider>      
+    </FullRoomProvider>
   );
 }
 
@@ -106,7 +102,7 @@ interface RoomPageProps {
 
 export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
-  
+
   return (
     <RoomProvider roomId={roomId}>
       <RoomContent roomId={roomId} />

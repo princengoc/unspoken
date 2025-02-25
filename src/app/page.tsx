@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/context/AuthProvider';
-import { Container, Button, Stack, Title, Text, Group } from '@mantine/core';
-import { useRouter } from 'next/navigation';
+import { useAuth } from "@/context/AuthProvider";
+import { Container, Button, Stack, Title, Text, Group } from "@mantine/core";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { user } = useAuth();
@@ -17,21 +17,27 @@ export default function Home() {
             Stories waiting to be told
           </Text>
           <Text size="md" c="gray.7" maw={450}>
-            A card game designed to spark meaningful conversations. Because the best talks don&apos;t just happen, they start with the right question.
+            A card game designed to spark meaningful conversations. Because the
+            best talks don&apos;t just happen, they start with the right
+            question.
           </Text>
         </Stack>
         <Group justify="center" gap="md">
           {user ? (
             <>
-              <Button size="lg" onClick={() => router.push('/room/create')}>
+              <Button size="lg" onClick={() => router.push("/room/create")}>
                 Create Room
               </Button>
-              <Button size="lg" variant="light" onClick={() => router.push('/room/join')}>
+              <Button
+                size="lg"
+                variant="light"
+                onClick={() => router.push("/room/join")}
+              >
                 Join Room
               </Button>
             </>
           ) : (
-            <Button size="lg" onClick={() => router.push('/auth')}>
+            <Button size="lg" onClick={() => router.push("/auth")}>
               Login
             </Button>
           )}

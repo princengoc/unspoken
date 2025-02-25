@@ -1,18 +1,17 @@
 // src/core/game/types.ts
-export type GamePhase = 'setup' | 'speaking' | 'endgame';
-export type JoinRequestStatus = 'pending' | 'approved' | 'rejected';
-export type GameMode = 'irl' | 'remote';
+export type GamePhase = "setup" | "speaking" | "endgame";
+export type JoinRequestStatus = "pending" | "approved" | "rejected";
+export type GameMode = "irl" | "remote";
 
-export type SetupViewType = 'cards' | 'exchange';
+export type SetupViewType = "cards" | "exchange";
 
-export type DerivedPlayerStatus = 
-  | 'drawing'     // No cards in hand
-  | 'choosing'    // Has cards but hasn't selected
-  | 'browsing'    // Has selected card
-  | 'speaking'    // Is active speaker
-  | 'listening'   // Not active speaker during speaking phase
-  | 'done';       // Has spoken
-
+export type DerivedPlayerStatus =
+  | "drawing" // No cards in hand
+  | "choosing" // Has cards but hasn't selected
+  | "browsing" // Has selected card
+  | "speaking" // Is active speaker
+  | "listening" // Not active speaker during speaking phase
+  | "done"; // Has spoken
 
 // Core player state
 export type Player = {
@@ -22,11 +21,10 @@ export type Player = {
   has_spoken: boolean;
 };
 
-export const DEFAULT_PLAYER: Omit<Player, 'id' | 'username'> = {
-  is_online: true,   // Defaulting to online when joining
+export const DEFAULT_PLAYER: Omit<Player, "id" | "username"> = {
+  is_online: true, // Defaulting to online when joining
   has_spoken: false,
 };
-
 
 export type JoinRequest = {
   id: string;
@@ -76,36 +74,57 @@ export type Card = {
 export type CardState = {
   roomPile: string[]; // all cards that have ever appeared, useful for dealing
   discardPile: string[]; // cards in discard state
-  playerHands: Record<string, string[]>; 
-  selectedCards: Record<string, string>; 
-}
+  playerHands: Record<string, string[]>;
+  selectedCards: Record<string, string>;
+};
 
 // Exchange types
 
 export type MatchedExchange = {
-  player1: string; 
+  player1: string;
   player2: string;
-  player1_card: string; 
+  player1_card: string;
   player2_card: string;
-}
+};
 
 // Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {
-  const uniqueCards = new Map(cards.map(card => [card.id, card]));
+  const uniqueCards = new Map(cards.map((card) => [card.id, card]));
   return Array.from(uniqueCards.values());
 };
 
-export const mergeCardsWithDeduplication = (existingCards: Card[], newCards: Card[]): Card[] => {
+export const mergeCardsWithDeduplication = (
+  existingCards: Card[],
+  newCards: Card[],
+): Card[] => {
   const uniqueCards = new Map(
-    [...existingCards, ...newCards].map(card => [card.id, card])
+    [...existingCards, ...newCards].map((card) => [card.id, card]),
   );
   return Array.from(uniqueCards.values());
 };
 
 // Functions to deconstruct a room
 export function extractMetadata(room: Room): RoomMetadata {
-  const { id, passcode, created_by, name, created_at, updated_at, is_active, game_mode } = room;
-  return { id, passcode, created_by, name, created_at, updated_at, is_active, game_mode };
+  const {
+    id,
+    passcode,
+    created_by,
+    name,
+    created_at,
+    updated_at,
+    is_active,
+    game_mode,
+  } = room;
+  return {
+    id,
+    passcode,
+    created_by,
+    name,
+    created_at,
+    updated_at,
+    is_active,
+    game_mode,
+  };
 }
 
 export function extractGameState(room: Room): GameState {

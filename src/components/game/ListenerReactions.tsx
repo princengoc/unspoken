@@ -1,53 +1,65 @@
-import { useState, useMemo } from 'react';
-import { Group, ActionIcon, Tooltip, Switch } from '@mantine/core';
-import { IconSparkles, IconHeart, IconBulb, IconRipple, IconLock, IconWorld } from '@tabler/icons-react';
-import { useAuth } from '@/context/AuthProvider';
-import { useReactions } from '@/hooks/game/useReactions';
-import type { ReactionType } from '@/services/supabase/reactions';
+import { useState, useMemo } from "react";
+import { Group, ActionIcon, Tooltip, Switch } from "@mantine/core";
+import {
+  IconSparkles,
+  IconHeart,
+  IconBulb,
+  IconRipple,
+  IconLock,
+  IconWorld,
+} from "@tabler/icons-react";
+import { useReactions } from "@/hooks/game/useReactions";
+import type { ReactionType } from "@/services/supabase/reactions";
 
 const REACTIONS = [
-  { id: 'inspiring' as ReactionType, icon: IconSparkles, label: 'Inspiring' },
-  { id: 'resonates' as ReactionType, icon: IconHeart, label: 'Resonates' },
-  { id: 'metoo' as ReactionType, icon: IconBulb, label: 'Me too!' }
+  { id: "inspiring" as ReactionType, icon: IconSparkles, label: "Inspiring" },
+  { id: "resonates" as ReactionType, icon: IconHeart, label: "Resonates" },
+  { id: "metoo" as ReactionType, icon: IconBulb, label: "Me too!" },
 ] as const;
 
 interface ListenerReactionsProps {
   speakerId: string;
   cardId: string;
   roomId: string;
+  userId: string;
 }
 
-export function ListenerReactions({ speakerId, cardId, roomId }: ListenerReactionsProps) {
-  const { user } = useAuth();
+export function ListenerReactions({
+  speakerId,
+  cardId,
+  roomId,
+  userId,
+}: ListenerReactionsProps) {
   const [isPrivate, setIsPrivate] = useState(true);
 
-  if (!user || !roomId) return null;
-
-  const { toggleReaction, toggleRipple, hasReaction, isRippled, reactions } = useReactions({
-    roomId,
-    speakerId,
-    listenerId: user.id,
-    cardId
-  });
+  const { toggleReaction, toggleRipple, hasReaction, isRippled, reactions } =
+    useReactions({
+      roomId,
+      speakerId,
+      listenerId: userId,
+      cardId,
+    });
 
   // ✅ Store temporary "button disabled" state
-  const [disabledButtons, setDisabledButtons] = useState<Record<ReactionType, boolean>>({});
+  const [disabledButtons, setDisabledButtons] = useState<
+    Record<ReactionType, boolean>
+  >({});
   const [rippleDisabled, setRippleDisabled] = useState(false);
 
   // ✅ Use `useMemo` to prevent unnecessary re-renders
   const activeReactions = useMemo(
     () =>
       Object.fromEntries(
-        REACTIONS.map(({ id }) => [id, hasReaction(id)])
+        REACTIONS.map(({ id }) => [id, hasReaction(id)]),
       ) as Record<ReactionType, boolean>,
-    [reactions]
+    [hasReaction],
   );
 
-  const rippled = useMemo(() => isRippled(), [reactions]);
+  const rippled = useMemo(() => isRippled(), [isRippled]);
 
   const handleReactionClick = async (id: ReactionType) => {
     await toggleReaction(id, isPrivate);
-    
+
     // Disable button to prevent spam clicking
     setDisabledButtons((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
@@ -72,7 +84,7 @@ export function ListenerReactions({ speakerId, cardId, roomId }: ListenerReactio
       {REACTIONS.map(({ id, icon: Icon, label }) => (
         <Tooltip key={id} label={label}>
           <ActionIcon
-            variant={activeReactions[id] ? 'filled' : 'subtle'}
+            variant={activeReactions[id] ? "filled" : "subtle"}
             color="blue"
             onClick={() => handleReactionClick(id)}
             radius="xl"
@@ -87,7 +99,7 @@ export function ListenerReactions({ speakerId, cardId, roomId }: ListenerReactio
 
       <Tooltip label="Save for later (Ripple)">
         <ActionIcon
-          variant={rippled ? 'filled' : 'subtle'}
+          variant={rippled ? "filled" : "subtle"}
           color="violet"
           onClick={handleRippleClick}
           radius="xl"
@@ -109,13 +121,11 @@ export function ListenerReactions({ speakerId, cardId, roomId }: ListenerReactio
           label={
             <Group gap="md">
               <PrivacyIcon size={14} />
-              {isPrivate ? 'Private' : 'Public'}
+              {isPrivate ? "Private" : "Public"}
             </Group>
           }
         />
-      </Group>      
+      </Group>
     </Group>
-
-    
   );
 }

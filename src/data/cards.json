@@ -1,221 +1,220 @@
 {
-    "cards": [
-      {
-        "id": "1",
-        "content": "If I could have dinner with anyone in the world, it would be...",
-        "category": "light & playful",
-        "depth": 1
-      },
-      {
-        "id": "2",
-        "content": "I wouldn’t mind being famous if it meant...",
-        "category": "self & growth",
-        "depth": 1
-      },
-      {
-        "id": "3",
-        "content": "Before I make a phone call, I sometimes rehearse because...",
-        "category": "self & growth",
-        "depth": 1
-      },
-      {
-        "id": "4",
-        "content": "A perfect day for me always includes...",
-        "category": "light & playful",
-        "depth": 1
-      },
-      {
-        "id": "5",
-        "content": "The last time I sang to myself... The last time I sang to someone else...",
-        "category": "light & playful",
-        "depth": 1
-      },
-      {
-        "id": "6",
-        "content": "If I could keep either my 30-year-old mind or body until 90, I’d choose...",
-        "category": "life & legacy",
-        "depth": 1
-      },
-      {
-        "id": "7",
-        "content": "I have a quiet hunch that I'll die...",
-        "category": "life & legacy",
-        "depth": 1
-      },
-      {
-        "id": "8",
-        "content": "One thing my partner and I have in common is...",
-        "category": "love & relationships",
-        "depth": 1
-      },
-      {
-        "id": "9",
-        "content": "The thing I’m most grateful for in life is...",
-        "category": "self & growth",
-        "depth": 1
-      },
-      {
-        "id": "10",
-        "content": "If I could rewrite one part of my childhood, I’d...",
-        "category": "vulnerability & truths",
-        "depth": 1
-      },
-      {
-        "id": "11",
-        "content": "If I had four minutes to tell my life story, I’d start with...",
-        "category": "life & legacy",
-        "depth": 1
-      },
-      {
-        "id": "12",
-        "content": "If I woke up tomorrow with a new ability, I’d want it to be...",
-        "category": "self & growth",
-        "depth": 1
-      },
-      {
-        "id": "13",
-        "content": "If a crystal ball could reveal one truth about my life, I’d ask...",
-        "category": "life & legacy",
-        "depth": 2
-      },
-      {
-        "id": "14",
-        "content": "I’ve always dreamed of ____, but I haven’t done it yet because...",
-        "category": "self & growth",
-        "depth": 2
-      },
-      {
-        "id": "15",
-        "content": "My greatest accomplishment so far is...",
-        "category": "self & growth",
-        "depth": 2
-      },
-      {
-        "id": "16",
-        "content": "The thing I value most in a friendship is...",
-        "category": "love & relationships",
-        "depth": 2
-      },
-      {
-        "id": "17",
-        "content": "A memory I hold close to my heart is...",
-        "category": "life & legacy",
-        "depth": 2
-      },
-      {
-        "id": "18",
-        "content": "The memory I try not to think about too often is...",
-        "category": "vulnerability & truths",
-        "depth": 2
-      },
-      {
-        "id": "19",
-        "content": "If I knew I’d die in a year, I’d start...",
-        "category": "life & legacy",
-        "depth": 2
-      },
-      {
-        "id": "20",
-        "content": "Friendship, to me, means...",
-        "category": "love & relationships",
-        "depth": 2
-      },
-      {
-        "id": "21",
-        "content": "Love and affection show up in my life when...",
-        "category": "love & relationships",
-        "depth": 2
-      },
-      {
-        "id": "22",
-        "content": "Something I truly admire about you is...",
-        "category": "love & relationships",
-        "depth": 2
-      },
-      {
-        "id": "23",
-        "content": "Looking back, my family felt...",
-        "category": "vulnerability & truths",
-        "depth": 2
-      },
-      {
-        "id": "24",
-        "content": "My relationship with my mother has always been...",
-        "category": "vulnerability & truths",
-        "depth": 2
-      },
-      {
-        "id": "25",
-        "content": "Right now, we are both...",
-        "category": "love & relationships",
-        "depth": 3
-      },
-      {
-        "id": "26",
-        "content": "I wish I had someone I could share ____ with.",
-        "category": "vulnerability & truths",
-        "depth": 3
-      },
-      {
-        "id": "27",
-        "content": "If we were going to be close, you should know that...",
-        "category": "vulnerability & truths",
-        "depth": 3
-      },
-      {
-        "id": "28",
-        "content": "Something I like about you, but haven’t said yet, is...",
-        "category": "love & relationships",
-        "depth": 3
-      },
-      {
-        "id": "29",
-        "content": "I still cringe when I think about the time I...",
-        "category": "light & playful",
-        "depth": 3
-      },
-      {
-        "id": "30",
-        "content": "The last time I cried in front of someone was... The last time I cried alone was...",
-        "category": "vulnerability & truths",
-        "depth": 3
-      },
-      {
-        "id": "31",
-        "content": "Already, I can tell that you...",
-        "category": "love & relationships",
-        "depth": 3
-      },
-      {
-        "id": "32",
-        "content": "One thing that will never be funny to me is...",
-        "category": "vulnerability & truths",
-        "depth": 3
-      },
-      {
-        "id": "33",
-        "content": "If I died tonight, I’d regret never telling ____ that...",
-        "category": "life & legacy",
-        "depth": 3
-      },
-      {
-        "id": "34",
-        "content": "If my house was on fire and I could grab one thing, it’d be...",
-        "category": "life & legacy",
-        "depth": 3
-      },
-      {
-        "id": "35",
-        "content": "Losing ____ in my family would shake me the most because...",
-        "category": "love & relationships",
-        "depth": 3
-      },
-      {
-        "id": "36",
-        "content": "Here’s something I’m struggling with—what would you do?",
-        "category": "vulnerability & truths",
-        "depth": 3
-      }
-    ]
-  }
-  
+  "cards": [
+    {
+      "id": "1",
+      "content": "If I could have dinner with anyone in the world, it would be...",
+      "category": "light & playful",
+      "depth": 1
+    },
+    {
+      "id": "2",
+      "content": "I wouldn’t mind being famous if it meant...",
+      "category": "self & growth",
+      "depth": 1
+    },
+    {
+      "id": "3",
+      "content": "Before I make a phone call, I sometimes rehearse because...",
+      "category": "self & growth",
+      "depth": 1
+    },
+    {
+      "id": "4",
+      "content": "A perfect day for me always includes...",
+      "category": "light & playful",
+      "depth": 1
+    },
+    {
+      "id": "5",
+      "content": "The last time I sang to myself... The last time I sang to someone else...",
+      "category": "light & playful",
+      "depth": 1
+    },
+    {
+      "id": "6",
+      "content": "If I could keep either my 30-year-old mind or body until 90, I’d choose...",
+      "category": "life & legacy",
+      "depth": 1
+    },
+    {
+      "id": "7",
+      "content": "I have a quiet hunch that I'll die...",
+      "category": "life & legacy",
+      "depth": 1
+    },
+    {
+      "id": "8",
+      "content": "One thing my partner and I have in common is...",
+      "category": "love & relationships",
+      "depth": 1
+    },
+    {
+      "id": "9",
+      "content": "The thing I’m most grateful for in life is...",
+      "category": "self & growth",
+      "depth": 1
+    },
+    {
+      "id": "10",
+      "content": "If I could rewrite one part of my childhood, I’d...",
+      "category": "vulnerability & truths",
+      "depth": 1
+    },
+    {
+      "id": "11",
+      "content": "If I had four minutes to tell my life story, I’d start with...",
+      "category": "life & legacy",
+      "depth": 1
+    },
+    {
+      "id": "12",
+      "content": "If I woke up tomorrow with a new ability, I’d want it to be...",
+      "category": "self & growth",
+      "depth": 1
+    },
+    {
+      "id": "13",
+      "content": "If a crystal ball could reveal one truth about my life, I’d ask...",
+      "category": "life & legacy",
+      "depth": 2
+    },
+    {
+      "id": "14",
+      "content": "I’ve always dreamed of ____, but I haven’t done it yet because...",
+      "category": "self & growth",
+      "depth": 2
+    },
+    {
+      "id": "15",
+      "content": "My greatest accomplishment so far is...",
+      "category": "self & growth",
+      "depth": 2
+    },
+    {
+      "id": "16",
+      "content": "The thing I value most in a friendship is...",
+      "category": "love & relationships",
+      "depth": 2
+    },
+    {
+      "id": "17",
+      "content": "A memory I hold close to my heart is...",
+      "category": "life & legacy",
+      "depth": 2
+    },
+    {
+      "id": "18",
+      "content": "The memory I try not to think about too often is...",
+      "category": "vulnerability & truths",
+      "depth": 2
+    },
+    {
+      "id": "19",
+      "content": "If I knew I’d die in a year, I’d start...",
+      "category": "life & legacy",
+      "depth": 2
+    },
+    {
+      "id": "20",
+      "content": "Friendship, to me, means...",
+      "category": "love & relationships",
+      "depth": 2
+    },
+    {
+      "id": "21",
+      "content": "Love and affection show up in my life when...",
+      "category": "love & relationships",
+      "depth": 2
+    },
+    {
+      "id": "22",
+      "content": "Something I truly admire about you is...",
+      "category": "love & relationships",
+      "depth": 2
+    },
+    {
+      "id": "23",
+      "content": "Looking back, my family felt...",
+      "category": "vulnerability & truths",
+      "depth": 2
+    },
+    {
+      "id": "24",
+      "content": "My relationship with my mother has always been...",
+      "category": "vulnerability & truths",
+      "depth": 2
+    },
+    {
+      "id": "25",
+      "content": "Right now, we are both...",
+      "category": "love & relationships",
+      "depth": 3
+    },
+    {
+      "id": "26",
+      "content": "I wish I had someone I could share ____ with.",
+      "category": "vulnerability & truths",
+      "depth": 3
+    },
+    {
+      "id": "27",
+      "content": "If we were going to be close, you should know that...",
+      "category": "vulnerability & truths",
+      "depth": 3
+    },
+    {
+      "id": "28",
+      "content": "Something I like about you, but haven’t said yet, is...",
+      "category": "love & relationships",
+      "depth": 3
+    },
+    {
+      "id": "29",
+      "content": "I still cringe when I think about the time I...",
+      "category": "light & playful",
+      "depth": 3
+    },
+    {
+      "id": "30",
+      "content": "The last time I cried in front of someone was... The last time I cried alone was...",
+      "category": "vulnerability & truths",
+      "depth": 3
+    },
+    {
+      "id": "31",
+      "content": "Already, I can tell that you...",
+      "category": "love & relationships",
+      "depth": 3
+    },
+    {
+      "id": "32",
+      "content": "One thing that will never be funny to me is...",
+      "category": "vulnerability & truths",
+      "depth": 3
+    },
+    {
+      "id": "33",
+      "content": "If I died tonight, I’d regret never telling ____ that...",
+      "category": "life & legacy",
+      "depth": 3
+    },
+    {
+      "id": "34",
+      "content": "If my house was on fire and I could grab one thing, it’d be...",
+      "category": "life & legacy",
+      "depth": 3
+    },
+    {
+      "id": "35",
+      "content": "Losing ____ in my family would shake me the most because...",
+      "category": "love & relationships",
+      "depth": 3
+    },
+    {
+      "id": "36",
+      "content": "Here’s something I’m struggling with—what would you do?",
+      "category": "vulnerability & truths",
+      "depth": 3
+    }
+  ]
+}

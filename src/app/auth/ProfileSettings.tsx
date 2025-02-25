@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Card, TextInput, Button, Stack, Group, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { useProfile } from '@/hooks/auth/useProfile';
-import { useAuth } from '@/context/AuthProvider';
+import { useState, useEffect } from "react";
+import { Card, TextInput, Button, Stack, Group, Text } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useProfile } from "@/hooks/auth/useProfile";
+import { useAuth } from "@/context/AuthProvider";
 
 export function ProfileSettings() {
   const { user } = useAuth();
   const { profile, updateProfile, loading } = useProfile();
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     if (profile?.username) {
@@ -19,15 +19,15 @@ export function ProfileSettings() {
     try {
       await updateProfile({ username });
       notifications.show({
-        title: 'Success',
-        message: 'Profile updated successfully',
-        color: 'green'
+        title: "Success",
+        message: "Profile updated successfully",
+        color: "green",
       });
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: error.message,
-        color: 'red'
+        color: "red",
       });
     }
   };
@@ -39,13 +39,11 @@ export function ProfileSettings() {
   return (
     <Card shadow="sm" p="lg">
       <Stack>
-        <Text size="xl" fw={700}>Profile Settings</Text>
-        
-        <TextInput
-          label="Email"
-          value={user?.email || ''}
-          disabled
-        />
+        <Text size="xl" fw={700}>
+          Profile Settings
+        </Text>
+
+        <TextInput label="Email" value={user?.email || ""} disabled />
 
         <TextInput
           label="Username"
@@ -55,9 +53,7 @@ export function ProfileSettings() {
         />
 
         <Group justify="flex-end">
-          <Button onClick={handleSubmit}>
-            Save Changes
-          </Button>
+          <Button onClick={handleSubmit}>Save Changes</Button>
         </Group>
       </Stack>
     </Card>

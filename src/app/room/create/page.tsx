@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Container } from '@mantine/core';
-import { CreateRoom } from '@/components/room/CreateRoom';
+import { Container } from "@mantine/core";
+import { CreateRoom } from "@/components/room/CreateRoom";
 
 export default function CreateRoomPage() {
   return (

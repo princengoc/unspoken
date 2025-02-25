@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthProvider';
-import { supabase } from '@/services/supabase/client';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthProvider";
+import { supabase } from "@/services/supabase/client";
 
 interface Profile {
   id: string;
@@ -25,9 +25,9 @@ export function useProfile() {
     const fetchProfile = async () => {
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
           .single();
 
         if (error) throw error;
@@ -47,13 +47,13 @@ export function useProfile() {
 
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updates)
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (error) throw error;
 
-      setProfile(prev => prev ? { ...prev, ...updates } : null);
+      setProfile((prev) => (prev ? { ...prev, ...updates } : null));
     } catch (err) {
       throw err;
     }

@@ -1,7 +1,13 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useAuth } from '@/context/AuthProvider';
-import { roomMembersService } from '@/services/supabase/roomMembers';
-import type { Player } from '@/core/game/types';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { useAuth } from "@/context/AuthProvider";
+import { roomMembersService } from "@/services/supabase/roomMembers";
+import type { Player } from "@/core/game/types";
 
 // Define context type
 interface RoomMembersContextType {
@@ -19,10 +25,13 @@ interface RoomMembersProviderProps {
   children: ReactNode;
 }
 
-export function RoomMembersProvider({ roomId, children }: RoomMembersProviderProps) {
+export function RoomMembersProvider({
+  roomId,
+  children,
+}: RoomMembersProviderProps) {
   const { user } = useAuth();
   const [members, setMembers] = useState<Player[]>([]);
-  
+
   // Set up real-time sync
   useEffect(() => {
     // Initial fetch
@@ -41,7 +50,7 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
       roomId,
       (updatedMembers) => {
         setMembers(updatedMembers);
-      }
+      },
     );
 
     // Cleanup
@@ -53,26 +62,26 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
   }, [roomId]);
 
   // Keep track of current member
-  const currentMember = members.find(m => m.id === user?.id) || null;
+  const currentMember = members.find((m) => m.id === user?.id) || null;
 
   // Member state update actions
   const updateMember = async (memberId: string, updates: Partial<Player>) => {
     try {
       // optimistic update
-      setMembers(prev => 
-        prev.map(m => m.id === memberId ? { ...m, updates } : m)
+      setMembers((prev) =>
+        prev.map((m) => (m.id === memberId ? { ...m, updates } : m)),
       );
       await roomMembersService.updatePlayerState(roomId, memberId, updates);
     } catch (error) {
-      console.error('Failed to update member:', error);
+      console.error("Failed to update member:", error);
       throw error;
     }
   };
-  
+
   const value = {
     // State
     members,
-    currentMember,    
+    currentMember,
     // Actions
     updateMember,
   };
@@ -88,7 +97,7 @@ export function RoomMembersProvider({ roomId, children }: RoomMembersProviderPro
 export function useRoomMembers() {
   const context = useContext(RoomMembersContext);
   if (!context) {
-    throw new Error('useRoomMembers must be used within RoomMembersProvider');
+    throw new Error("useRoomMembers must be used within RoomMembersProvider");
   }
   return context;
 }

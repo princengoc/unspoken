@@ -1,12 +1,18 @@
-import { useEffect, useState } from 'react';
-import { Popover, Group, Avatar, Indicator, ActionIcon, Tooltip } from '@mantine/core';
-import { IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
-import { roomMembersService } from '@/services/supabase/roomMembers';
-import { useAuth } from '@/context/AuthProvider';
-import { useRoomAPI } from './useRoomAPI';
-import CopyCodeButton from './CopyCodeButton';
-
+import { useEffect, useState } from "react";
+import {
+  Popover,
+  Group,
+  Avatar,
+  Indicator,
+  ActionIcon,
+  Tooltip,
+} from "@mantine/core";
+import { IconUserPlus, IconCheck, IconX } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+import { roomMembersService } from "@/services/supabase/roomMembers";
+import { useAuth } from "@/context/AuthProvider";
+import { useRoomAPI } from "./useRoomAPI";
+import CopyCodeButton from "./CopyCodeButton";
 
 interface JoinRequestsProps {
   roomId: string;
@@ -17,24 +23,24 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [opened, setOpened] = useState(false);
-  const { findPasscodeByRoom} = useRoomAPI();
+  const { findPasscodeByRoom } = useRoomAPI();
 
   const [roomPasscode, setRoomPasscode] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true; // Prevent state updates if unmounted
-  
+
     const fetchPasscode = async () => {
       const passcode = await findPasscodeByRoom(roomId);
       if (isMounted) {
         setRoomPasscode(passcode);
       }
     };
-  
+
     if (roomId) {
       fetchPasscode();
     }
-  
+
     return () => {
       isMounted = false; // Cleanup to prevent memory leaks
     };
@@ -49,7 +55,7 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
         const data = await roomMembersService.getJoinRequestsForRoom(roomId);
         setRequests(data);
       } catch (error) {
-        console.error('Failed to fetch join requests:', error);
+        console.error("Failed to fetch join requests:", error);
       }
     };
     fetchRequests();
@@ -57,7 +63,7 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
     // Subscribe to changes
     const subscription = roomMembersService.subscribeToJoinRequests(
       roomId,
-      (updatedRequests) => setRequests(updatedRequests)
+      (updatedRequests) => setRequests(updatedRequests),
     );
 
     return () => {
@@ -65,23 +71,26 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
     };
   }, [roomId]);
 
-  const handleRequest = async (requestId: string, status: 'approved' | 'rejected') => {
+  const handleRequest = async (
+    requestId: string,
+    status: "approved" | "rejected",
+  ) => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      await roomMembersService.handleJoinRequest(requestId, status, user.id);      
+      await roomMembersService.handleJoinRequest(requestId, status, user.id);
       notifications.show({
-        title: 'Success',
+        title: "Success",
         message: `Request to join room from ${user.id} is ${status}`,
-        color: status === 'approved' ? 'green' : 'red'
+        color: status === "approved" ? "green" : "red",
       });
     } catch (error) {
-      console.error('Failed to handle request:', error);
+      console.error("Failed to handle request:", error);
       notifications.show({
-        title: 'Error',
-        message: 'Failed to handle request',
-        color: 'red'
+        title: "Error",
+        message: "Failed to handle request",
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -97,13 +106,26 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
     >
       <Popover.Target>
         {requests.length > 0 ? (
-          <Indicator label={String(requests.length)} inline size={16} color="red">
-            <ActionIcon variant="subtle" size="lg" onClick={() => setOpened((o) => !o)}>
+          <Indicator
+            label={String(requests.length)}
+            inline
+            size={16}
+            color="red"
+          >
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={() => setOpened((o) => !o)}
+            >
               <IconUserPlus size={20} />
             </ActionIcon>
           </Indicator>
         ) : (
-          <ActionIcon variant="subtle" size="lg" onClick={() => setOpened((o) => !o)}>
+          <ActionIcon
+            variant="subtle"
+            size="lg"
+            onClick={() => setOpened((o) => !o)}
+          >
             <IconUserPlus size={20} />
           </ActionIcon>
         )}
@@ -118,16 +140,14 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
                   {request.user_id.charAt(0).toUpperCase()}
                 </Avatar>
               </Tooltip>
-              <Group gap='sm'>
+              <Group gap="sm">
                 <Tooltip label="Decline" position="top" withArrow>
                   <ActionIcon
                     color="red"
-                    onClick={() => 
-                      {
-                        handleRequest(request.id, 'rejected'); 
-                        setOpened(false);
-                      }
-                    }
+                    onClick={() => {
+                      handleRequest(request.id, "rejected");
+                      setOpened(false);
+                    }}
                     disabled={loading}
                   >
                     <IconX size={16} />
@@ -137,10 +157,9 @@ export function JoinRequests({ roomId }: JoinRequestsProps) {
                   <ActionIcon
                     color="green"
                     onClick={() => {
-                      handleRequest(request.id, 'approved');
+                      handleRequest(request.id, "approved");
                       setOpened(false);
-                      }
-                    }
+                    }}
                     disabled={loading}
                   >
                     <IconCheck size={16} />

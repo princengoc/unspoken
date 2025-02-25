@@ -1,15 +1,15 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-const protectedRoutes = ['/profile', '/room/create', '/room/join', '/room/']
+const protectedRoutes = ["/profile", "/room/create", "/room/join", "/room/"];
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll().map((cookie) => ({
             name: cookie.name,
             value: cookie.value,
-          }))
+          }));
         },
         setAll(cookies) {
           cookies.forEach(({ name, value, ...options }) => {
@@ -28,19 +28,26 @@ export async function middleware(request: NextRequest) {
               name,
               value,
               ...options,
-            })
-          })
+            });
+          });
         },
       },
-    }
-  )
+    },
+  );
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route)) && !session) {
-    const redirectUrl = new URL('/auth', request.url)
-    return NextResponse.redirect(redirectUrl)
+  if (
+    protectedRoutes.some((route) =>
+      request.nextUrl.pathname.startsWith(route),
+    ) &&
+    !session
+  ) {
+    const redirectUrl = new URL("/auth", request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  return response
+  return response;
 }

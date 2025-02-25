@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useAuth } from '@/context/AuthProvider';
-import { roomsService } from '@/services/supabase/rooms';
-import type { Room, RoomSettings } from '@/core/game/types';
+import { useState } from "react";
+import { useAuth } from "@/context/AuthProvider";
+import { roomsService } from "@/services/supabase/rooms";
+import type { Room, RoomSettings } from "@/core/game/types";
 
 interface UseRoomReturn {
   loading: boolean;
@@ -18,15 +18,21 @@ export function useRoomAPI(): UseRoomReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const createRoom = async (name: string, settings?: Partial<RoomSettings>): Promise<Room> => {
-    if (!user) throw new Error('Must be logged in to create a room');
+  const createRoom = async (
+    name: string,
+    settings?: Partial<RoomSettings>,
+  ): Promise<Room> => {
+    if (!user) throw new Error("Must be logged in to create a room");
 
     try {
       setLoading(true);
       const newRoom = await roomsService.create(name, user.id, settings);
       return newRoom;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(`Failed to create room ${JSON.stringify(err)}`);
+      const error =
+        err instanceof Error
+          ? err
+          : new Error(`Failed to create room ${JSON.stringify(err)}`);
       setError(error);
       throw error;
     } finally {
@@ -35,19 +41,20 @@ export function useRoomAPI(): UseRoomReturn {
   };
 
   const findPasscodeByRoom = async (roomId: string): Promise<string> => {
-    const passcode = await roomsService.findPasscodeByRoom(roomId); 
-    if (!passcode) throw new Error(`Passcode not found for room with ID ${roomId}`);
-    return passcode
+    const passcode = await roomsService.findPasscodeByRoom(roomId);
+    if (!passcode)
+      throw new Error(`Passcode not found for room with ID ${roomId}`);
+    return passcode;
   };
 
   const findRoomByPasscode = async (passcode: string): Promise<Room> => {
     const room = await roomsService.findRoomByPasscode(passcode);
-    if (!room) throw new Error('Room not found');
+    if (!room) throw new Error("Room not found");
     return room;
   };
 
   const joinRoom = async (roomId: string): Promise<Room> => {
-    if (!user) throw new Error('Must be logged in to join a room');
+    if (!user) throw new Error("Must be logged in to join a room");
 
     try {
       setLoading(true);
