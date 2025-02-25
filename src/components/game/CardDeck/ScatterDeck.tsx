@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Paper, Stack, Group, Text, Box } from '@mantine/core';
+import { Paper, Stack, Text, Box } from '@mantine/core';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaQuery } from '@mantine/hooks';
 import type { Card as CardType } from '@/core/game/types';

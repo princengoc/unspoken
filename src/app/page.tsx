@@ -17,7 +17,7 @@ export default function Home() {
             Stories waiting to be told
           </Text>
           <Text size="md" c="gray.7" maw={450}>
-            A card game designed to spark meaningful conversations. Because the best talks don't just happen, they start with the right question.
+            A card game designed to spark meaningful conversations. Because the best talks don&apos;t just happen, they start with the right question.
           </Text>
         </Stack>
         <Group justify="center" gap="md">

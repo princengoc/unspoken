@@ -1,5 +1,5 @@
 import { Card as MantineCard, Group, Text, Button, Avatar, Tooltip, Badge, Stack } from '@mantine/core';
-import { IconShare2, IconCheck } from '@tabler/icons-react';
+import { IconShare2 } from '@tabler/icons-react';
 import type { Card as CardType } from '@/core/game/types';
 
 interface GameCardProps {

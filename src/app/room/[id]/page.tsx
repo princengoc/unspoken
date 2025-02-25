@@ -8,7 +8,6 @@ import {
   Box,
   Text,
   Loader,
-  Paper,
 } from '@mantine/core';
 import { FullRoomProvider } from '@/context/FullRoomProvider';
 import { RoomProvider, useRoom } from '@/context/RoomProvider';
@@ -29,16 +28,8 @@ function RoomContent({ roomId }: { roomId: string }) {
   
   // Handle leaving room
   const handleLeaveRoom = async () => {
-    try {
-      await leaveRoom();
-      router.push('/');
-    } catch (err) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to leave room',
-        color: 'red',
-      });
-    }
+    await leaveRoom();
+    router.push('/');
   };
 
   // Memoized callback to prevent unnecessary renders

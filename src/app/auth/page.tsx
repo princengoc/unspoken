@@ -51,7 +51,7 @@ export default function AuthPage() {
         await loginWithEmail(email, password);
         notifications.show({ title: "Logged in", message: "Welcome back!", color: "blue" });
       }
-    } catch (error: any) {
+    } catch (error) {
       notifications.show({ title: "Error", message: error.message, color: "red" });
     }
   };
