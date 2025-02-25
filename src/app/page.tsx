@@ -5,7 +5,7 @@ import { Container, Button, Stack, Title, Text, Group } from "@mantine/core";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   return (
@@ -37,7 +37,11 @@ export default function Home() {
               </Button>
             </>
           ) : (
-            <Button size="lg" onClick={() => router.push("/auth")}>
+            <Button
+              size="lg"
+              onClick={() => router.push("/auth")}
+              loading={loading}
+            >
               Login
             </Button>
           )}
