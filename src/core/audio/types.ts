@@ -1,18 +1,18 @@
 export interface AudioMessage {
     id: string;
-    roomId: string;
-    senderId: string;
-    filePath: string;
-    isPublic: boolean;
-    createdAt: string;
-    expiresAt: string;
+    room_id: string;
+    sender_id: string;
+    file_path: string;
+    is_public: boolean;
+    created_at: string;
+    expires_at: string;
   }
   
   export interface AudioMessageAccess {
     id: string;
-    messageId: string;
-    userId: string;
-    accessedAt: string;
+    message_id: string;
+    user_id: string;
+    accessed_at: string;
   }
   
   export interface RecordingState {
