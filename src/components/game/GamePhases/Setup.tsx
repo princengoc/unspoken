@@ -9,8 +9,8 @@ import { SlideIn } from "@/components/animations/Motion";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { ExchangeTab } from "../ExchangeRequests/ExchangeTab";
 import { SetupViewType } from "@/core/game/types";
-import { MiniCard } from "../CardDeck/MiniCard";
-import { MiniDeck } from "../CardDeck/MiniDeck";
+import { CardDeck } from "../CardDeck";
+import { Card as GameCard } from "../Card";
 
 type SetupProps = {
   roomId: string | undefined;
@@ -77,17 +77,12 @@ export function Setup({ initialView = "cards", onViewChange }: SetupProps) {
       case "choosing":
         // Show CardDeck to choose from
         return (
-          <Stack gap="md" align="center">
-            <Text size="lg" fw={500} ta="center">
-              Choose the card that inspire you to share a story
-            </Text>
-            <MiniDeck
-              cards={
-                getCardsByIds(cardState.playerHands[currentMember!.id]) || []
-              }
-              onSelect={handleCardSelection}
-            />
-          </Stack>
+          <CardDeck
+            cards={
+              getCardsByIds(cardState.playerHands[currentMember!.id]) || []
+            }
+            onSelect={handleCardSelection}
+          />
         );
 
       case "browsing":
@@ -99,7 +94,7 @@ export function Setup({ initialView = "cards", onViewChange }: SetupProps) {
                 <Text size="md" fw={500}>
                   Your Selected Card:
                 </Text>
-                <MiniCard card={selectedCard} size="lg" />
+                <GameCard card={selectedCard} />
                 <Text size="sm" c="dimmed">
                   This is the card you'll share during your turn
                 </Text>

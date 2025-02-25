@@ -7,9 +7,13 @@ import {
   Tooltip,
   Badge,
   Stack,
+  Box,
+  rem,
 } from "@mantine/core";
 import { IconShare2 } from "@tabler/icons-react";
 import type { Card as CardType } from "@/core/game/types";
+import { PlayerAssignment } from "./statusBarUtils";
+import { PlayerAvatar } from "./PlayerAvatar";
 
 interface GameCardProps {
   card: CardType;
@@ -18,6 +22,8 @@ interface GameCardProps {
   showExchange?: boolean;
   selected?: boolean;
   showSender?: boolean;
+  playerAssignment?: PlayerAssignment;
+  playerName?: string;
   onSelect?: () => void;
   onExchange?: () => void;
 }
@@ -30,6 +36,8 @@ export function GameCard({
   showExchange = false,
   selected = false,
   showSender = false,
+  playerAssignment,
+  playerName,
   onSelect,
   onExchange,
 }: GameCardProps) {
@@ -78,6 +86,25 @@ export function GameCard({
         <Text size="lg" fw={500} ta="center" py="xl">
           {card.content}
         </Text>
+
+        {/* Player who used this card - top right corner */}
+        {playerAssignment && (
+          <Box
+            style={{
+              position: "absolute",
+              top: rem(8),
+              right: rem(8),
+              zIndex: 2,
+            }}
+          >
+            <PlayerAvatar
+              assignment={playerAssignment}
+              size="md"
+              showTooltip={true}
+              tooltipLabel={playerName + " is sharing" || "Speaker is sharing"}
+            />
+          </Box>
+        )}
 
         {/* Card Footer */}
         {showSender && (

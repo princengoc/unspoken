@@ -24,11 +24,11 @@
 
 ## FEEDBACK
 
-- [ ] **UI/UX Improvements**
+- [x] **UI/UX Improvements**
 
   - [x] Display list of rooms on main page, in addition to create room / join room.
   - [x] Allow reading three cards at once, remove tags
-  - [ ] Display the name of the player making a request.
+  - [x] Display the name of the player making a request.
 
 - [ ] **Gameplay Mechanics: Exchange System**
 
@@ -41,6 +41,8 @@
 
   - [ ] Limit encore mode to reuse existing cards only.
   - [ ] Start a new game with a fresh deck (no discard pile).
+
+- [ ] **Implement remote play: audio**
 
 - [ ] **Localization**
   - [ ] Translate the game into Vietnamese.

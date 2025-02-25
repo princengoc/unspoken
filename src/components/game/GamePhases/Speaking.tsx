@@ -10,7 +10,6 @@ import { useAuth } from "@/context/AuthProvider";
 import { getPlayerAssignments } from "../statusBarUtils";
 import { useRoom } from "@/context/RoomProvider";
 import { useDisclosure } from "@mantine/hooks";
-import { PlayerAvatar } from "../PlayerAvatar";
 
 type SpeakingProp = {
   roomId: string;
@@ -20,16 +19,9 @@ export function Speaking({ roomId }: SpeakingProp) {
   const { user } = useAuth();
   const { room } = useRoom();
   const { isActiveSpeaker, finishSpeaking } = useFullRoom();
-
+  const [isSpeaking, { toggle }] = useDisclosure(false);
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
-  const [isSpeaking, { toggle }] = useDisclosure(false);
-
-  if (!room?.active_player_id) return null;
-  const activeCard = getCardById(
-    cardState.selectedCards[room.active_player_id],
-  );
-  if (!activeCard) return null;
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 
@@ -40,6 +32,17 @@ export function Speaking({ roomId }: SpeakingProp) {
     toggle();
   };
 
+  if (!room?.active_player_id) return null;
+  const activeCard = getCardById(
+    cardState.selectedCards[room.active_player_id],
+  );
+  const activeSpeakerIcon = playerAssignments.get(room?.active_player_id);
+  const activeSpeakerName =
+    members.find((member) => member.id === room.active_player_id)?.username ||
+    "";
+  if (!activeCard) return null;
+  if (!activeSpeakerIcon) return null;
+
   return (
     <Stack gap="md">
       <Group justify="center">
@@ -48,7 +51,13 @@ export function Speaking({ roomId }: SpeakingProp) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Card card={activeCard} index={0} total={1} />
+          <Card
+            card={activeCard}
+            index={0}
+            total={1}
+            playerAssignment={activeSpeakerIcon}
+            playerName={activeSpeakerName}
+          />
         </motion.div>
       </Group>
 
@@ -69,14 +78,6 @@ export function Speaking({ roomId }: SpeakingProp) {
           </Button>
         ) : (
           <Stack>
-            <Group>
-              <PlayerAvatar
-                assignment={playerAssignments.get(room.active_player_id)!}
-                size="xs"
-                showTooltip={false}
-              />{" "}
-              <span>is sharing</span>
-            </Group>
             <ListenerReactions
               speakerId={room.active_player_id}
               cardId={activeCard.id}

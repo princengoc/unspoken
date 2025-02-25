@@ -19,9 +19,6 @@ import {
   IconCheck,
   IconHelp,
   IconExchange,
-  IconCirclesRelation,
-  IconIkosaedr,
-  IconCell,
 } from "@tabler/icons-react";
 import { JoinRequests } from "@/hooks/room/JoinRequests";
 import { SetupViewType, type GamePhase } from "@/core/game/types";
