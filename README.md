@@ -4,7 +4,54 @@
   - [x] do NOT allow multiple encore.
   - [ ] properly close the room.
 - [x] Improve explanation texts.
-- [ ] Vercel publish!
+- [x] Vercel publish!
+
+## Feedback
+
+- [ ] tag system confusing
+- [ ] back button -- don't know how to rejoin room
+- [ ] redo card choice (?)
+- [ ] help system not obvious
+- [ ] exchange system undiscovered by first player
+- [ ] encore with just a single card choosing is confusing
+- [ ] need auto-switch (?) between phase tab and exchange tab
+
+* **BUG**:
+
+- finish sharing doesn't transit for first speaker (RLS policy on rooms? Mobile device issues?)
+- encore on encore is allowed ???!!!
+- exchange bug: should NOT allow choosing of the same exchange card, otherwise only one person can choose it.
+
+## FEEDBACK
+
+- [ ] **UI/UX Improvements**
+
+  - [ ] Display list of rooms on main page, in addition to create room / join room.
+  - [ ] Allow reading three cards at once, remove tags
+  - [ ] Display the name of the player making a request.
+
+- [ ] **Gameplay Mechanics: Exchange System**
+
+  - [ ] Exchange reset on subsequent round
+  - [ ] Make the exchange tab available at all times.
+  - [ ] Force matched exchanges in two-player mode.
+  - [ ] Automatically transition to the exchange phase when both players agree.
+
+- [ ] **Gameplay Modes and Features**
+
+  - [ ] Limit encore mode to reuse existing cards only.
+  - [ ] Start a new game with a fresh deck (no discard pile).
+
+- [ ] **Localization**
+  - [ ] Translate the game into Vietnamese.
+
+Good things
+
+- 3 cards ok, mobile display ok
+
+Questions
+
+- Ripple ?
 
 # TODO
 

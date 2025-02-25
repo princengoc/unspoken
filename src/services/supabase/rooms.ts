@@ -1,5 +1,10 @@
 import { supabase } from "./client";
-import { type Room, type RoomSettings, GamePhase } from "@/core/game/types";
+import {
+  type Room,
+  type RoomSettings,
+  GamePhase,
+  RoomMetaDataAndState,
+} from "@/core/game/types";
 import { roomMembersService } from "./roomMembers";
 
 export const roomsService = {
@@ -117,6 +122,38 @@ export const roomsService = {
     if (error && error.code === "PGRST116") return null; // Room not found
     if (error) throw error;
     return data;
+  },
+
+  // Fetch user's active rooms
+  async fetchActiveRooms(playerId: string): Promise<RoomMetaDataAndState[]> {
+    // Get all rooms the user is a member of
+    const { data, error } = await supabase
+      .from("room_members")
+      .select(
+        `
+      rooms (id, name, created_at, is_active, passcode, created_by, updated_at, game_mode, phase, active_player_id)
+    `,
+      )
+      .eq("user_id", playerId);
+
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    // Since rooms is returned as an array, flatten and filter
+    const activeRooms = data
+      ?.map((member) => member.rooms as RoomMetaDataAndState[]) // Extract rooms arrays
+      .flat() // Flatten into a single array
+      .filter((room) => room.is_active === true) // filter for active rooms
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+
+    console.log(activeRooms);
+
+    return activeRooms;
   },
 
   /* Game specific phase changes */

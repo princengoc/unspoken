@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { roomsService } from "@/services/supabase/rooms";
-import type { Room, RoomSettings } from "@/core/game/types";
+import type {
+  Room,
+  RoomSettings,
+} from "@/core/game/types";
 
 interface UseRoomReturn {
   loading: boolean;
@@ -56,17 +59,10 @@ export function useRoomAPI(): UseRoomReturn {
   const joinRoom = async (roomId: string): Promise<Room> => {
     if (!user) throw new Error("Must be logged in to join a room");
 
-    try {
-      setLoading(true);
-      const joinedRoom = await roomsService.join(roomId, user.id);
-      return joinedRoom;
-    } catch (err) {
-      console.error(`Join room error: ${JSON.stringify(err)}`);
-      setError(err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const joinedRoom = await roomsService.join(roomId, user.id);
+    setLoading(false);
+    return joinedRoom;
   };
 
   return {
