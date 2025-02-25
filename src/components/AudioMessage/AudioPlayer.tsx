@@ -52,7 +52,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
         setLoading(true);
         setError(null);
         
-        const result = await getAudioUrl(message.id, message.file_path);
+        const result = await getAudioUrl(message.file_path);
         
         if (result && result.url) {
           setAudioUrl(result.url);

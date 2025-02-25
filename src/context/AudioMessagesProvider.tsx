@@ -12,7 +12,7 @@ interface AudioMessagesContextType {
   // Actions
   sendAudioMessage: (audioBlob: Blob, privacy: AudioPrivacy) => Promise<AudioMessage | null>;
   markAsListened: (messageId: string) => Promise<boolean>;
-  getAudioUrl: (messageId: string, filePath: string) => Promise<{ url: string; expiresIn: number } | null>;
+  getAudioUrl: (filePath: string) => Promise<{ url: string; expiresIn: number } | null>;
   refreshMessages: () => Promise<void>;
   setRecording: (isRecording: boolean) => void;
 }
@@ -34,22 +34,8 @@ export function AudioMessagesProvider({ roomId, children }: AudioMessagesProvide
     if (!user?.id || !roomId) return;
 
     setLoading(true);
-    
-    // Initial fetch of messages
-    const fetchMessages = async () => {
-      try {
-        const availableMessages = await audioMessagesService.getAvailableAudioMessages(roomId, user.id);
-        setMessages(availableMessages);
-      } catch (error) {
-        console.error('Error fetching audio messages:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchMessages();
-
-    // Subscribe to messages
+    // Subscribe to messages already has an initial fetch with call back
     const subscription = audioMessagesService.subscribeToAudioMessages(
       roomId,
       user.id,
@@ -80,6 +66,7 @@ export function AudioMessagesProvider({ roomId, children }: AudioMessagesProvide
     
     try {
       const success = await audioMessagesService.markMessageAsListened(messageId, user.id);
+      console.log(`Success after mark as listened clicked: ${success}`);
       if (success) {
         // Remove from local state immediately for a responsive UI
         setMessages(prev => prev.filter(m => m.id !== messageId));

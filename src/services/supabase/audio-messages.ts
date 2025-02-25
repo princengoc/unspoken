@@ -70,6 +70,8 @@ export const audioMessagesService = {
         console.error('Error fetching available audio messages:', error);
         return [];
       }
+
+      console.log(`Available audio messages: ${JSON.stringify(audioMessages as AudioMessage[])}`);
       
       return audioMessages as AudioMessage[];
   },
@@ -78,6 +80,7 @@ export const audioMessagesService = {
     filePath: string,
   ): Promise<{ url: string; expiresIn: number } | null> {
     try {
+      console.log(`filePath in getAudioMessageUrl: ${filePath}`);
       // Get a signed URL that expires in 10 minutes
       const expiresIn = 600;
       const { data: urlData, error: urlError } = await supabase.storage
