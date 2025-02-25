@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { roomsService } from "@/services/supabase/rooms";
-import type {
-  Room,
-  RoomSettings,
-} from "@/core/game/types";
+import type { Room, RoomSettings } from "@/core/game/types";
 
 interface UseRoomReturn {
   loading: boolean;

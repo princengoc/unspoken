@@ -79,11 +79,8 @@ export function SideNavbar({
       case "choosing":
         return (
           <>
-            Explore your cards one by one, letting each spark a feeling or
-            memory. Use tags <IconCirclesRelation size={14} />{" "}
-            <IconIkosaedr size={14} /> <IconCell size={14} /> to capture what
-            resonates. There is no right or wrong, only what feels true. When
-            ready, revisit them all and choose the one you feel drawn to share.
+            Choose a card that sparks a story you want to share. There is no
+            right or wrong, only what feels true.
           </>
         );
       case "browsing":

@@ -5,12 +5,12 @@ import { Stack, Text, Group, Button, Paper } from "@mantine/core";
 import { IconCheck, IconHourglass } from "@tabler/icons-react";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useFullRoom } from "@/context/FullRoomProvider";
-import { CardDeck } from "../CardDeck";
 import { SlideIn } from "@/components/animations/Motion";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { ExchangeTab } from "../ExchangeRequests/ExchangeTab";
 import { SetupViewType } from "@/core/game/types";
 import { MiniCard } from "../CardDeck/MiniCard";
+import { MiniDeck } from "../CardDeck/MiniDeck";
 
 type SetupProps = {
   roomId: string | undefined;
@@ -77,12 +77,17 @@ export function Setup({ initialView = "cards", onViewChange }: SetupProps) {
       case "choosing":
         // Show CardDeck to choose from
         return (
-          <CardDeck
-            cards={
-              getCardsByIds(cardState.playerHands[currentMember!.id]) || []
-            }
-            onSelect={handleCardSelection}
-          />
+          <Stack gap="md" align="center">
+            <Text size="lg" fw={500} ta="center">
+              Choose the card that inspire you to share a story
+            </Text>
+            <MiniDeck
+              cards={
+                getCardsByIds(cardState.playerHands[currentMember!.id]) || []
+              }
+              onSelect={handleCardSelection}
+            />
+          </Stack>
         );
 
       case "browsing":

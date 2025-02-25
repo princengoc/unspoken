@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Group, Button, Stack } from "@mantine/core";
-import { motion, AnimatePresence } from "framer-motion";
+import { Group, Stack, SimpleGrid, Text, Button } from "@mantine/core";
+import { motion } from "framer-motion";
 import type { Card as CardType } from "@/core/game/types";
 import { Card } from "../Card";
-import { MoodType, moods } from "./MiniCard";
-import { MiniDeck } from "./MiniDeck";
 
 interface CardDeckProps {
   cards: CardType[];
@@ -12,82 +10,84 @@ interface CardDeckProps {
 }
 
 export function CardDeck({ cards, onSelect }: CardDeckProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [assignedMoods, setAssignedMoods] = useState<Record<number, MoodType>>(
-    {},
-  );
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
-  const flipVariants = {
-    initial: { rotateY: -30, opacity: 0 },
-    animate: { rotateY: 0, opacity: 1, transition: { duration: 0.5 } },
-    exit: { rotateY: 40, opacity: 0, transition: { duration: 0.5 } },
+  // Animations for card selection
+  const cardVariants = {
+    unselected: { scale: 1, y: 0 },
+    selected: { scale: 1.05, y: -10, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" },
   };
 
-  const handleAssign = (mood: MoodType) => {
-    setAssignedMoods((prev) => ({ ...prev, [currentIndex]: mood }));
-    setCurrentIndex((prev) => prev + 1);
+  // Handle card selection
+  const handleSelectCard = (cardId: string) => {
+    setSelectedCardId(cardId);
+  };
+
+  // Handle confirming selection
+  const handleConfirmSelection = () => {
+    if (selectedCardId && onSelect) {
+      onSelect(selectedCardId);
+    }
   };
 
   return (
-    <Stack gap="xs" justify="center">
-      {/* Main area container */}
-      {currentIndex < cards.length ? (
-        <Group justify="center" mt="xs">
-          <AnimatePresence mode="wait">
+    <Stack gap="md" align="center">
+      <Text size="lg" fw={500} ta="center">
+        Choose the card that resonates with you the most
+      </Text>
+
+      {cards.length <= 3 ? (
+        // Display cards in a row for small number of cards
+        <Group align="flex-start" justify="center" gap="md">
+          {cards.map((card) => (
             <motion.div
-              key={currentIndex}
-              variants={flipVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              style={{ transformOrigin: "center" }}
+              key={card.id}
+              variants={cardVariants}
+              animate={selectedCardId === card.id ? "selected" : "unselected"}
+              transition={{ duration: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+              style={{ cursor: "pointer" }}
+              onClick={() => handleSelectCard(card.id)}
             >
               <Card
-                card={cards[currentIndex]}
-                index={currentIndex}
-                total={cards.length}
+                card={card}
+                selected={selectedCardId === card.id}
+                onSelect={() => handleSelectCard(card.id)}
               />
             </motion.div>
-          </AnimatePresence>
+          ))}
         </Group>
       ) : (
-        <MiniDeck
-          cards={cards}
-          assignedMoods={assignedMoods}
-          onSelect={onSelect}
-        />
+        // Use a grid for more cards
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+          {cards.map((card) => (
+            <motion.div
+              key={card.id}
+              variants={cardVariants}
+              animate={selectedCardId === card.id ? "selected" : "unselected"}
+              transition={{ duration: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+              style={{ cursor: "pointer" }}
+              onClick={() => handleSelectCard(card.id)}
+            >
+              <Card
+                card={card}
+                selected={selectedCardId === card.id}
+                onSelect={() => handleSelectCard(card.id)}
+              />
+            </motion.div>
+          ))}
+        </SimpleGrid>
       )}
 
-      {currentIndex < cards.length && (
-        <>
-          <Group justify="center" mt="xs" gap="sm">
-            {moods.map(({ type, icon: Icon, color }) => (
-              <Button
-                key={type}
-                onClick={() => handleAssign(type)}
-                variant="light"
-                size="lg"
-                p={8}
-                style={{
-                  color: color,
-                  backgroundColor: `${color}15`,
-                  "&:hover": {
-                    backgroundColor: `${color}25`,
-                  },
-                }}
-              >
-                <Icon size={24} />
-              </Button>
-            ))}
-          </Group>
-
-          <MiniDeck
-            cards={cards.slice(0, currentIndex)}
-            assignedMoods={assignedMoods}
-            onSelect={onSelect}
-          />
-        </>
-      )}
+      <Button
+        size="lg"
+        disabled={!selectedCardId}
+        onClick={handleConfirmSelection}
+        mt="md"
+      >
+        Confirm Selection
+      </Button>
     </Stack>
   );
 }

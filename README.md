@@ -26,8 +26,8 @@
 
 - [ ] **UI/UX Improvements**
 
-  - [ ] Display list of rooms on main page, in addition to create room / join room.
-  - [ ] Allow reading three cards at once, remove tags
+  - [x] Display list of rooms on main page, in addition to create room / join room.
+  - [x] Allow reading three cards at once, remove tags
   - [ ] Display the name of the player making a request.
 
 - [ ] **Gameplay Mechanics: Exchange System**
