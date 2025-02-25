@@ -23,7 +23,7 @@ export function Speaking({ roomId }: SpeakingProp) {
   const { isActiveSpeaker, finishSpeaking } = useFullRoom();
   const [isSpeaking, { toggle }] = useDisclosure(false);
   const { cardState, getCardById } = useCardsInGame();
-  const { members  } = useRoomMembers();
+  const { members } = useRoomMembers();
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 

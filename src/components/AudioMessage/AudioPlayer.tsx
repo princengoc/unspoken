@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   Text,
@@ -9,19 +9,19 @@ import {
   Progress,
   Stack,
   Badge,
-  Paper
-} from '@mantine/core';
+  Paper,
+} from "@mantine/core";
 import {
   IconPlayerPlay,
   IconPlayerPause,
   IconCheck,
   IconLock,
-  IconWorldUpload
-} from '@tabler/icons-react';
+  IconWorldUpload,
+} from "@tabler/icons-react";
 
-import { AudioMessage } from '@/core/audio/types';
-import { useAudioMessages } from '@/context/AudioMessagesProvider';
-import { useRoomMembers } from '@/context/RoomMembersProvider';
+import { AudioMessage } from "@/core/audio/types";
+import { useAudioMessages } from "@/context/AudioMessagesProvider";
+import { useRoomMembers } from "@/context/RoomMembersProvider";
 
 interface AudioPlayerProps {
   message: AudioMessage;
@@ -37,38 +37,38 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
-  
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Get sender username
-  const sender = members.find(m => m.id === message.sender_id);
-  const senderName = sender?.username || 'Unknown user';
-  
+  const sender = members.find((m) => m.id === message.sender_id);
+  const senderName = sender?.username || "Unknown user";
+
   // Load the audio URL
   useEffect(() => {
     const loadAudio = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const result = await getAudioUrl(message.file_path);
-        
+
         if (result && result.url) {
           setAudioUrl(result.url);
         } else {
-          setError('Failed to load audio message.');
+          setError("Failed to load audio message.");
         }
       } catch (err) {
-        console.error('Error loading audio message:', err);
-        setError('An error occurred while loading the audio message.');
+        console.error("Error loading audio message:", err);
+        setError("An error occurred while loading the audio message.");
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadAudio();
-    
+
     // Clean up on unmount
     return () => {
       if (progressInterval.current) {
@@ -76,118 +76,120 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       }
     };
   }, [message.id, message.file_path, getAudioUrl]);
-  
+
   // Handle audio element events
   useEffect(() => {
     if (!audioRef.current) return;
-    
+
     const audio = audioRef.current;
-    
+
     const handleLoadedMetadata = () => {
       setDuration(audio.duration);
     };
-    
+
     const handlePlay = () => {
       setIsPlaying(true);
-      
+
       // Start interval to update progress
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
       }
-      
+
       progressInterval.current = setInterval(() => {
         setCurrentTime(audio.currentTime);
         setProgress((audio.currentTime / audio.duration) * 100);
       }, 100);
     };
-    
+
     const handlePause = () => {
       setIsPlaying(false);
-      
+
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
       }
     };
-    
+
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
       setProgress(0);
-      
+
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
       }
     };
-    
+
     const handleError = (e: Event) => {
-      console.error('Audio playback error:', e);
-      setError('Error playing audio. Please try again.');
+      console.error("Audio playback error:", e);
+      setError("Error playing audio. Please try again.");
     };
-    
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
-    
+
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", handleError);
+
     return () => {
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('error', handleError);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("error", handleError);
     };
   }, [audioUrl]);
-  
+
   // Format time in MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
-  
+
   const handlePlayPause = () => {
     if (!audioRef.current || !audioUrl) return;
-    
+
     if (isPlaying) {
       audioRef.current.pause();
     } else {
       audioRef.current.play();
     }
   };
-  
+
   const handleMarkAsListened = async () => {
     await markAsListened(message.id);
   };
-  
+
   return (
     <Card shadow="sm" padding="md" radius="md" withBorder>
-      <audio 
-        ref={audioRef} 
-        src={audioUrl || undefined}
-        preload="metadata" 
-      />
-      
+      <audio ref={audioRef} src={audioUrl || undefined} preload="metadata" />
+
       <Stack gap="xs">
         <Group align="apart">
           <Text fw={500}>Audio Message</Text>
-          <Badge color={message.is_public ? 'green' : 'yellow'}>
-            {message.is_public ? 'Public' : 'Private'}
+          <Badge color={message.is_public ? "green" : "yellow"}>
+            {message.is_public ? "Public" : "Private"}
           </Badge>
         </Group>
-        
-        <Text size="xs" color="dimmed">From: {senderName}</Text>
-        
+
+        <Text size="xs" color="dimmed">
+          From: {senderName}
+        </Text>
+
         {loading ? (
           <Group align="center" my="md">
             <Loader size="sm" />
-            <Text size="sm" color="dimmed">Loading audio...</Text>
+            <Text size="sm" color="dimmed">
+              Loading audio...
+            </Text>
           </Group>
         ) : error ? (
           <Paper p="xs" withBorder color="red" radius="md">
-            <Text size="sm" color="red">{error}</Text>
+            <Text size="sm" color="red">
+              {error}
+            </Text>
           </Paper>
         ) : (
           <>
@@ -205,21 +207,21 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
                   <IconPlayerPlay size={16} />
                 )}
               </ActionIcon>
-              
-              <Text size="xs" style={{ fontFamily: 'monospace' }}>
+
+              <Text size="xs" style={{ fontFamily: "monospace" }}>
                 {formatTime(currentTime)} / {formatTime(duration)}
               </Text>
             </Group>
-            
-            <Progress 
-              value={progress} 
-              size="sm" 
-              radius="xl" 
+
+            <Progress
+              value={progress}
+              size="sm"
+              radius="xl"
               transitionDuration={100}
             />
-            
+
             <Group align="center" mt="xs">
-              <Button 
+              <Button
                 leftSection={<IconCheck size={16} />}
                 size="xs"
                 onClick={handleMarkAsListened}
@@ -229,7 +231,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
             </Group>
           </>
         )}
-        
+
         <Group align="right" mt="xs">
           <IconLock size={14} opacity={message.is_public ? 0.3 : 0.8} />
           <IconWorldUpload size={14} opacity={message.is_public ? 0.8 : 0.3} />
