@@ -1,4 +1,4 @@
-import { Stack, Button, Group, Box, Text } from "@mantine/core";
+import { Stack, Button, Group, Box } from "@mantine/core";
 import { motion } from "framer-motion";
 import { useFullRoom } from "@/context/FullRoomProvider";
 import { ListenerReactions } from "../ListenerReactions";

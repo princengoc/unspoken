@@ -10,7 +10,6 @@ import {
   Switch,
   Group,
   Text,
-  Select,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconAdjustments } from "@tabler/icons-react";

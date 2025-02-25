@@ -71,7 +71,7 @@ export function PlayerAvatar({
     <Avatar
       radius="xl"
       size={size}
-      styles={(theme) => ({
+      styles={() => ({
         root: {
           border: highlighted ? `2px solid ${highlightColor}` : "none",
           boxSizing: "content-box",

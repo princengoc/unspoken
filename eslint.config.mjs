@@ -6,10 +6,14 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.config({
-    extends: ["next"],
+    extends: ["next/core-web-vitals", "next/typescript"],
+    parser: "@typescript-eslint/parser",
+    plugins: ["@typescript-eslint"],
     rules: {
+      // Optional overrides
       "react/no-unescaped-entities": "off",
       "@next/next/no-page-custom-font": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   }),
 ];

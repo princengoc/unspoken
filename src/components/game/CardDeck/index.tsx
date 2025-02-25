@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Group, Button, Stack, Divider } from "@mantine/core";
+import { Group, Button, Stack } from "@mantine/core";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Card as CardType } from "@/core/game/types";
 import { Card } from "../Card";
-import { MiniCard, MoodType, moods } from "./MiniCard";
+import { MoodType, moods } from "./MiniCard";
 import { MiniDeck } from "./MiniDeck";
 
 interface CardDeckProps {

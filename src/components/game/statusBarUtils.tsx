@@ -34,7 +34,7 @@ export const hashCode = (str: string): number => {
   if (!str) {
     return 0;
   } else {
-    str.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return str.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   }
 };
 

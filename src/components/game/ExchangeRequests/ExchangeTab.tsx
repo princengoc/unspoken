@@ -46,7 +46,6 @@ export function ExchangeTab() {
     requestExchange,
     acceptRequest,
     declineRequest,
-    hasMatch,
   } = useExchanges();
 
   if (loading) {
@@ -239,7 +238,7 @@ export function ExchangeTab() {
                   </Stack>
 
                   <Box
-                    sx={{
+                    style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",

@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { CardState, GamePhase } from "@/core/game/types";
+import { CardState } from "@/core/game/types";
 import { INITIAL_CARDS_PER_PLAYER } from "@/core/game/constants";
 
 const CARDS_IN_ROOMS_DB = "cards_in_rooms";

@@ -95,7 +95,7 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
     useCardsInGame();
 
   // Destructure currentMember values for easier dependency management
-  const currentMemberId = currentMember?.id!;
+  const currentMemberId = currentMember?.id;
   const isCreator = currentMemberId === room!.created_by;
   const hasSpoken = currentMember?.has_spoken ?? false;
   const isActiveSpeaker =
@@ -166,7 +166,7 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
   // Update the handleDealCards function to use new dealCardsToPlayer
   const handleDealCards = useCallback(async () => {
     try {
-      const dealtCards = await dealCardsToPlayer(currentMemberId);
+      const dealtCards = await dealCardsToPlayer(currentMemberId!);
       return dealtCards;
     } catch (error) {
       console.error("Failed to deal cards:", error);

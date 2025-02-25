@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && tsc --noEmit",
     "test:supabase": "ts-node src/lib/supabase/__tests__/connection.test.ts",
     "format": "prettier --write ."
   },

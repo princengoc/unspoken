@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Group, ActionIcon, Tooltip, Switch } from "@mantine/core";
 import {
   IconSparkles,
@@ -32,18 +32,19 @@ export function ListenerReactions({
 }: ListenerReactionsProps) {
   const [isPrivate, setIsPrivate] = useState(true);
 
-  const { toggleReaction, toggleRipple, hasReaction, isRippled, reactions } =
-    useReactions({
+  const { toggleReaction, toggleRipple, hasReaction, isRippled } = useReactions(
+    {
       roomId,
       speakerId,
       listenerId: userId,
       cardId,
-    });
+    },
+  );
 
-  // ✅ Store temporary "button disabled" state
+  // Store temporary "button disabled" state
   const [disabledButtons, setDisabledButtons] = useState<
     Record<ReactionType, boolean>
-  >({});
+  >({} as Record<ReactionType, boolean>);
   const [rippleDisabled, setRippleDisabled] = useState(false);
 
   // ✅ Use `useMemo` to prevent unnecessary re-renders
