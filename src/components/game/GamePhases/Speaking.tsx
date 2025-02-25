@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { getPlayerAssignments } from "../statusBarUtils";
 import { useRoom } from "@/context/RoomProvider";
 import { useDisclosure } from "@mantine/hooks";
+import { AudioMessageContainer } from "@/components/AudioMessage/AudioMessageContainer";
 
 type SpeakingProp = {
   roomId: string;
@@ -21,7 +22,7 @@ export function Speaking({ roomId }: SpeakingProp) {
   const { isActiveSpeaker, finishSpeaking } = useFullRoom();
   const [isSpeaking, { toggle }] = useDisclosure(false);
   const { cardState, getCardById } = useCardsInGame();
-  const { members } = useRoomMembers();
+  const { members  } = useRoomMembers();
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 
@@ -97,6 +98,13 @@ export function Speaking({ roomId }: SpeakingProp) {
           />
         </Box>
       </motion.div>
+
+        <div className="audio-message-section">
+          <AudioMessageContainer 
+            userId={user.id}
+            roomId={roomId}
+          />
+        </div>
     </Stack>
   );
 }

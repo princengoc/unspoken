@@ -28,7 +28,6 @@ interface GameCardProps {
   onExchange?: () => void;
 }
 
-// TODO: add props like Minicard to allow showing of player icons in corners
 export function GameCard({
   card,
   index = null,
