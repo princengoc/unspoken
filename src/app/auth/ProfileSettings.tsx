@@ -23,7 +23,7 @@ export function ProfileSettings() {
         message: 'Profile updated successfully',
         color: 'green'
       });
-    } catch (error: any) {
+    } catch (error) {
       notifications.show({
         title: 'Error',
         message: error.message,

@@ -4,7 +4,17 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthProvider";
 import { useDisclosure } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
-import { Container, TextInput, Button, Title, Stack, Center, Text, PasswordInput, Loader } from "@mantine/core";
+import { 
+  Container, 
+  TextInput, 
+  Button, 
+  Title, 
+  Stack, 
+  Center, 
+  Text, 
+  PasswordInput, 
+  Loader 
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 export default function AuthPage() {
@@ -15,6 +25,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [visible, { toggle }] = useDisclosure(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [signedUp, setSignedUp] = useState(false); // tracks if signup is complete
 
   useEffect(() => {
     if (!loading && user) {
@@ -34,7 +45,8 @@ export default function AuthPage() {
     try {
       if (isSignUp) {
         await signUpWithEmail(email, password, username);
-        notifications.show({ title: "Success", message: "Sign-up successful! Please check your email for confirmation.", color: "green" });
+        // After signing up, clear the form and show the check email message
+        setSignedUp(true);
       } else {
         await loginWithEmail(email, password);
         notifications.show({ title: "Logged in", message: "Welcome back!", color: "blue" });
@@ -43,6 +55,20 @@ export default function AuthPage() {
       notifications.show({ title: "Error", message: error.message, color: "red" });
     }
   };
+
+  // If the user has just signed up, show a message to check their email.
+  if (isSignUp && signedUp) {
+    return (
+      <Container size="xs">
+        <Center style={{ height: "100vh" }}>
+          <Stack align="center" gap="md">
+            <Title order={2}>Check your email</Title>
+            <Text>Please verify your email to complete the sign-up process.</Text>
+          </Stack>
+        </Center>
+      </Container>
+    );
+  }
 
   return (
     <Container size="xs">
@@ -58,13 +84,16 @@ export default function AuthPage() {
             required
           />
 
-          <TextInput
-            label="Username"
-            placeholder="Enter your username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+          {/* Render the Username input only for Sign Up */}
+          {isSignUp && (
+            <TextInput
+              label="Username"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          )}
 
           <PasswordInput
             label="Password"
@@ -81,7 +110,11 @@ export default function AuthPage() {
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
 
-          <Text size="sm" onClick={() => setIsSignUp(!isSignUp)} style={{ cursor: "pointer", textDecoration: "underline" }}>
+          <Text 
+            size="sm" 
+            onClick={() => setIsSignUp(!isSignUp)} 
+            style={{ cursor: "pointer", textDecoration: "underline" }}
+          >
             {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </Text>
         </Stack>
