@@ -53,6 +53,11 @@
     - [ ] speaking phase has no "active player".
     - [ ] player can choose to respond to specific player's cards as public or private. 
 
+BUG FIXES on remote play
+- [ ] after recording, should mark player status as "has_spoken: true", and if has_spoken, then do NOT show the recording button. 
+- [ ] isComplete in setup should be after people have all spoken, NOT after they have selected. 
+
+
 
 - [ ] **Localization**
   - [ ] Translate the game into Vietnamese.

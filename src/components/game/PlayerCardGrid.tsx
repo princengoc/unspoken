@@ -62,7 +62,7 @@ export function PlayerCardGrid({
               />
               
               {/* Render action buttons if provided */}
-              {actionButtons && (
+              {actionButtons && !isHighlighted && (
                 <Box mt="xs">
                   {actionButtons(info.playerId)}
                 </Box>

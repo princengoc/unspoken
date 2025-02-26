@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Card,
   Text,
   Group,
   Button,
@@ -105,9 +104,8 @@ export function AudioRecorder({
   };
 
   return (
-    <Card shadow="sm" p="md" radius="md" withBorder>
-      <Stack gap="md">
-        <Text fw={500} size="lg">
+      <Stack gap="xs">
+        <Text fw={500} size="md">
           Record Audio Message
           {targetPlayerId && " for Specific Player"}
         </Text>
@@ -266,6 +264,5 @@ export function AudioRecorder({
           </>
         )}
       </Stack>
-    </Card>
   );
 }
