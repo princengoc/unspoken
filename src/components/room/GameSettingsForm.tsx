@@ -17,7 +17,7 @@ export function GameSettingsForm({
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
     deal_extras: initialSettings.deal_extras || true,
     card_depth: initialSettings.card_depth || null,
-    is_encore: initialSettings.is_encore || false,
+    is_exchange: initialSettings.is_exchange || false,
   });
 
   const handleSettingChange = (updatedSettings: Partial<RoomSettings>) => {

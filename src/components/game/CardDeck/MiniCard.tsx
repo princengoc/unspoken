@@ -14,6 +14,8 @@ import {
   IconCirclesRelation,
   IconIkosaedr,
   IconCell,
+  IconEar,
+  IconMicrophone,
 } from "@tabler/icons-react";
 import type { PlayerAssignment } from "../statusBarUtils";
 import { PlayerAvatar } from "../PlayerAvatar";
@@ -61,7 +63,7 @@ export const moodConfig = {
   },
 };
 
-interface MiniCardProps {
+export interface MiniCardProps {
   card: CardType;
   mood?: MoodType;
   isSelected?: boolean;
@@ -91,7 +93,7 @@ export function MiniCard({
 
   // Card dimensions based on size
   const cardDimensions = {
-    xs: { width: "100px", height: "110px", iconSize: 16, fontSize: "xs" },
+    xs: { width: "100px", height: "110px", iconSize: 14, fontSize: "xs" },
     sm: { width: "120px", height: "130px", iconSize: 18, fontSize: "xs" },
     md: { width: "150px", height: "160px", iconSize: 24, fontSize: "sm" },
     lg: { width: "180px", height: "190px", iconSize: 28, fontSize: "md" },
@@ -156,6 +158,8 @@ export function MiniCard({
                   top: rem(4),
                   right: rem(4),
                   zIndex: 2,
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <PlayerAvatar
@@ -163,6 +167,9 @@ export function MiniCard({
                   size="xs"
                   showTooltip={false}
                 />
+                <IconMicrophone
+                  size={14}
+                />                
               </Box>
             </Tooltip>
           )}
@@ -170,7 +177,7 @@ export function MiniCard({
           {/* Contributor/Sender - bottom left corner */}
           {showSender && contributorAssignment && (
             <Tooltip
-              label={contributorName || card.contributor_id || "Anonymous"}
+              label={"Asked by " + contributorName || card.contributor_id || "Anonymous"}
               position="bottom"
               withArrow
             >
@@ -180,12 +187,17 @@ export function MiniCard({
                   bottom: rem(4),
                   left: rem(4),
                   zIndex: 2,
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <PlayerAvatar
                   assignment={contributorAssignment}
                   size="xs"
                   showTooltip={false}
+                />
+                <IconEar
+                  size={14}
                 />
               </Box>
             </Tooltip>
@@ -198,19 +210,24 @@ export function MiniCard({
               position="bottom"
               withArrow
             >
-              <Avatar
-                size="xs"
-                radius="xl"
-                color="gray"
+              <Box
                 style={{
                   position: "absolute",
                   bottom: rem(4),
                   left: rem(4),
                   zIndex: 2,
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                {card.contributor_id.charAt(0).toUpperCase()}
-              </Avatar>
+                <Avatar size="xs" radius="xl" color="gray">
+                  {card.contributor_id.charAt(0).toUpperCase()}
+                </Avatar>
+                <IconEar
+                  size={iconSize}
+                  style={{ marginLeft: rem(2) }}
+                />
+              </Box>
             </Tooltip>
           )}
 

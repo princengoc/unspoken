@@ -59,7 +59,8 @@ export type RoomMetaDataAndState = RoomMetadata & GameState;
 export type RoomSettings = {
   card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
   deal_extras: boolean; // If true, deal extra cards from cards table, otherwise, use ripples and exchanges only
-  is_encore: boolean; // Experimental: will not allow encore on top of encore
+  is_exchange: boolean; // If true, this is an exchange round. Auto-update by server
+  exchange_available: boolean; // if true, there is at least one pair of players with matched exchange. Auto-updated by server
 };
 
 export type Room = RoomMetadata & RoomSettings & GameState;
@@ -88,6 +89,37 @@ export type MatchedExchange = {
   player1_card: string;
   player2_card: string;
 };
+
+export type ExchangeRequestStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "matched"
+  | "auto-declined";
+export type ExchangeRequestDirection = "incoming" | "outgoing";
+
+export interface ExchangeRequest {
+  id: string;
+  room_id: string;
+  from_id: string;
+  to_id: string;
+  card_id: string;
+  status: ExchangeRequestStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+// Enriched types: keep track of the other player relative to current user
+// and the Card
+export interface EnrichedExchangeRequest extends ExchangeRequest {
+  otherPlayer?: {
+    id: string;
+    username: string | null;
+  };
+  card?: Card;
+}
+
+
 
 // Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {

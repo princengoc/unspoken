@@ -186,8 +186,7 @@ export default function Home() {
 
     const settings = {
       card_depth: convertCardDepth(cardDepth), 
-      deal_extras: true, 
-      is_encore: false
+      deal_extras: true
     } as RoomSettings;
 
     try {

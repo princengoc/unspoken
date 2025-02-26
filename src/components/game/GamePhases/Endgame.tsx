@@ -9,19 +9,28 @@ import {
   Button,
   Paper,
   SimpleGrid,
+  Card as MantineCard,
+  Badge,
+  Divider,
+  Loader,
 } from "@mantine/core";
-import { IconRepeat, IconArrowRight } from "@tabler/icons-react";
+import { IconRepeat, IconArrowRight, IconExchange } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { motion } from "framer-motion";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useFullRoom } from "@/context/FullRoomProvider";
 import { useRoom } from "@/context/RoomProvider";
-import { SlideIn, FadeIn } from "@/components/animations/Motion";
-import { MiniCard } from "../CardDeck/MiniCard";
+import { FadeIn } from "@/components/animations/Motion";
 import { getPlayerAssignments } from "../statusBarUtils";
-import { RoomSettings } from "@/core/game/types";
+import { RoomSettings, EnrichedExchangeRequest } from "@/core/game/types";
 import { GameSettingsForm } from "@/components/room/GameSettingsForm";
+import { PlayerCardGrid, PlayerCardInfo } from "../PlayerCardGrid";
+import { 
+  getAllMatchedExchanges, 
+  enrichExchanges, 
+  groupExchangesByReceiver 
+}  from "@/services/supabase/exchangeUtils";
 
 type EndgameProp = {
   roomId: string;
@@ -29,29 +38,41 @@ type EndgameProp = {
 
 export function Endgame({ roomId }: EndgameProp) {
   const { room } = useRoom();
-  const { members } = useRoomMembers();
+  const { members, currentMember } = useRoomMembers();
   const { cardState, getCardById } = useCardsInGame();
   const { isCreator, startNextRound } = useFullRoom();
-  const [showingCards, setShowingCards] = useState(false);
   const [nextRoundSettings, setNextRoundSettings] = useState<
     Partial<RoomSettings>
   >({
     deal_extras: true,
     card_depth: null,
-    is_encore: true,
+    is_exchange: true,
   });
   const [loading, setLoading] = useState(false);
+  const [matchedExchanges, setMatchedExchanges] = useState<EnrichedExchangeRequest[]>([]);
+  const [loadingExchanges, setLoadingExchanges] = useState(false);
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 
+  // Load all matched exchanges for the room
   useEffect(() => {
-    // Delay showing cards for a dramatic effect
-    const timer = setTimeout(() => {
-      setShowingCards(true);
-    }, 500);
+    const fetchMatchedExchanges = async () => {
+      if (!roomId) return;
+      console.log(`Fetching matched exchanges`);
+      setLoadingExchanges(true);
+      try {
+        const exchanges = await getAllMatchedExchanges(roomId);
+        const enrichedExchanges = enrichExchanges(exchanges, getCardById, members);
+        setMatchedExchanges(enrichedExchanges);
+      } catch (error) {
+        console.error("Failed to load matched exchanges:", error);
+      } finally {
+        setLoadingExchanges(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    fetchMatchedExchanges();
+  }, [roomId, getCardById, members]);
 
   useEffect(() => {
     if (room?.card_depth) {
@@ -62,45 +83,74 @@ export function Endgame({ roomId }: EndgameProp) {
     }
   }, [room?.card_depth]);
 
-  // Get player to card mapping
-  const playerCards = Object.entries(cardState.selectedCards).map(
-    ([playerId, cardId]) => {
+  // Map regular player cards for display
+  const playerCardsInfo: PlayerCardInfo[] = Object.entries(cardState.selectedCards)
+    .map(([playerId, cardId]) => {
       const player = members.find((m) => m.id === playerId);
       const card = getCardById(cardId);
 
-      const contributorId = card?.contributor_id;
+      if (!card) return null;
+
+      const contributorId = card.contributor_id;
       const contributor = contributorId
         ? members.find((m) => m.id === contributorId)
         : undefined;
+      
       return {
         playerId,
         playerName: player?.username || "Unknown Player",
-        playerAssignments: playerAssignments.get(playerId),
-        card,
+        playerAssignment: playerAssignments.get(playerId),
+        card: card,
+        contributorId,
         contributorName: contributor?.username,
         contributorAssignment: contributorId
           ? playerAssignments.get(contributorId)
           : undefined,
       };
-    },
-  );
+    })
+    .filter(Boolean) as PlayerCardInfo[]; // Filter out any null entries
 
-  const handleStartEncore = async () => {
+  // Group exchanges by receiver
+  const exchangesByReceiver = groupExchangesByReceiver(matchedExchanges);
+
+  // Convert exchanges to PlayerCardInfo format for display
+  const getPlayerExchangeCards = (playerId: string): PlayerCardInfo[] => {
+    const exchanges = exchangesByReceiver.get(playerId) || [];
+    
+    return exchanges.map(exchange => ({
+      playerId: exchange.to_id,
+      playerName: members.find(m => m.id === exchange.to_id)?.username || "Unknown Player",
+      playerAssignment: playerAssignments.get(exchange.to_id),
+      card: exchange.card!,
+      contributorId: exchange.from_id,
+      contributorName: exchange.otherPlayer?.username,
+      contributorAssignment: playerAssignments.get(exchange.from_id)
+    }));
+  };
+
+  const handleStartExchange = async () => {
     if (!isCreator) return;
 
     setLoading(true);
     try {
-      await startNextRound(nextRoundSettings);
+      // Set is_exchange to true for exchange round
+      const exchangeSettings = {
+        ...nextRoundSettings,
+        is_exchange: true,
+      };
+      
+      await startNextRound(exchangeSettings); // TODO: may want to call a startExchangeRound separate function. 
+      
       notifications.show({
         title: "Success",
-        message: "Encore round started!",
+        message: "Exchange round started!",
         color: "green",
       });
     } catch (error) {
-      console.error("Failed to start encore:", error);
+      console.error("Failed to start exchange round:", error);
       notifications.show({
         title: "Error",
-        message: "Failed to start encore round",
+        message: "Failed to start exchange round",
         color: "red",
       });
     } finally {
@@ -108,106 +158,198 @@ export function Endgame({ roomId }: EndgameProp) {
     }
   };
 
+  const handleStartNewGame = async () => {
+    if (!isCreator) return;
+
+    setLoading(true);
+    try {
+      // Reset is_exchange to false for a completely new game
+      const newGameSettings = {
+        ...nextRoundSettings,
+        is_exchange: false,
+      };
+      
+      await startNextRound(newGameSettings);
+      
+      notifications.show({
+        title: "Success",
+        message: "New game started!",
+        color: "green",
+      });
+    } catch (error) {
+      console.error("Failed to start new game:", error);
+      notifications.show({
+        title: "Error",
+        message: "Failed to start new game",
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderExchangeSection = () => {
+    if ( room?.is_exchange) {
+      return renderPlayAgainSection();
+    }
+
+    if (loadingExchanges) {
+      return (
+        <Paper p="md" radius="md" withBorder mt="md">
+          <Stack align="center" py="md">
+            <Loader size="sm" />
+            <Text c="dimmed">Loading exchange data...</Text>
+          </Stack>
+        </Paper>
+      );
+    }
+
+    if (exchangesByReceiver.size === 0) {
+      // No Matched exchanges found, also render play again
+      return renderPlayAgainSection();
+    }
+
+    // has some exchanges to do
+    const currentMemberExchanges = exchangesByReceiver.get(currentMember!.id) || [];
+    // Collect exchange cards for all other players into one array
+    const otherExchangeCards: PlayerCardInfo[] = [];
+    exchangesByReceiver.forEach((_, playerId) => {
+      if (playerId !== currentMember!.id) {
+        otherExchangeCards.push(...getPlayerExchangeCards(playerId));
+      }
+    });    
+
+    return (
+      <Paper p="md" radius="md" withBorder mt="xs">
+        <Stack gap="xs">
+          <Group align="center">
+            <IconExchange size={20} />
+            <Title order={4}>Exchange Round</Title>
+            <Badge color="blue">New</Badge>
+          </Group>
+  
+          <Text>
+            Players have matched exchanges! Time for a special round where everyone responds to the cards they've been challenged with.
+          </Text>
+  
+          {currentMemberExchanges.length > 0 && (
+            <Stack gap="xs">
+              <Group align="center">
+                <Title order={5}>You will answer to</Title>
+              </Group>
+              <PlayerCardGrid 
+                cardInfos={getPlayerExchangeCards(currentMember!.id)} 
+                showSender={true} 
+                animate={false}
+              />
+            </Stack>
+          )}
+  
+          {otherExchangeCards.length > 0 && (
+            <Stack gap="xs">
+              <Title order={5}>Other players will answer to</Title>
+              <PlayerCardGrid 
+                cardInfos={otherExchangeCards} 
+                showSender={true} 
+                animate={false}
+              />
+            </Stack>
+          )}
+  
+          {isCreator && (
+            <Group justify="center">
+              <Button
+                size="md"
+                leftSection={<IconExchange size={18} />}
+                onClick={handleStartExchange}
+                color="blue"
+                loading={loading}
+              >
+                Start Exchange Round
+              </Button>
+            </Group>
+          )}
+  
+          {!isCreator && (
+            <Text ta="center" c="dimmed">
+              Waiting for the room creator to start the exchange round...
+            </Text>
+          )}
+        </Stack>
+      </Paper>
+    );
+  };
+
+  const renderPlayAgainSection = () => {
+    return (
+      <Paper p="md" radius="md" withBorder mt="md">
+        <Stack gap="md">
+          <Title order={4}>Play Again?</Title>
+
+          <GameSettingsForm
+            onChange={setNextRoundSettings}
+            dealExtrasDescription="If disabled, will use cards from previous round only when available."
+          />
+
+          <Group justify="center" mt="sm">
+            <Button
+              size="md"
+              leftSection={<IconRepeat size={18} />}
+              onClick={handleStartNewGame}
+              color="indigo"
+              loading={loading}
+            >
+              Start New Game
+            </Button>
+            <Button
+              size="md"
+              rightSection={<IconArrowRight size={18} />}
+              variant="outline"
+              color="gray"
+              onClick={() => (window.location.href = "/")}
+            >
+              Exit Game
+            </Button>
+          </Group>
+        </Stack>
+      </Paper>
+    );
+  };
+
   return (
     <Container size="lg" py="md">
       <Stack gap="xs">
         <FadeIn>
           <Title order={2} ta="center">
-            Game Complete
+            {room?.is_exchange ? "Exchange Round Complete" : "Game Complete"}
           </Title>
           <Text ta="center" size="md" c="dimmed">
             Here's what everyone shared:
           </Text>
         </FadeIn>
 
-        {showingCards && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <SimpleGrid
-              cols={{ base: 2, sm: 3, md: 4 }}
-              spacing="xs"
-              verticalSpacing="xs"
-            >
-              {playerCards.map(
-                (
-                  {
-                    playerId,
-                    playerName,
-                    playerAssignments,
-                    card,
-                    contributorAssignment,
-                    contributorName,
-                  },
-                  index,
-                ) =>
-                  card && (
-                    <SlideIn key={playerId} delay={index * 0.1}>
-                      <MiniCard
-                        card={card}
-                        showSender={true}
-                        playerAssignment={playerAssignments}
-                        playerName={playerName}
-                        contributorAssignment={contributorAssignment}
-                        contributorName={contributorName}
-                      />
-                    </SlideIn>
-                  ),
-              )}
-            </SimpleGrid>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <PlayerCardGrid 
+            cardInfos={playerCardsInfo} 
+            showSender={false}
+          />
+        </motion.div>
 
-        {/* Only allow start next game for creator AND game is not already encore */}
-        {isCreator && !room?.is_encore && (
-          <Paper p="md" radius="md" withBorder mt="md">
-            <Stack gap="md">
-              <Title order={4}>Play an Encore Round</Title>
+        {/* Show exchange section if available, otherwise show play again */}
+        {renderExchangeSection()}
 
-              <GameSettingsForm
-                onChange={setNextRoundSettings}
-                dealExtrasDescription="If disabled, will use cards from previous round only when available."
-              />
-
-              <Group justify="center" mt="sm">
-                <Button
-                  size="md"
-                  leftSection={<IconRepeat size={18} />}
-                  onClick={handleStartEncore}
-                  color="indigo"
-                  loading={loading}
-                >
-                  Start Encore Round
-                </Button>
-                <Button
-                  size="md"
-                  rightSection={<IconArrowRight size={18} />}
-                  variant="outline"
-                  color="gray"
-                  onClick={() => (window.location.href = "/")}
-                >
-                  Exit Game
-                </Button>
-              </Group>
-            </Stack>
-          </Paper>
-        )}
-
-        {!isCreator && room?.is_encore && (
-          <Paper p="md" radius="md">
-            <Text ta="center">Encore ended. Thanks for playing!</Text>
-          </Paper>
-        )}
-
-        {!isCreator && !room?.is_encore && (
+        {!isCreator && (
           <Paper p="md" radius="md">
             <Text ta="center">
-              Thnks for playing! Waiting for room creator to Encore or End Game.
+              Thanks for playing! Waiting for room creator to start again or end session.
             </Text>
           </Paper>
         )}
+
       </Stack>
     </Container>
   );

@@ -9,23 +9,12 @@ import React, {
 } from "react";
 import {
   exchangeRequestsService,
-  ExchangeRequest,
 } from "@/services/supabase/exchangeRequests";
 import { useAuth } from "@/context/AuthProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
-import { Card } from "@/core/game/types";
 import { notifications } from "@mantine/notifications";
-
-// Enriched types: keep track of the other player relative to current user
-// and the Card
-export interface EnrichedExchangeRequest extends ExchangeRequest {
-  otherPlayer?: {
-    id: string;
-    username: string | null;
-  };
-  card?: Card;
-}
+import { ExchangeRequest, EnrichedExchangeRequest } from "@/core/game/types";
 
 // Updated context type definition
 interface ExchangesContextType {
@@ -144,7 +133,7 @@ export function ExchangesProvider({
     };
   }, [outgoingRequests, incomingRequests, members, getCardById]);
 
-  // Derive overall match state - if any exchange is matched
+  // Derive overall match state FOR THIS PLAYER - if any exchange involving current player is matched
   const hasMatchState = useMemo(() => {
     return [...enrichedRequests.incoming, ...enrichedRequests.outgoing].some(
       (req) => req.status === "matched",

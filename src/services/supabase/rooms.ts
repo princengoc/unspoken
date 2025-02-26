@@ -25,7 +25,7 @@ export const roomsService = {
       active_player_id: null,
       card_depth: settings?.card_depth ?? null,
       deal_extras: settings?.deal_extras ?? true,
-      is_encore: settings?.is_encore ?? false,
+      is_exchange: settings?.is_exchange ?? false,
     };
 
     // after insertion room now has id, needs to be returned

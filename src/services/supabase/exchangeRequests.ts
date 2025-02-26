@@ -1,23 +1,6 @@
 import { supabase } from "./client";
+import { ExchangeRequest, ExchangeRequestStatus, ExchangeRequestDirection } from "@/core/game/types";
 
-export type ExchangeRequestStatus =
-  | "pending"
-  | "accepted"
-  | "declined"
-  | "matched"
-  | "auto-declined";
-export type ExchangeRequestDirection = "incoming" | "outgoing";
-
-export interface ExchangeRequest {
-  id: string;
-  room_id: string;
-  from_id: string;
-  to_id: string;
-  card_id: string;
-  status: ExchangeRequestStatus;
-  created_at: string;
-  updated_at: string;
-}
 
 export const exchangeRequestsService = {
   // TODO: front-end should NOT allow replacement of requested cards
