@@ -29,7 +29,7 @@ import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { MiniCard } from "../CardDeck/MiniCard";
 import { MiniDeck } from "../CardDeck/MiniDeck";
 import { useExchanges } from "@/context/ExchangesProvider";
-import type { EnrichedExchangeRequest } from "@/context/ExchangesProvider";
+import type { EnrichedExchangeRequest } from "@/core/game/types";
 import { useAuth } from "@/context/AuthProvider";
 
 export function ExchangeTab() {

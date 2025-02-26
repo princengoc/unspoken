@@ -1,22 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Stack, Text, Group, Button, Paper } from "@mantine/core";
 import { IconCheck, IconHourglass } from "@tabler/icons-react";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useFullRoom } from "@/context/FullRoomProvider";
 import { SlideIn } from "@/components/animations/Motion";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
-import { ExchangeTab } from "../ExchangeRequests/ExchangeTab";
-import { SetupViewType } from "@/core/game/types";
 import { CardDeck } from "../CardDeck";
 import { Card as GameCard } from "../Card";
 
-type SetupProps = {
-  roomId: string | undefined;
-  initialView?: SetupViewType;
-  onViewChange?: (view: SetupViewType) => void;
-};
-
-export function Setup({ initialView = "cards", onViewChange }: SetupProps) {
+export function Setup() {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame();
   const { currentMember } = useRoomMembers();
   const {
@@ -29,16 +21,6 @@ export function Setup({ initialView = "cards", onViewChange }: SetupProps) {
   } = useFullRoom();
 
   const [isDealing, setIsDealing] = useState(false);
-  const [currentView, setCurrentView] = useState<SetupViewType>(initialView);
-
-  // Sync view changes with parent component
-  useEffect(() => {
-    setCurrentView(initialView);
-  }, [initialView]);
-
-  useEffect(() => {
-    onViewChange?.(currentView);
-  }, [currentView, onViewChange]);
 
   const handleDrawCards = async () => {
     if (!currentMember?.id) return;
@@ -144,13 +126,5 @@ export function Setup({ initialView = "cards", onViewChange }: SetupProps) {
   };
 
   // Render the appropriate content based on current view
-  return (
-    <Stack gap="xl" justify="center">
-      {currentView === "exchange" ? (
-        <ExchangeTab />
-      ) : (
-        renderContentOnCardsView()
-      )}
-    </Stack>
-  );
+  return renderContentOnCardsView();
 }

@@ -11,7 +11,24 @@ import { Speaking } from "@/components/game/GamePhases/Speaking";
 import { SideNavbar } from "@/components/layout/SideNavbar";
 import { notifications } from "@mantine/notifications";
 import { Endgame } from "@/components/game/GamePhases/Endgame";
-import { SetupViewType } from "@/core/game/types";
+import { SetupViewType, Room } from "@/core/game/types";
+import { ExchangeTab } from "@/components/game/ExchangeRequests/ExchangeTab";
+
+function renderGameContent(currentSetupView: SetupViewType, room: Room) {
+  // always allow view of exchange tab
+  if (currentSetupView === "exchange") {
+    return <ExchangeTab />;
+  }
+
+  // otherwise depends on the game phase
+  if (room.phase === "setup") {
+    return <Setup />;
+  } else if (room.phase === "endgame") {
+    return <Endgame roomId={room.id} />;
+  } else {
+    return <Speaking roomId={room.id} />;
+  }
+}
 
 /**
  * Main content component that renders the actual room UI
@@ -63,7 +80,7 @@ function RoomContent({ roomId }: { roomId: string }) {
           roomId={room.id}
           gamePhase={room.phase}
           handleLeaveRoom={handleLeaveRoom}
-          onViewChange={room.phase === "setup" ? handleViewChange : undefined}
+          onViewChange={handleViewChange}
         />
 
         {/* Main Content */}
@@ -75,23 +92,16 @@ function RoomContent({ roomId }: { roomId: string }) {
             overflowY: "auto",
           }}
         >
-          {/* Game Phases */}
-          {room.phase === "setup" ? (
-            <Setup
-              roomId={room.id}
-              initialView={currentSetupView}
-              onViewChange={handleViewChange}
-            />
-          ) : room.phase === "endgame" ? (
-            <Endgame roomId={room.id} />
-          ) : (
-            <Speaking roomId={room.id} />
-          )}
+          {renderGameContent(currentSetupView, room)}
         </Box>
+
       </Box>
     </FullRoomProvider>
   );
 }
+
+
+
 
 /**
  * Main page component that handles params and sets up providers

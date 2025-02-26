@@ -3,8 +3,7 @@ import { ExchangeRequest, ExchangeRequestStatus, ExchangeRequestDirection } from
 
 
 export const exchangeRequestsService = {
-  // TODO: front-end should NOT allow replacement of requested cards
-  // only one request can be made per pair per room: (room_id, from_id, to_id) is unique
+  
   async createRequest(
     roomId: string,
     fromId: string,
