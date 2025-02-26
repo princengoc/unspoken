@@ -11,7 +11,7 @@ import {
 import type { Player } from "@/core/game/types";
 
 // Seeded random number generator for consistent assignments
-export function mulberry32(a: number) {
+function mulberry32(a: number) {
   return function () {
     let t = (a += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
@@ -20,7 +20,7 @@ export function mulberry32(a: number) {
   };
 }
 
-export function shuffleArray<T>(array: T[], seed: number): T[] {
+function shuffleArray<T>(array: T[], seed: number): T[] {
   const random = mulberry32(seed);
   const arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -30,7 +30,7 @@ export function shuffleArray<T>(array: T[], seed: number): T[] {
   return arr;
 }
 
-export const hashCode = (str: string): number => {
+const hashCode = (str: string): number => {
   if (!str) {
     return 0;
   } else {

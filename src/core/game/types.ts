@@ -117,19 +117,3 @@ export interface EnrichedExchangeRequest extends ExchangeRequest {
   };
   card?: Card;
 }
-
-// Utility functions remain the same
-export const deduplicateCardsById = (cards: Card[]): Card[] => {
-  const uniqueCards = new Map(cards.map((card) => [card.id, card]));
-  return Array.from(uniqueCards.values());
-};
-
-export const mergeCardsWithDeduplication = (
-  existingCards: Card[],
-  newCards: Card[],
-): Card[] => {
-  const uniqueCards = new Map(
-    [...existingCards, ...newCards].map((card) => [card.id, card]),
-  );
-  return Array.from(uniqueCards.values());
-};

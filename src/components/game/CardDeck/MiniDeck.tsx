@@ -3,19 +3,14 @@
 import { useState } from "react";
 import { Group } from "@mantine/core";
 import type { Card as CardType } from "@/core/game/types";
-import { MiniCard, MoodType } from "./MiniCard";
+import { MiniCard } from "./MiniCard";
 
 interface MiniDeckProps {
   cards: CardType[];
-  assignedMoods?: Record<number, MoodType>;
   onSelect?: (cardId: string) => void;
 }
 
-export function MiniDeck({
-  cards,
-  assignedMoods = {},
-  onSelect,
-}: MiniDeckProps) {
+export function MiniDeck({ cards, onSelect }: MiniDeckProps) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
     null,
   );
@@ -34,7 +29,6 @@ export function MiniDeck({
           <MiniCard
             key={index}
             card={card}
-            mood={assignedMoods[index]} // Will be undefined if not assigned
             isSelected={selectedCardIndex === index}
             onClick={() => handlePeripheralCardClick(index)}
           />
