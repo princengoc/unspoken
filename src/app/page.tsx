@@ -16,6 +16,7 @@ import {
   Loader,
   CopyButton,
   Tooltip,
+  Select
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -39,6 +40,7 @@ import {
   GamePhase,
   RoomMetaDataAndState,
   DEFAULT_PLAYER,
+  RoomSettings,
 } from "@/core/game/types";
 import { roomsService } from "@/services/supabase/rooms";
 
@@ -56,12 +58,20 @@ interface RoomWithStatus extends RoomMetaDataAndState {
   isNew?: boolean; // Flag for newly created rooms
 }
 
+function convertCardDepth(value: string | null): number | null {
+  if (value === null || value === 'all') return null;
+  const num = Number(value);
+  return isNaN(num) ? null : num;
+}
+
+
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [rooms, setRooms] = useState<RoomWithStatus[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [newRoomName, setNewRoomName] = useState("");
+  const [cardDepthFilter, setCardDepthFilter] = useState<string | null>(null);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
 
@@ -152,7 +162,7 @@ export default function Home() {
   );
 
   // Create new room
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = async (cardDepth: string | null) => {
     if (!newRoomName.trim() || !user) return;
 
     // Add a temporary row for the room being created
@@ -174,8 +184,14 @@ export default function Home() {
 
     setRooms((prev) => [...prev, tempRoom]);
 
+    const settings = {
+      card_depth: convertCardDepth(cardDepth), 
+      deal_extras: true, 
+      is_encore: false
+    } as RoomSettings;
+
     try {
-      const room = await createRoom(newRoomName.trim());
+      const room = await createRoom(newRoomName.trim(), settings);
 
       // Members for this new room is just the user itself, save a query
       const currentPlayer = {
@@ -571,12 +587,12 @@ export default function Home() {
                     {isAddingRoom && (
                       <Table.Tr>
                         <Table.Td>
-                          <TextInput
-                            placeholder="Room name"
-                            value={newRoomName}
-                            onChange={(e) => setNewRoomName(e.target.value)}
-                            size="xs"
-                          />
+                            <TextInput
+                              placeholder="Room name"
+                              value={newRoomName}
+                              onChange={(e) => setNewRoomName(e.target.value)}
+                              size="xs"
+                            />
                         </Table.Td>
                         <Table.Td>
                           <Text fs="italic" size="sm" c="dimmed">
@@ -584,13 +600,25 @@ export default function Home() {
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                          <Badge color="blue">New</Badge>
+                        <Select
+                              placeholder="Card depth filter"
+                              value={cardDepthFilter}
+                              onChange={setCardDepthFilter}
+                              data={[
+                                // { value: "0", label: "0" },
+                                { value: "1", label: "1" },
+                                { value: "2", label: "2" },
+                                { value: "3", label: "3" },
+                                { value: "all", label: "allow all" },
+                              ]}
+                              size="xs"
+                            />
                         </Table.Td>
                         <Table.Td>
                           <Group gap="xs">
                             <Button
                               size="xs"
-                              onClick={handleCreateRoom}
+                              onClick={() => handleCreateRoom(cardDepthFilter)}
                               disabled={!newRoomName.trim()}
                             >
                               Create

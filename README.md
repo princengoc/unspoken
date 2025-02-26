@@ -30,6 +30,8 @@
   - [x] Allow reading three cards at once, remove tags
   - [x] Display the name of the player making a request.
 
+- Room Settings: allow card depth filter
+
 - [ ] **Gameplay Mechanics: Exchange System**
 
   - [ ] Exchange reset on subsequent round
@@ -42,7 +44,9 @@
   - [ ] Limit encore mode to reuse existing cards only.
   - [ ] Start a new game with a fresh deck (no discard pile).
 
-- [ ] **Implement remote play: audio**
+- [x] **Implement remote play: audio**
+- [ ] read game_mode: only allow voice for "remote" play (not "irl")
+
 
 - [ ] **Localization**
   - [ ] Translate the game into Vietnamese.
