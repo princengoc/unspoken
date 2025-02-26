@@ -19,7 +19,7 @@ export const roomsService = {
       name,
       created_by: createdBy,
       passcode,
-      game_mode: "irl",
+      game_mode: settings?.game_mode ?? "irl",
       is_active: true,
       phase: "setup" as GamePhase,
       active_player_id: null,

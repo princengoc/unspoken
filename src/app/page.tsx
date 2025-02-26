@@ -16,6 +16,7 @@ import {
   Loader,
   CopyButton,
   Tooltip,
+  Switch,
   Select
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
@@ -74,6 +75,7 @@ export default function Home() {
   const [cardDepthFilter, setCardDepthFilter] = useState<string | null>(null);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
+  const [isRemote, setIsRemote] = useState(false); 
 
   const {
     findRoomByPasscode,
@@ -162,7 +164,8 @@ export default function Home() {
   );
 
   // Create new room
-  const handleCreateRoom = async (cardDepth: string | null) => {
+  const handleCreateRoom = async (cardDepth: string | null, isRemote: boolean) => {
+    console.log(`Is remote: ${isRemote}`);
     if (!newRoomName.trim() || !user) return;
 
     // Add a temporary row for the room being created
@@ -174,7 +177,6 @@ export default function Home() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: true,
-      game_mode: "remote",
       status: "creating",
       isCreator: true,
       lastUpdated: new Date(),
@@ -186,7 +188,8 @@ export default function Home() {
 
     const settings = {
       card_depth: convertCardDepth(cardDepth), 
-      deal_extras: true
+      deal_extras: true,
+      game_mode: isRemote ? "remote" : "irl",
     } as RoomSettings;
 
     try {
@@ -330,26 +333,6 @@ export default function Home() {
     return undefined; // if pendingRoomIds.length === 0
   }, [rooms, checkJoinStatus]);
 
-  // Effect to remove "new" highlight after 5 seconds
-  useEffect(() => {
-    const newRoomIds = rooms
-      .filter((room) => room.isNew)
-      .map((room) => room.id);
-
-    if (newRoomIds.length > 0) {
-      const timeout = setTimeout(() => {
-        setRooms((prevRooms) =>
-          prevRooms.map((room) =>
-            newRoomIds.includes(room.id) ? { ...room, isNew: false } : room,
-          ),
-        );
-      }, 5000);
-
-      return () => clearTimeout(timeout);
-    }
-    return undefined; // if newRoomIds.length === 0
-  }, [rooms]);
-
   // Format relative time
   const formatRelativeTime = (date: Date) => {
     const now = new Date();
@@ -490,7 +473,9 @@ export default function Home() {
                       >
                         <Table.Td>
                           <Group gap="xs">
-                            <Text fw={500}>{room.name}</Text>
+                            <Tooltip label={room.game_mode === "remote" ? "remote" : "in-person"}>
+                              <Text fw={500} c={room.game_mode === "remote" ? "orange" : "blue"}>{room.name}</Text>
+                            </Tooltip>
                             {room.isCreator && (
                               <Tooltip label="You created this room">
                                 <ActionIcon
@@ -599,12 +584,12 @@ export default function Home() {
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                        <Select
+                        <Group gap="xs">
+                            <Select
                               placeholder="Card depth filter"
                               value={cardDepthFilter}
                               onChange={setCardDepthFilter}
                               data={[
-                                // { value: "0", label: "0" },
                                 { value: "1", label: "1" },
                                 { value: "2", label: "2" },
                                 { value: "3", label: "3" },
@@ -612,12 +597,21 @@ export default function Home() {
                               ]}
                               size="xs"
                             />
+                            <Switch
+                              label="Remote mode"
+                              checked={isRemote}
+                              onChange={(event) =>
+                                setIsRemote(event.currentTarget.checked)
+                              }
+                              size="xs"
+                            />
+                          </Group>
                         </Table.Td>
                         <Table.Td>
                           <Group gap="xs">
                             <Button
                               size="xs"
-                              onClick={() => handleCreateRoom(cardDepthFilter)}
+                              onClick={() => handleCreateRoom(cardDepthFilter, isRemote)}
                               disabled={!newRoomName.trim()}
                             >
                               Create
