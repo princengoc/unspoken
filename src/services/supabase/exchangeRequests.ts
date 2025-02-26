@@ -1,9 +1,11 @@
 import { supabase } from "./client";
-import { ExchangeRequest, ExchangeRequestStatus, ExchangeRequestDirection } from "@/core/game/types";
-
+import {
+  ExchangeRequest,
+  ExchangeRequestStatus,
+  ExchangeRequestDirection,
+} from "@/core/game/types";
 
 export const exchangeRequestsService = {
-  
   async createRequest(
     roomId: string,
     fromId: string,

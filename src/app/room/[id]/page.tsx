@@ -15,7 +15,6 @@ import { SetupViewType, Room } from "@/core/game/types";
 import { ExchangeTab } from "@/components/game/ExchangeRequests/ExchangeTab";
 import { SpeakingRemote } from "@/components/game/GamePhases/SpeakingRemote";
 
-
 function renderGameContent(currentSetupView: SetupViewType, room: Room) {
   // always allow view of exchange tab
   if (currentSetupView === "exchange") {
@@ -30,7 +29,7 @@ function renderGameContent(currentSetupView: SetupViewType, room: Room) {
   } else {
     if (room.game_mode === "remote") {
       return <SpeakingRemote roomId={room.id} />;
-    } 
+    }
     return <Speaking roomId={room.id} />;
   }
 }
@@ -99,14 +98,10 @@ function RoomContent({ roomId }: { roomId: string }) {
         >
           {renderGameContent(currentSetupView, room)}
         </Box>
-
       </Box>
     </FullRoomProvider>
   );
 }
-
-
-
 
 /**
  * Main page component that handles params and sets up providers

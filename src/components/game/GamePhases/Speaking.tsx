@@ -10,7 +10,6 @@ import { useAuth } from "@/context/AuthProvider";
 import { getPlayerAssignments } from "../statusBarUtils";
 import { useRoom } from "@/context/RoomProvider";
 import { useDisclosure } from "@mantine/hooks";
-import { AudioMessageContainer } from "@/components/AudioMessage";
 
 type SpeakingProp = {
   roomId: string;
@@ -98,7 +97,6 @@ export function Speaking({ roomId }: SpeakingProp) {
           />
         </Box>
       </motion.div>
-
     </Stack>
   );
 }

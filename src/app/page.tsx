@@ -17,7 +17,7 @@ import {
   CopyButton,
   Tooltip,
   Switch,
-  Select
+  Select,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -42,6 +42,7 @@ import {
   RoomMetaDataAndState,
   DEFAULT_PLAYER,
   RoomSettings,
+  GameMode,
 } from "@/core/game/types";
 import { roomsService } from "@/services/supabase/rooms";
 
@@ -54,17 +55,17 @@ interface RoomWithStatus extends RoomMetaDataAndState {
     | "rejected"
     | "creating"
     | "joining";
+  game_mode?: GameMode;
   isCreator?: boolean;
   lastUpdated?: Date;
   isNew?: boolean; // Flag for newly created rooms
 }
 
 function convertCardDepth(value: string | null): number | null {
-  if (value === null || value === 'all') return null;
+  if (value === null || value === "all") return null;
   const num = Number(value);
   return isNaN(num) ? null : num;
 }
-
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -75,7 +76,7 @@ export default function Home() {
   const [cardDepthFilter, setCardDepthFilter] = useState<string | null>(null);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
-  const [isRemote, setIsRemote] = useState(false); 
+  const [isRemote, setIsRemote] = useState(false);
 
   const {
     findRoomByPasscode,
@@ -164,7 +165,10 @@ export default function Home() {
   );
 
   // Create new room
-  const handleCreateRoom = async (cardDepth: string | null, isRemote: boolean) => {
+  const handleCreateRoom = async (
+    cardDepth: string | null,
+    isRemote: boolean,
+  ) => {
     console.log(`Is remote: ${isRemote}`);
     if (!newRoomName.trim() || !user) return;
 
@@ -187,7 +191,7 @@ export default function Home() {
     setRooms((prev) => [...prev, tempRoom]);
 
     const settings = {
-      card_depth: convertCardDepth(cardDepth), 
+      card_depth: convertCardDepth(cardDepth),
       deal_extras: true,
       game_mode: isRemote ? "remote" : "irl",
     } as RoomSettings;
@@ -473,8 +477,23 @@ export default function Home() {
                       >
                         <Table.Td>
                           <Group gap="xs">
-                            <Tooltip label={room.game_mode === "remote" ? "remote" : "in-person"}>
-                              <Text fw={500} c={room.game_mode === "remote" ? "orange" : "blue"}>{room.name}</Text>
+                            <Tooltip
+                              label={
+                                room.game_mode === "remote"
+                                  ? "remote"
+                                  : "in-person"
+                              }
+                            >
+                              <Text
+                                fw={500}
+                                c={
+                                  room.game_mode === "remote"
+                                    ? "orange"
+                                    : "blue"
+                                }
+                              >
+                                {room.name}
+                              </Text>
                             </Tooltip>
                             {room.isCreator && (
                               <Tooltip label="You created this room">
@@ -571,12 +590,12 @@ export default function Home() {
                     {isAddingRoom && (
                       <Table.Tr>
                         <Table.Td>
-                            <TextInput
-                              placeholder="Room name"
-                              value={newRoomName}
-                              onChange={(e) => setNewRoomName(e.target.value)}
-                              size="xs"
-                            />
+                          <TextInput
+                            placeholder="Room name"
+                            value={newRoomName}
+                            onChange={(e) => setNewRoomName(e.target.value)}
+                            size="xs"
+                          />
                         </Table.Td>
                         <Table.Td>
                           <Text fs="italic" size="sm" c="dimmed">
@@ -584,7 +603,7 @@ export default function Home() {
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                        <Group gap="xs">
+                          <Group gap="xs">
                             <Select
                               placeholder="Card depth filter"
                               value={cardDepthFilter}
@@ -611,7 +630,9 @@ export default function Home() {
                           <Group gap="xs">
                             <Button
                               size="xs"
-                              onClick={() => handleCreateRoom(cardDepthFilter, isRemote)}
+                              onClick={() =>
+                                handleCreateRoom(cardDepthFilter, isRemote)
+                              }
                               disabled={!newRoomName.trim()}
                             >
                               Create

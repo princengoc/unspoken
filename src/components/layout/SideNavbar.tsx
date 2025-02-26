@@ -128,7 +128,7 @@ export function SideNavbar({
 
   // Handle exchange icon click
   const handleExchangeIconClick = () => {
-      onViewChange?.("exchange");
+    onViewChange?.("exchange");
   };
 
   const handleAvatarClick = () => {
@@ -184,12 +184,7 @@ export function SideNavbar({
           </Tooltip>
 
           {/* Exchange requests with notification badge */}
-          <Tooltip
-            label={
-              "Exchange requests"
-            }
-            position="right"
-          >
+          <Tooltip label={"Exchange requests"} position="right">
             <ActionIcon
               onClick={handleExchangeIconClick}
               variant="subtle"

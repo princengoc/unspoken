@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Group, Text, Box, Paper, Stack } from "@mantine/core";
 import { SlideIn } from "@/components/animations/Motion";
-import { MiniCard} from "./CardDeck/MiniCard";
+import { MiniCard } from "./CardDeck/MiniCard";
 import { PlayerAssignment } from "./statusBarUtils";
 import { Card as CardType } from "@/core/game/types";
 import { ReactionsFeed } from "./ReactionsFeed";
@@ -32,18 +32,20 @@ interface PlayerCardGridRemoteProps {
   playerAssignments: Map<string, PlayerAssignment>;
 }
 
-export function PlayerCardGridRemote({ 
-  cardInfos, 
+export function PlayerCardGridRemote({
+  cardInfos,
   roomId,
-  showSender = false, 
+  showSender = false,
   animate = true,
   highlightPlayerId = null,
   title = null,
   actionButtons,
-  playerAssignments
+  playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
-  const [cardAudios, setCardAudios] = useState<Map<string, AudioMessage[]>>(new Map());
+  const [cardAudios, setCardAudios] = useState<Map<string, AudioMessage[]>>(
+    new Map(),
+  );
   const [loading, setLoading] = useState(true);
 
   // Load all audio messages for each card
@@ -51,27 +53,31 @@ export function PlayerCardGridRemote({
     const fetchAllAudios = async () => {
       setLoading(true);
       const newCardAudios = new Map<string, AudioMessage[]>();
-      
+
       try {
         // Get all public audio messages for the room
-        const allAudios = await audioMessagesService.getAvailableAudioMessages(roomId, user.id);
-        
+        const allAudios = await audioMessagesService.getAvailableAudioMessages(
+          roomId,
+          user.id,
+        );
+
         // Group by sender (which is the player who spoke about a card)
-        cardInfos.forEach(info => {
+        cardInfos.forEach((info) => {
           const playerAudios = allAudios.filter(
-            audio => audio.sender_id === info.playerId && audio.is_public
+            (audio) => audio.sender_id === info.playerId && audio.is_public,
           );
-          
+
           // Also include private messages intended for this user
           const privateAudios = allAudios.filter(
-            audio => audio.sender_id === info.playerId && 
-                    !audio.is_public && 
-                    audio.receiver_id === user.id
+            (audio) =>
+              audio.sender_id === info.playerId &&
+              !audio.is_public &&
+              audio.receiver_id === user.id,
           );
-          
+
           newCardAudios.set(info.playerId, [...playerAudios, ...privateAudios]);
         });
-        
+
         setCardAudios(newCardAudios);
       } catch (error) {
         console.error("Failed to fetch audio messages:", error);
@@ -79,24 +85,30 @@ export function PlayerCardGridRemote({
         setLoading(false);
       }
     };
-    
+
     fetchAllAudios();
   }, [roomId, user.id, cardInfos]);
 
   return (
     <>
-      {title && <Text fw={500} mb="xs">{title}</Text>}
+      {title && (
+        <Text fw={500} mb="xs">
+          {title}
+        </Text>
+      )}
       <Group align="start" justify="center" gap="xl">
         {cardInfos.map((info, index) => {
           // Filter out undefined/null cards
           if (!info.card) return null;
-          
+
           // Check if this card should be highlighted
-          const isHighlighted = highlightPlayerId ? info.playerId === highlightPlayerId : false;
-          
+          const isHighlighted = highlightPlayerId
+            ? info.playerId === highlightPlayerId
+            : false;
+
           // Get any audio messages for this card
           const audioMessages = cardAudios.get(info.playerId) || [];
-          
+
           // Prepare the card component with appropriate props
           const cardContent = (
             <Box>
@@ -110,14 +122,12 @@ export function PlayerCardGridRemote({
                 contributorAssignment={info.contributorAssignment}
                 contributorName={info.contributorName}
               />
-              
+
               {/* Render action buttons if provided */}
               {actionButtons && !isHighlighted && (
-                <Box mt="xs">
-                  {actionButtons(info.playerId)}
-                </Box>
+                <Box mt="xs">{actionButtons(info.playerId)}</Box>
               )}
-              
+
               {/* Render ReactionsFeed for this card */}
               <Box mt="sm">
                 <ReactionsFeed
@@ -128,13 +138,15 @@ export function PlayerCardGridRemote({
                   playerAssignments={playerAssignments || new Map()}
                 />
               </Box>
-              
+
               {/* Render Audio Messages for this card */}
               {audioMessages.length > 0 && (
                 <Paper p="xs" radius="md" withBorder mt="sm">
                   <Stack gap="xs">
-                    <Text size="sm" fw={500}>Audio Messages ({audioMessages.length})</Text>
-                    {audioMessages.map(message => (
+                    <Text size="sm" fw={500}>
+                      Audio Messages ({audioMessages.length})
+                    </Text>
+                    {audioMessages.map((message) => (
                       <AudioPlayer key={message.id} message={message} />
                     ))}
                   </Stack>
@@ -142,7 +154,7 @@ export function PlayerCardGridRemote({
               )}
             </Box>
           );
-          
+
           // Apply animation if needed
           return animate ? (
             <SlideIn key={info.playerId + index} delay={index * 0.1}>
@@ -153,8 +165,12 @@ export function PlayerCardGridRemote({
           );
         })}
       </Group>
-      
-      {loading && <Text ta="center" c="dimmed" mt="lg">Loading audio messages...</Text>}
+
+      {loading && (
+        <Text ta="center" c="dimmed" mt="lg">
+          Loading audio messages...
+        </Text>
+      )}
     </>
   );
 }

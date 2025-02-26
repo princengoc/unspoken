@@ -7,9 +7,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import {
-  exchangeRequestsService,
-} from "@/services/supabase/exchangeRequests";
+import { exchangeRequestsService } from "@/services/supabase/exchangeRequests";
 import { useAuth } from "@/context/AuthProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";

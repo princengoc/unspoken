@@ -140,13 +140,13 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
   const finishSpeaking = useCallback(
     async (speakerId: string, isRemote?: boolean) => {
       if (!room?.id) throw new Error("No active room");
-  
+
       try {
         if (isRemote) {
           // For remote mode, the creator can end the reviewing phase
           // This moves directly to endgame without active_player_id rotation
           await roomsService.finishRemoteSpeaking(room.id, speakerId);
-          
+
           // Optimistically update room state
           setRoom((prev) =>
             prev
@@ -155,13 +155,13 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
                   phase: "endgame" as GamePhase,
                   active_player_id: null,
                 }
-              : null
+              : null,
           );
         } else {
           // Original behavior for IRL mode
           const { next_phase, next_speaker_id } =
             await roomsService.finishSpeaking(room.id, speakerId);
-  
+
           // Optimistically update room state before the subscription effect
           setRoom((prev) =>
             prev
@@ -170,7 +170,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
                   phase: next_phase,
                   active_player_id: next_speaker_id,
                 }
-              : null
+              : null,
           );
         }
       } catch (error) {
@@ -178,18 +178,18 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
         throw error;
       }
     },
-    [room?.id]
+    [room?.id],
   );
 
   const startSpeakingPhase = useCallback(
     async (creatorId: string, isRemote?: boolean) => {
       if (!room?.id) throw new Error("No active room");
-  
+
       try {
         if (isRemote) {
           // For remote mode, just update the phase without selecting a speaker
           await roomsService.startRemoteSpeakingPhase(room.id, creatorId);
-          
+
           // Optimistically update room state
           setRoom((prev) =>
             prev
@@ -198,13 +198,13 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
                   phase: "speaking" as GamePhase,
                   active_player_id: null, // No active player in remote mode
                 }
-              : null
+              : null,
           );
         } else {
           // Original behavior for IRL mode
           const { next_phase, first_speaker_id } =
             await roomsService.startSpeakingPhase(room.id, creatorId);
-  
+
           // Optimistically update room state before the subscription effect
           setRoom((prev) =>
             prev
@@ -213,7 +213,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
                   phase: next_phase,
                   active_player_id: first_speaker_id,
                 }
-              : null
+              : null,
           );
         }
       } catch (error) {
@@ -221,7 +221,7 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
         throw error;
       }
     },
-    [room?.id]
+    [room?.id],
   );
 
   const startNextRound = useCallback(

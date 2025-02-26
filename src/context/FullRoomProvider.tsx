@@ -110,17 +110,14 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
     [currentMember?.id, cardState, room],
   );
 
-  const isSetupComplete = useMemo(
-    () => {
-      // For remote mode, check if all members have spoken
-      if (room?.game_mode === "remote") {
-        return members.every(member => member.has_spoken);
-      }
-      // For normal mode, keep the existing logic
-      return allMembersHaveSelectedCards(members, cardState.selectedCards);
-    },
-    [members, cardState.selectedCards, room?.game_mode]
-  );
+  const isSetupComplete = useMemo(() => {
+    // For remote mode, check if all members have spoken
+    if (room?.game_mode === "remote") {
+      return members.every((member) => member.has_spoken);
+    }
+    // For normal mode, keep the existing logic
+    return allMembersHaveSelectedCards(members, cardState.selectedCards);
+  }, [members, cardState.selectedCards, room?.game_mode]);
 
   const completeSetup = useCallback(
     async (cardId: string) => {
@@ -154,7 +151,7 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
       console.log(`Invalid finishSpeaking call: member ID ${currentMemberId}`);
       return;
     }
-    
+
     try {
       if (room?.game_mode === "remote") {
         // In remote mode, this is called by the creator to end the reviewing phase

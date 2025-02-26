@@ -11,7 +11,12 @@ import {
   Badge,
   Loader,
 } from "@mantine/core";
-import { IconRepeat, IconArrowRight, IconExchange, IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconRepeat,
+  IconArrowRight,
+  IconExchange,
+  IconInfoCircle,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { motion } from "framer-motion";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
@@ -24,11 +29,11 @@ import { getPlayerAssignments } from "../statusBarUtils";
 import { RoomSettings, EnrichedExchangeRequest } from "@/core/game/types";
 import { GameSettingsForm } from "@/components/room/GameSettingsForm";
 import { PlayerCardGrid, PlayerCardInfo } from "../PlayerCardGrid";
-import { 
-  getAllMatchedExchanges, 
-  enrichExchanges, 
-  groupExchangesByReceiver 
-}  from "@/services/supabase/exchangeUtils";
+import {
+  getAllMatchedExchanges,
+  enrichExchanges,
+  groupExchangesByReceiver,
+} from "@/services/supabase/exchangeUtils";
 
 type EndgameProp = {
   roomId: string;
@@ -47,7 +52,9 @@ export function Endgame({ roomId }: EndgameProp) {
     is_exchange: true,
   });
   const [loading, setLoading] = useState(false);
-  const [matchedExchanges, setMatchedExchanges] = useState<EnrichedExchangeRequest[]>([]);
+  const [matchedExchanges, setMatchedExchanges] = useState<
+    EnrichedExchangeRequest[]
+  >([]);
   const [loadingExchanges, setLoadingExchanges] = useState(false);
 
   const playerAssignments = getPlayerAssignments(members, roomId);
@@ -60,7 +67,11 @@ export function Endgame({ roomId }: EndgameProp) {
       console.log("Fetched matched exchanges");
       try {
         const exchanges = await getAllMatchedExchanges(roomId);
-        const enrichedExchanges = enrichExchanges(exchanges, getCardById, members);
+        const enrichedExchanges = enrichExchanges(
+          exchanges,
+          getCardById,
+          members,
+        );
         setMatchedExchanges(enrichedExchanges);
       } catch (error) {
         console.error("Failed to load matched exchanges:", error);
@@ -82,7 +93,9 @@ export function Endgame({ roomId }: EndgameProp) {
   }, [room?.card_depth]);
 
   // Map regular player cards for display
-  const playerCardsInfo: PlayerCardInfo[] = Object.entries(cardState.selectedCards)
+  const playerCardsInfo: PlayerCardInfo[] = Object.entries(
+    cardState.selectedCards,
+  )
     .map(([playerId, cardId]) => {
       const player = members.find((m) => m.id === playerId);
       const card = getCardById(cardId);
@@ -93,7 +106,7 @@ export function Endgame({ roomId }: EndgameProp) {
       const contributor = contributorId
         ? members.find((m) => m.id === contributorId)
         : undefined;
-      
+
       return {
         playerId,
         playerName: player?.username || "Unknown Player",
@@ -111,15 +124,15 @@ export function Endgame({ roomId }: EndgameProp) {
   // Combine all exchange cards into a single array for unified display
   const getAllExchangeCards = (): PlayerCardInfo[] => {
     const allExchangeCards: PlayerCardInfo[] = [];
-    
+
     // Group exchanges by receiver
     const exchangesByReceiver = groupExchangesByReceiver(matchedExchanges);
-    
+
     // For each receiver, process their exchanges
-    exchangesByReceiver.forEach((exchanges, receiverId) => {
-      exchanges.forEach(exchange => {
-        const receiver = members.find(m => m.id === exchange.to_id);
-        
+    exchangesByReceiver.forEach((exchanges) => {
+      exchanges.forEach((exchange) => {
+        const receiver = members.find((m) => m.id === exchange.to_id);
+
         allExchangeCards.push({
           playerId: exchange.to_id, // The person who will respond to this card
           playerName: receiver?.username || "Unknown Player",
@@ -127,11 +140,11 @@ export function Endgame({ roomId }: EndgameProp) {
           card: exchange.card!,
           contributorId: exchange.from_id, // The person who sent this challenge
           contributorName: exchange.otherPlayer?.username,
-          contributorAssignment: playerAssignments.get(exchange.from_id)
+          contributorAssignment: playerAssignments.get(exchange.from_id),
         });
       });
     });
-    
+
     return allExchangeCards;
   };
 
@@ -142,7 +155,7 @@ export function Endgame({ roomId }: EndgameProp) {
     try {
       const exchangeSuccess = await roomsService.startExchangeRound(roomId);
       console.log(`Exchange success: ${exchangeSuccess}`);
-      
+
       notifications.show({
         title: "Success",
         message: "Exchange round started!",
@@ -170,9 +183,9 @@ export function Endgame({ roomId }: EndgameProp) {
         ...nextRoundSettings,
         is_exchange: false,
       };
-      
+
       await startNextRound(newGameSettings);
-      
+
       notifications.show({
         title: "Success",
         message: "New game started!",
@@ -192,7 +205,7 @@ export function Endgame({ roomId }: EndgameProp) {
 
   const renderExchangeSection = () => {
     if (room?.is_exchange) {
-      console.log('Room already has exchange');
+      console.log("Room already has exchange");
       return renderPlayAgainSection();
     }
 
@@ -209,7 +222,7 @@ export function Endgame({ roomId }: EndgameProp) {
 
     // Get all exchange cards
     const allExchangeCards = getAllExchangeCards();
-    
+
     if (allExchangeCards.length === 0) {
       return renderPlayAgainSection();
     }
@@ -223,18 +236,19 @@ export function Endgame({ roomId }: EndgameProp) {
             <Title order={4}>Exchange Round</Title>
             <Badge color="blue">New</Badge>
           </Group>
-  
+
           <Text>
-            Players have matched exchanges! Time for a special round where everyone responds to the cards they've been challenged with.
+            Players have matched exchanges! Time for a special round where
+            everyone responds to the cards they've been challenged with.
           </Text>
-  
-          <PlayerCardGrid 
+
+          <PlayerCardGrid
             cardInfos={allExchangeCards}
-            showSender={true} 
+            showSender={true}
             animate={false}
             highlightPlayerId={currentMember?.id || null}
           />
-  
+
           {isCreator && (
             <Group justify="center" mt="md">
               <Button
@@ -248,7 +262,7 @@ export function Endgame({ roomId }: EndgameProp) {
               </Button>
             </Group>
           )}
-  
+
           {!isCreator && (
             <Text ta="center" c="dimmed" mt="md">
               Waiting for the room creator to start the exchange round...
@@ -279,7 +293,9 @@ export function Endgame({ roomId }: EndgameProp) {
               disabled={!isCreator}
               loading={loading}
             >
-              {isCreator ? "Start New Game" : "Waiting for creator to start new game..."}
+              {isCreator
+                ? "Start New Game"
+                : "Waiting for creator to start new game..."}
             </Button>
             <Button
               size="md"
@@ -304,8 +320,7 @@ export function Endgame({ roomId }: EndgameProp) {
             {room?.is_exchange ? "Exchange Round Complete" : "Game Complete"}
           </Title>
           <Text ta="center" size="md" c="dimmed" mb="xs">
-            Thanks for playing! 
-            Here's what everyone shared:
+            Thanks for playing! Here's what everyone shared:
           </Text>
         </FadeIn>
 
@@ -320,9 +335,9 @@ export function Endgame({ roomId }: EndgameProp) {
               Your card is highlighted in blue
             </Text>
           </Group>
-          
-          <PlayerCardGrid 
-            cardInfos={playerCardsInfo} 
+
+          <PlayerCardGrid
+            cardInfos={playerCardsInfo}
             showSender={false}
             highlightPlayerId={currentMember?.id || null}
           />
@@ -330,7 +345,6 @@ export function Endgame({ roomId }: EndgameProp) {
 
         {/* Show exchange section if available, otherwise show play again */}
         {renderExchangeSection()}
-
       </Stack>
     </Container>
   );

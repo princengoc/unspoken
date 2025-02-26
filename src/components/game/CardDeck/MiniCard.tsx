@@ -120,16 +120,14 @@ export function MiniCard({
               ],
             }
           : isHighlighted
-          ? {
-              boxShadow: [
-                "0 0 5px rgba(34, 139, 230, 0.3)",
-              ],
-            }
-          : {}
+            ? {
+                boxShadow: ["0 0 5px rgba(34, 139, 230, 0.3)"],
+              }
+            : {}
       }
       transition={{
         duration: 0.3,
-        repeat: (isSelected) ? Infinity : 0,
+        repeat: isSelected ? Infinity : 0,
         repeatType: "reverse",
       }}
     >
@@ -139,10 +137,12 @@ export function MiniCard({
         radius="md"
         style={{
           cursor: onClick ? "pointer" : "default",
-          borderColor: isHighlighted 
-            ? highlightColor 
-            : isSelected ? moodStyles?.color : undefined,
-          borderWidth: (isSelected || isHighlighted) ? "2px" : "1px",
+          borderColor: isHighlighted
+            ? highlightColor
+            : isSelected
+              ? moodStyles?.color
+              : undefined,
+          borderWidth: isSelected || isHighlighted ? "2px" : "1px",
           width: width,
           height: height,
           backgroundColor: isHighlighted ? highlightBackgroundColor : undefined,
@@ -197,9 +197,7 @@ export function MiniCard({
                   size="xs"
                   showTooltip={false}
                 />
-                <IconMicrophone
-                  size={14}
-                />                
+                <IconMicrophone size={14} />
               </Box>
             </Tooltip>
           )}
@@ -207,7 +205,11 @@ export function MiniCard({
           {/* Contributor/Sender - bottom left corner */}
           {showSender && contributorAssignment && (
             <Tooltip
-              label={"Asked by " + contributorName || card.contributor_id || "Anonymous"}
+              label={
+                "Asked by " + contributorName ||
+                card.contributor_id ||
+                "Anonymous"
+              }
               position="bottom"
               withArrow
             >
@@ -226,9 +228,7 @@ export function MiniCard({
                   size="xs"
                   showTooltip={false}
                 />
-                <IconEar
-                  size={14}
-                />
+                <IconEar size={14} />
               </Box>
             </Tooltip>
           )}
@@ -253,9 +253,7 @@ export function MiniCard({
                 <Avatar size="xs" radius="xl" color="gray">
                   {card.contributor_id.charAt(0).toUpperCase()}
                 </Avatar>
-                <IconEar
-                  size={14}
-                />
+                <IconEar size={14} />
               </Box>
             </Tooltip>
           )}

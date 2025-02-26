@@ -209,19 +209,20 @@ export const roomsService = {
     return data;
   },
 
-  async startExchangeRound(
-    roomId: string
-  ): Promise<boolean> {
+  async startExchangeRound(roomId: string): Promise<boolean> {
     const { data, error } = await supabase.rpc("start_exchange_round", {
       p_room_id: roomId,
     });
 
     if (error) throw error;
-    return data as boolean;    
+    return data as boolean;
   },
 
   // Method for remote mode: start speaking phase without selecting a speaker
-  async startRemoteSpeakingPhase(roomId: string, creatorId: string): Promise<void> {
+  async startRemoteSpeakingPhase(
+    roomId: string,
+    creatorId: string,
+  ): Promise<void> {
     const { error } = await supabase
       .from("rooms")
       .update({
@@ -233,7 +234,7 @@ export const roomsService = {
 
     if (error) throw error;
   },
-  
+
   // Method for remote mode: finish speaking phase and go to endgame
   async finishRemoteSpeaking(roomId: string, creatorId: string): Promise<void> {
     const { error } = await supabase
@@ -246,7 +247,7 @@ export const roomsService = {
       .eq("created_by", creatorId); // Only creator can do this
 
     if (error) throw error;
-  },  
+  },
 
   subscribeToRoom(roomId: string, callback: (room: Room) => void) {
     return supabase

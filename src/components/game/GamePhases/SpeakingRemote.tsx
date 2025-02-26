@@ -20,24 +20,31 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   const { finishSpeaking, isCreator } = useFullRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members, currentMember } = useRoomMembers();
-  const [recordingForPlayer, setRecordingForPlayer] = useState<string | null>(null);
-  const [reactionForCard, setReactionForCard] = useState<{playerId: string, cardId: string} | null>(null);
+  const [recordingForPlayer, setRecordingForPlayer] = useState<string | null>(
+    null,
+  );
+  const [reactionForCard, setReactionForCard] = useState<{
+    playerId: string;
+    cardId: string;
+  } | null>(null);
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 
   // Convert selected cards into the format needed for PlayerCardGrid
-  const playerCardsInfo: PlayerCardInfo[] = Object.entries(cardState.selectedCards)
+  const playerCardsInfo: PlayerCardInfo[] = Object.entries(
+    cardState.selectedCards,
+  )
     .map(([playerId, cardId]) => {
       const player = members.find((m) => m.id === playerId);
       const card = getCardById(cardId);
 
       if (!card) return null;
-      
+
       return {
         playerId,
         playerName: player?.username || "Unknown Player",
         playerAssignment: playerAssignments.get(playerId),
-        card: card
+        card: card,
       };
     })
     .filter(Boolean) as PlayerCardInfo[];
@@ -62,14 +69,17 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
 
   return (
     <Stack gap="md">
-      <Title order={3} ta="center">Shared Stories</Title>
+      <Title order={3} ta="center">
+        Shared Stories
+      </Title>
       <Text ta="center" c="dimmed">
-        Review cards and reactions from all players. You can react to cards or record audio messages.
+        Review cards and reactions from all players. You can react to cards or
+        record audio messages.
       </Text>
 
       <Paper p="md" withBorder shadow="sm">
-        <PlayerCardGridRemote 
-          cardInfos={playerCardsInfo} 
+        <PlayerCardGridRemote
+          cardInfos={playerCardsInfo}
           roomId={roomId}
           showSender={false}
           animate={false}
@@ -77,17 +87,19 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
           playerAssignments={playerAssignments}
           actionButtons={(playerId) => (
             <Group gap="xs">
-              <Button 
-                leftSection={<IconMessageCircle size={16} />} 
-                size="xs" 
+              <Button
+                leftSection={<IconMessageCircle size={16} />}
+                size="xs"
                 variant="light"
-                onClick={() => handleReactToCard(playerId, cardState.selectedCards[playerId])}
+                onClick={() =>
+                  handleReactToCard(playerId, cardState.selectedCards[playerId])
+                }
               >
                 React
               </Button>
-              <Button 
-                leftSection={<IconMicrophone size={16} />} 
-                size="xs" 
+              <Button
+                leftSection={<IconMicrophone size={16} />}
+                size="xs"
                 variant="light"
                 onClick={() => handleRecordForPlayer(playerId)}
               >
@@ -100,9 +112,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
 
       {isCreator && (
         <Group justify="center" mt="md">
-          <Button onClick={handleEndReviewingPhase}>
-            End Reviewing Phase
-          </Button>
+          <Button onClick={handleEndReviewingPhase}>End Reviewing Phase</Button>
         </Group>
       )}
 
@@ -116,7 +126,9 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
         {reactionForCard && (
           <Stack gap="md">
             <Text size="sm">
-              Add reactions to {members.find(m => m.id === reactionForCard.playerId)?.username}'s card
+              Add reactions to{" "}
+              {members.find((m) => m.id === reactionForCard.playerId)?.username}
+              's card
             </Text>
             <ListenerReactions
               speakerId={reactionForCard.playerId}
@@ -136,16 +148,17 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
         size="md"
       >
         {recordingForPlayer && (
-            <Stack gap="md">
-              <Text size="sm">
-                Record an audio message for {members.find(m => m.id === recordingForPlayer)?.username}
-              </Text>
-              <AudioRecorder 
-                targetPlayerId={recordingForPlayer}
-                onCancel={() => setRecordingForPlayer(null)}
-                onComplete={() => setRecordingForPlayer(null)}
-              />
-            </Stack>
+          <Stack gap="md">
+            <Text size="sm">
+              Record an audio message for{" "}
+              {members.find((m) => m.id === recordingForPlayer)?.username}
+            </Text>
+            <AudioRecorder
+              targetPlayerId={recordingForPlayer}
+              onCancel={() => setRecordingForPlayer(null)}
+              onComplete={() => setRecordingForPlayer(null)}
+            />
+          </Stack>
         )}
       </Modal>
     </Stack>

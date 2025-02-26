@@ -118,8 +118,6 @@ export interface EnrichedExchangeRequest extends ExchangeRequest {
   card?: Card;
 }
 
-
-
 // Utility functions remain the same
 export const deduplicateCardsById = (cards: Card[]): Card[] => {
   const uniqueCards = new Map(cards.map((card) => [card.id, card]));
@@ -135,32 +133,3 @@ export const mergeCardsWithDeduplication = (
   );
   return Array.from(uniqueCards.values());
 };
-
-// Functions to deconstruct a room
-export function extractMetadata(room: Room): RoomMetadata {
-  const {
-    id,
-    passcode,
-    created_by,
-    name,
-    created_at,
-    updated_at,
-    is_active,
-    game_mode,
-  } = room;
-  return {
-    id,
-    passcode,
-    created_by,
-    name,
-    created_at,
-    updated_at,
-    is_active,
-    game_mode,
-  };
-}
-
-export function extractGameState(room: Room): GameState {
-  const { phase, active_player_id } = room;
-  return { phase, active_player_id };
-}

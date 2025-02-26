@@ -38,26 +38,27 @@
   - [x] Automatically transition to the exchange phase when available
 
 - [x] **Gameplay Modes and Features**
+
   - [x] Start a new game with a fresh deck (no discard pile).
 
 - **Room management**
+
   - [ ] Allow room creators to delete a room
   - [ ] Allow player to permanently leave a room
   - [ ] Allow direct player invitations (pre-approved join)
 
 - [x] **Implement remote play: audio**
   - [ ] read game_mode: only allow voice for "remote" play (not "irl")
-  - [ ] "remote" play logic 
-    - [ ] allow recording of message at setup. These are public messages. 
-    - [ ] speaking phase is just to review public messages. There will be a grid of "here are the shared messages" with icons underneath. 
+  - [ ] "remote" play logic
+    - [ ] allow recording of message at setup. These are public messages.
+    - [ ] speaking phase is just to review public messages. There will be a grid of "here are the shared messages" with icons underneath.
     - [ ] speaking phase has no "active player".
-    - [ ] player can choose to respond to specific player's cards as public or private. 
+    - [ ] player can choose to respond to specific player's cards as public or private.
 
 BUG FIXES on remote play
-- [ ] after recording, should mark player status as "has_spoken: true", and if has_spoken, then do NOT show the recording button. 
-- [ ] isComplete in setup should be after people have all spoken, NOT after they have selected. 
 
-
+- [ ] after recording, should mark player status as "has_spoken: true", and if has_spoken, then do NOT show the recording button.
+- [ ] isComplete in setup should be after people have all spoken, NOT after they have selected.
 
 - [ ] **Localization**
   - [ ] Translate the game into Vietnamese.

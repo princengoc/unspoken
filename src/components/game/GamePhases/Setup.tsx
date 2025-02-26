@@ -47,15 +47,14 @@ export function Setup() {
     setShowRecorder(false);
     try {
       if (!room?.id || !currentMember?.id) return;
-      
+
       await roomMembersService.updatePlayerState(room.id, currentMember.id, {
-        has_spoken: true
+        has_spoken: true,
       });
     } catch (error) {
       console.error("Failed to update player status:", error);
     }
   }, [room?.id, currentMember?.id]);
-  
 
   const renderContentOnCardsView = () => {
     switch (currentMemberStatus) {
@@ -100,11 +99,11 @@ export function Setup() {
                 <Text size="sm" c="dimmed">
                   This is the card you'll share during your turn
                 </Text>
-                
+
                 {isRemoteMode && (
                   <Box>
                     {!showRecorder && !currentMember?.has_spoken ? (
-                      <Button 
+                      <Button
                         leftSection={<IconMicrophone size={16} />}
                         onClick={() => setShowRecorder(true)}
                         mt="md"
@@ -117,8 +116,8 @@ export function Setup() {
                       </Text>
                     ) : (
                       <Paper p="md" withBorder radius="md" shadow="sm" mt="md">
-                        <AudioRecorder 
-                          isPublic={true} 
+                        <AudioRecorder
+                          isPublic={true}
                           onComplete={handleRecordComplete}
                           onCancel={() => setShowRecorder(false)}
                         />
