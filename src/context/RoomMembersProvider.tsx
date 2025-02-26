@@ -34,8 +34,10 @@ export function RoomMembersProvider({
 
   // Set up real-time sync
   useEffect(() => {
+    console.log(`Initializing a subscription in room members provider: ${JSON.stringify(members)}`);
     // Initial fetch
     const fetchMembers = async () => {
+      console.log(`Fetching members: ${JSON.stringify(members)}`);
       try {
         const initialMembers = await roomMembersService.getRoomMembers(roomId);
         setMembers(initialMembers);

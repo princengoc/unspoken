@@ -209,6 +209,17 @@ export const roomsService = {
     return data;
   },
 
+  async startExchangeRound(
+    roomId: string
+  ): Promise<boolean> {
+    const { data, error } = await supabase.rpc("start_exchange_round", {
+      p_room_id: roomId,
+    });
+
+    if (error) throw error;
+    return data as boolean;    
+  },
+
   subscribeToRoom(roomId: string, callback: (room: Room) => void) {
     return supabase
       .channel(`rooms:${roomId}`)

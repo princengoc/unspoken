@@ -60,7 +60,6 @@ export type RoomSettings = {
   card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
   deal_extras: boolean; // If true, deal extra cards from cards table, otherwise, use ripples and exchanges only
   is_exchange: boolean; // If true, this is an exchange round. Auto-update by server
-  exchange_available: boolean; // if true, there is at least one pair of players with matched exchange. Auto-updated by server
 };
 
 export type Room = RoomMetadata & RoomSettings & GameState;

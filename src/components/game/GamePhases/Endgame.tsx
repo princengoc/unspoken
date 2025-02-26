@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useFullRoom } from "@/context/FullRoomProvider";
+import { roomsService } from "@/services/supabase/rooms";
 import { useRoom } from "@/context/RoomProvider";
 import { FadeIn } from "@/components/animations/Motion";
 import { getPlayerAssignments } from "../statusBarUtils";
@@ -55,8 +56,8 @@ export function Endgame({ roomId }: EndgameProp) {
   useEffect(() => {
     const fetchMatchedExchanges = async () => {
       if (!roomId) return;
-      console.log(`Fetching matched exchanges`);
       setLoadingExchanges(true);
+      console.log("Fetched matched exchanges");
       try {
         const exchanges = await getAllMatchedExchanges(roomId);
         const enrichedExchanges = enrichExchanges(exchanges, getCardById, members);
@@ -69,7 +70,7 @@ export function Endgame({ roomId }: EndgameProp) {
     };
 
     fetchMatchedExchanges();
-  }, [roomId, getCardById, members]);
+  }, [roomId, getCardById]);
 
   useEffect(() => {
     if (room?.card_depth) {
@@ -135,17 +136,12 @@ export function Endgame({ roomId }: EndgameProp) {
   };
 
   const handleStartExchange = async () => {
-    if (!isCreator) return;
+    if (!isCreator || !roomId) return;
 
     setLoading(true);
     try {
-      // Set is_exchange to true for exchange round
-      const exchangeSettings = {
-        ...nextRoundSettings,
-        is_exchange: true,
-      };
-      
-      await startNextRound(exchangeSettings);
+      const exchangeSuccess = await roomsService.startExchangeRound(roomId);
+      console.log(`Exchange success: ${exchangeSuccess}`);
       
       notifications.show({
         title: "Success",
@@ -196,6 +192,7 @@ export function Endgame({ roomId }: EndgameProp) {
 
   const renderExchangeSection = () => {
     if (room?.is_exchange) {
+      console.log('Room already has exchange');
       return renderPlayAgainSection();
     }
 
@@ -214,7 +211,6 @@ export function Endgame({ roomId }: EndgameProp) {
     const allExchangeCards = getAllExchangeCards();
     
     if (allExchangeCards.length === 0) {
-      // No Matched exchanges found, also render play again
       return renderPlayAgainSection();
     }
 
@@ -280,9 +276,10 @@ export function Endgame({ roomId }: EndgameProp) {
               leftSection={<IconRepeat size={18} />}
               onClick={handleStartNewGame}
               color="indigo"
+              disabled={!isCreator}
               loading={loading}
             >
-              Start New Game
+              {isCreator ? "Start New Game" : "Waiting for creator to start new game..."}
             </Button>
             <Button
               size="md"

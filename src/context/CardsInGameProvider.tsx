@@ -87,23 +87,7 @@ export function CardsInGameProvider({
 
   // Initialize card state and dictionary
   useEffect(() => {
-    const initializeCards = async () => {
-      try {
-        // Get initial card state
-        const initialState =
-          await cardsInRoomsService.fetchCurrentCardState(roomId);
-        setCardState(initialState);
-
-        // Initialize card dictionary with all cards in the room
-        await updateCardDictionary(initialState.roomPile);
-      } catch (error) {
-        console.error("Failed to initialize cards:", error);
-      }
-    };
-
-    initializeCards();
-
-    // Subscribe to card state changes
+    // Subscribe to card state changes. This already includes an initialization
     const subscription = cardsInRoomsService.subscribeToCardStateChanges(
       roomId,
       async (newState) => {
@@ -116,7 +100,7 @@ export function CardsInGameProvider({
     return () => {
       subscription.unsubscribe();
     };
-  }, [roomId, updateCardDictionary]);
+  }, [roomId]);
 
   // Card lookup helpers
   const getCardById = (cardId: string) => cardDictionary.get(cardId);
