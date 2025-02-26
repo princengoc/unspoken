@@ -122,18 +122,13 @@ export function SideNavbar({
     }
   };
 
-  // can view exchange only at browsing
-  const canViewExchange = currentMemberStatus === "browsing";
-
   const handlePhaseIconClick = () => {
     onViewChange?.("cards");
   };
 
   // Handle exchange icon click
   const handleExchangeIconClick = () => {
-    if (canViewExchange) {
       onViewChange?.("exchange");
-    }
   };
 
   const handleAvatarClick = () => {
@@ -191,7 +186,7 @@ export function SideNavbar({
           {/* Exchange requests with notification badge */}
           <Tooltip
             label={
-              canViewExchange ? "Exchange requests" : "Exchange not available"
+              "Exchange requests"
             }
             position="right"
           >
@@ -199,8 +194,6 @@ export function SideNavbar({
               onClick={handleExchangeIconClick}
               variant="subtle"
               size="lg"
-              disabled={!canViewExchange}
-              color={!canViewExchange ? "gray" : undefined}
             >
               {hasMatch ? (
                 <Indicator
@@ -211,7 +204,7 @@ export function SideNavbar({
                 >
                   <IconExchange size={20} />
                 </Indicator>
-              ) : exchangeUpdatesCount > 0 && canViewExchange ? (
+              ) : exchangeUpdatesCount > 0 ? (
                 <Indicator
                   label={exchangeUpdatesCount}
                   inline

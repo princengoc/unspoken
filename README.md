@@ -29,13 +29,12 @@
   - [x] Display list of rooms on main page, in addition to create room / join room.
   - [x] Allow reading three cards at once, remove tags
   - [x] Display the name of the player making a request.
-
-- Room Settings: allow card depth filter
+  - [x] Room Settings: allow card depth filter
 
 - [ ] **Gameplay Mechanics: Exchange System**
 
+  - [x] Make the exchange tab available at all times.
   - [ ] Exchange reset on subsequent round
-  - [ ] Make the exchange tab available at all times.
   - [ ] Force matched exchanges in two-player mode.
   - [ ] Automatically transition to the exchange phase when both players agree.
 
