@@ -1,6 +1,6 @@
 // src/components/room/GameSettingsForm.tsx
 import { useState } from "react";
-import { Switch, Select, Group } from "@mantine/core";
+import { Select, Group } from "@mantine/core";
 import type { RoomSettings } from "@/core/game/types";
 
 interface GameSettingsFormProps {
@@ -25,18 +25,18 @@ export function GameSettingsForm({
     setSettings(newSettings);
     onChange(newSettings);
   };
+  console.log(`Removed deal extras for now. ${dealExtrasDescription}`);
 
   return (
     <Group gap="xs" justify="flex-start">
-      <Switch
+      {/* <Switch
         label="Deal New Cards"
         description={dealExtrasDescription}
         checked={settings.deal_extras}
         onChange={(event) => {
           handleSettingChange({ deal_extras: event.currentTarget.checked });
         }}
-      />
-
+      /> */}
       <Select
         label="Card Depth"
         description={

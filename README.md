@@ -31,20 +31,27 @@
   - [x] Display the name of the player making a request.
   - [x] Room Settings: allow card depth filter
 
-- [ ] **Gameplay Mechanics: Exchange System**
+- [x] **Gameplay Mechanics: Exchange System**
 
   - [x] Make the exchange tab available at all times.
-  - [ ] Exchange reset on subsequent round
-  - [ ] Force matched exchanges in two-player mode.
-  - [ ] Automatically transition to the exchange phase when both players agree.
+  - [x] Exchange reset on subsequent round
+  - [x] Automatically transition to the exchange phase when available
 
-- [ ] **Gameplay Modes and Features**
+- [x] **Gameplay Modes and Features**
+  - [x] Start a new game with a fresh deck (no discard pile).
 
-  - [ ] Limit encore mode to reuse existing cards only.
-  - [ ] Start a new game with a fresh deck (no discard pile).
+- **Room management**
+  - [ ] Allow room creators to delete a room
+  - [ ] Allow player to permanently leave a room
+  - [ ] Allow direct player invitations (pre-approved join)
 
 - [x] **Implement remote play: audio**
-- [ ] read game_mode: only allow voice for "remote" play (not "irl")
+  - [ ] read game_mode: only allow voice for "remote" play (not "irl")
+  - [ ] "remote" play logic 
+    - [ ] allow recording of message at setup. These are public messages. 
+    - [ ] speaking phase is just to review public messages. There will be a grid of "here are the shared messages" with icons underneath. 
+    - [ ] speaking phase has no "active player".
+    - [ ] player can choose to respond to specific player's cards as public or private. 
 
 
 - [ ] **Localization**
