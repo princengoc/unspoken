@@ -1,17 +1,20 @@
+// src/context/AudioMessagesProvider.tsx
 import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   ReactNode,
+  useMemo,
 } from "react";
 import { AudioMessage, AudioPrivacy } from "@/core/audio/types";
 import { audioMessagesService } from "@/services/supabase/audio-messages";
 import { useAuth } from "./AuthProvider";
 
 interface AudioMessagesContextType {
-  // State
+  // Enhanced state with grouped messages
   messages: AudioMessage[];
+  messagesByPlayer: Map<string, AudioMessage[]>;
   loading: boolean;
   recording: boolean;
 
@@ -46,6 +49,21 @@ export function AudioMessagesProvider({
   const [messages, setMessages] = useState<AudioMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
+
+  // Group messages by player ID (sender_id)
+  const messagesByPlayer = useMemo(() => {
+    const grouped = new Map<string, AudioMessage[]>();
+
+    messages.forEach((message) => {
+      const playerId = message.sender_id;
+      if (!grouped.has(playerId)) {
+        grouped.set(playerId, []);
+      }
+      grouped.get(playerId)!.push(message);
+    });
+
+    return grouped;
+  }, [messages]);
 
   useEffect(() => {
     if (!user?.id || !roomId) return;
@@ -92,18 +110,20 @@ export function AudioMessagesProvider({
     if (!user?.id) return false;
 
     try {
+      // Optimistically update UI
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+
       const success = await audioMessagesService.markMessageAsListened(
         messageId,
         user.id,
       );
+
       console.log(`Success after mark as listened clicked: ${success}`);
-      if (success) {
-        // Remove from local state immediately for a responsive UI
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      }
       return success;
     } catch (error) {
       console.error("Error marking message as listened:", error);
+      // On error, refresh to get the correct state
+      await refreshMessages();
       return false;
     }
   };
@@ -129,6 +149,7 @@ export function AudioMessagesProvider({
 
   const value = {
     messages,
+    messagesByPlayer,
     loading,
     recording,
     sendAudioMessage,

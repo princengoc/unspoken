@@ -19,9 +19,9 @@ import {
   IconWorldUpload,
 } from "@tabler/icons-react";
 
-import { AudioMessage } from "@/core/audio/types";
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
+import { AudioMessage } from "@/core/audio/types";
 
 interface AudioPlayerProps {
   message: AudioMessage;

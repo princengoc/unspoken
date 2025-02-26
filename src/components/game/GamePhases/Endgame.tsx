@@ -26,7 +26,11 @@ import { roomsService } from "@/services/supabase/rooms";
 import { useRoom } from "@/context/RoomProvider";
 import { FadeIn } from "@/components/animations/Motion";
 import { getPlayerAssignments } from "../statusBarUtils";
-import { RoomSettings, EnrichedExchangeRequest, GameMode } from "@/core/game/types";
+import {
+  RoomSettings,
+  EnrichedExchangeRequest,
+  GameMode,
+} from "@/core/game/types";
 import { GameSettingsForm } from "@/components/room/GameSettingsForm";
 import { PlayerCardGrid, PlayerCardInfo } from "../PlayerCardGrid";
 import {
@@ -50,7 +54,7 @@ export function Endgame({ roomId }: EndgameProp) {
     deal_extras: true,
     card_depth: null,
     is_exchange: true,
-    game_mode: 'irl' as GameMode
+    game_mode: "irl" as GameMode,
   });
   const [loading, setLoading] = useState(false);
   const [matchedExchanges, setMatchedExchanges] = useState<
@@ -280,9 +284,7 @@ export function Endgame({ roomId }: EndgameProp) {
         <Stack gap="md">
           <Title order={4}>Play Again?</Title>
 
-          <GameSettingsForm
-            onChange={setNextRoundSettings}
-          />
+          <GameSettingsForm onChange={setNextRoundSettings} />
 
           <Group justify="center" mt="sm">
             <Button

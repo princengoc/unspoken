@@ -1,15 +1,14 @@
 // src/components/game/PlayerCardGridRemote.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Group, Text, Box, Paper, Stack } from "@mantine/core";
 import { SlideIn } from "@/components/animations/Motion";
 import { MiniCard } from "./CardDeck/MiniCard";
 import { PlayerAssignment } from "./statusBarUtils";
 import { Card as CardType } from "@/core/game/types";
 import { ReactionsFeed } from "./ReactionsFeed";
-import { AudioMessage } from "@/core/audio/types";
 import { AudioPlayer } from "@/components/AudioMessage/AudioPlayer";
-import { audioMessagesService } from "@/services/supabase/audio-messages";
 import { useAuth } from "@/context/AuthProvider";
+import { useAudioMessages } from "@/context/AudioMessagesProvider";
 
 export interface PlayerCardInfo {
   playerId: string;
@@ -43,51 +42,7 @@ export function PlayerCardGridRemote({
   playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
-  const [cardAudios, setCardAudios] = useState<Map<string, AudioMessage[]>>(
-    new Map(),
-  );
-  const [loading, setLoading] = useState(true);
-
-  // Load all audio messages for each card
-  useEffect(() => {
-    const fetchAllAudios = async () => {
-      setLoading(true);
-      const newCardAudios = new Map<string, AudioMessage[]>();
-
-      try {
-        // Get all public audio messages for the room
-        const allAudios = await audioMessagesService.getAvailableAudioMessages(
-          roomId,
-          user.id,
-        );
-
-        // Group by sender (which is the player who spoke about a card)
-        cardInfos.forEach((info) => {
-          const playerAudios = allAudios.filter(
-            (audio) => audio.sender_id === info.playerId && audio.is_public,
-          );
-
-          // Also include private messages intended for this user
-          const privateAudios = allAudios.filter(
-            (audio) =>
-              audio.sender_id === info.playerId &&
-              !audio.is_public &&
-              audio.receiver_id === user.id,
-          );
-
-          newCardAudios.set(info.playerId, [...playerAudios, ...privateAudios]);
-        });
-
-        setCardAudios(newCardAudios);
-      } catch (error) {
-        console.error("Failed to fetch audio messages:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllAudios();
-  }, [roomId, user.id, cardInfos]);
+  const { messagesByPlayer, loading } = useAudioMessages();
 
   return (
     <>
@@ -107,7 +62,7 @@ export function PlayerCardGridRemote({
             : false;
 
           // Get any audio messages for this card
-          const audioMessages = cardAudios.get(info.playerId) || [];
+          const audioMessages = messagesByPlayer.get(info.playerId) || [];
 
           // Prepare the card component with appropriate props
           const cardContent = (

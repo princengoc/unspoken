@@ -16,7 +16,7 @@ export function GameSettingsForm({
     deal_extras: initialSettings.deal_extras || true,
     card_depth: initialSettings.card_depth || null,
     is_exchange: initialSettings.is_exchange || false,
-    game_mode: initialSettings.game_mode || 'irl'
+    game_mode: initialSettings.game_mode || "irl",
   });
 
   const handleSettingChange = (updatedSettings: Partial<RoomSettings>) => {
@@ -30,9 +30,11 @@ export function GameSettingsForm({
       <Switch
         label="Play remote"
         description="Play remote"
-        checked={settings.game_mode === 'remote'}
+        checked={settings.game_mode === "remote"}
         onChange={(event) => {
-          handleSettingChange({ game_mode: event.currentTarget.checked ? 'remote' : 'irl' });
+          handleSettingChange({
+            game_mode: event.currentTarget.checked ? "remote" : "irl",
+          });
         }}
       />
       <Select
