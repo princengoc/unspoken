@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Group, Stack, SimpleGrid, Text, Button } from "@mantine/core";
+import { Group, Stack, Text, Button } from "@mantine/core";
 import { motion } from "framer-motion";
 import type { Card as CardType } from "@/core/game/types";
 import { Card } from "../Card";
@@ -36,49 +36,25 @@ export function CardDeck({ cards, onSelect }: CardDeckProps) {
         Choose the card that resonates with you the most
       </Text>
 
-      {cards.length <= 3 ? (
-        // Display cards in a row for small number of cards
-        <Group align="flex-start" justify="center" gap="md">
-          {cards.map((card) => (
-            <motion.div
-              key={card.id}
-              variants={cardVariants}
-              animate={selectedCardId === card.id ? "selected" : "unselected"}
-              transition={{ duration: 0.3 }}
-              whileHover={{ scale: 1.02 }}
-              style={{ cursor: "pointer" }}
-              onClick={() => handleSelectCard(card.id)}
-            >
-              <Card
-                card={card}
-                selected={selectedCardId === card.id}
-                onSelect={() => handleSelectCard(card.id)}
-              />
-            </motion.div>
-          ))}
-        </Group>
-      ) : (
-        // Use a grid for more cards
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-          {cards.map((card) => (
-            <motion.div
-              key={card.id}
-              variants={cardVariants}
-              animate={selectedCardId === card.id ? "selected" : "unselected"}
-              transition={{ duration: 0.3 }}
-              whileHover={{ scale: 1.02 }}
-              style={{ cursor: "pointer" }}
-              onClick={() => handleSelectCard(card.id)}
-            >
-              <Card
-                card={card}
-                selected={selectedCardId === card.id}
-                onSelect={() => handleSelectCard(card.id)}
-              />
-            </motion.div>
-          ))}
-        </SimpleGrid>
-      )}
+      <Group align="flex-start" justify="center" gap="md">
+        {cards.map((card) => (
+          <motion.div
+            key={card.id}
+            variants={cardVariants}
+            animate={selectedCardId === card.id ? "selected" : "unselected"}
+            transition={{ duration: 0.3 }}
+            whileHover={{ scale: 1.02 }}
+            style={{ cursor: "pointer" }}
+            onClick={() => handleSelectCard(card.id)}
+          >
+            <Card
+              card={card}
+              selected={selectedCardId === card.id}
+              onSelect={() => handleSelectCard(card.id)}
+            />
+          </motion.div>
+        ))}
+      </Group>
 
       <Button
         size="lg"

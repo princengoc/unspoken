@@ -8,13 +8,10 @@ import {
   Group,
   Button,
   Paper,
-  SimpleGrid,
-  Card as MantineCard,
   Badge,
-  Divider,
   Loader,
 } from "@mantine/core";
-import { IconRepeat, IconArrowRight, IconExchange } from "@tabler/icons-react";
+import { IconRepeat, IconArrowRight, IconExchange, IconInfoCircle } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { motion } from "framer-motion";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
@@ -110,22 +107,31 @@ export function Endgame({ roomId }: EndgameProp) {
     })
     .filter(Boolean) as PlayerCardInfo[]; // Filter out any null entries
 
-  // Group exchanges by receiver
-  const exchangesByReceiver = groupExchangesByReceiver(matchedExchanges);
-
-  // Convert exchanges to PlayerCardInfo format for display
-  const getPlayerExchangeCards = (playerId: string): PlayerCardInfo[] => {
-    const exchanges = exchangesByReceiver.get(playerId) || [];
+  // Combine all exchange cards into a single array for unified display
+  const getAllExchangeCards = (): PlayerCardInfo[] => {
+    const allExchangeCards: PlayerCardInfo[] = [];
     
-    return exchanges.map(exchange => ({
-      playerId: exchange.to_id,
-      playerName: members.find(m => m.id === exchange.to_id)?.username || "Unknown Player",
-      playerAssignment: playerAssignments.get(exchange.to_id),
-      card: exchange.card!,
-      contributorId: exchange.from_id,
-      contributorName: exchange.otherPlayer?.username,
-      contributorAssignment: playerAssignments.get(exchange.from_id)
-    }));
+    // Group exchanges by receiver
+    const exchangesByReceiver = groupExchangesByReceiver(matchedExchanges);
+    
+    // For each receiver, process their exchanges
+    exchangesByReceiver.forEach((exchanges, receiverId) => {
+      exchanges.forEach(exchange => {
+        const receiver = members.find(m => m.id === exchange.to_id);
+        
+        allExchangeCards.push({
+          playerId: exchange.to_id, // The person who will respond to this card
+          playerName: receiver?.username || "Unknown Player",
+          playerAssignment: playerAssignments.get(exchange.to_id),
+          card: exchange.card!,
+          contributorId: exchange.from_id, // The person who sent this challenge
+          contributorName: exchange.otherPlayer?.username,
+          contributorAssignment: playerAssignments.get(exchange.from_id)
+        });
+      });
+    });
+    
+    return allExchangeCards;
   };
 
   const handleStartExchange = async () => {
@@ -139,7 +145,7 @@ export function Endgame({ roomId }: EndgameProp) {
         is_exchange: true,
       };
       
-      await startNextRound(exchangeSettings); // TODO: may want to call a startExchangeRound separate function. 
+      await startNextRound(exchangeSettings);
       
       notifications.show({
         title: "Success",
@@ -189,7 +195,7 @@ export function Endgame({ roomId }: EndgameProp) {
   };
 
   const renderExchangeSection = () => {
-    if ( room?.is_exchange) {
+    if (room?.is_exchange) {
       return renderPlayAgainSection();
     }
 
@@ -204,21 +210,15 @@ export function Endgame({ roomId }: EndgameProp) {
       );
     }
 
-    if (exchangesByReceiver.size === 0) {
+    // Get all exchange cards
+    const allExchangeCards = getAllExchangeCards();
+    
+    if (allExchangeCards.length === 0) {
       // No Matched exchanges found, also render play again
       return renderPlayAgainSection();
     }
 
     // has some exchanges to do
-    const currentMemberExchanges = exchangesByReceiver.get(currentMember!.id) || [];
-    // Collect exchange cards for all other players into one array
-    const otherExchangeCards: PlayerCardInfo[] = [];
-    exchangesByReceiver.forEach((_, playerId) => {
-      if (playerId !== currentMember!.id) {
-        otherExchangeCards.push(...getPlayerExchangeCards(playerId));
-      }
-    });    
-
     return (
       <Paper p="md" radius="md" withBorder mt="xs">
         <Stack gap="xs">
@@ -232,32 +232,15 @@ export function Endgame({ roomId }: EndgameProp) {
             Players have matched exchanges! Time for a special round where everyone responds to the cards they've been challenged with.
           </Text>
   
-          {currentMemberExchanges.length > 0 && (
-            <Stack gap="xs">
-              <Group align="center">
-                <Title order={5}>You will answer to</Title>
-              </Group>
-              <PlayerCardGrid 
-                cardInfos={getPlayerExchangeCards(currentMember!.id)} 
-                showSender={true} 
-                animate={false}
-              />
-            </Stack>
-          )}
-  
-          {otherExchangeCards.length > 0 && (
-            <Stack gap="xs">
-              <Title order={5}>Other players will answer to</Title>
-              <PlayerCardGrid 
-                cardInfos={otherExchangeCards} 
-                showSender={true} 
-                animate={false}
-              />
-            </Stack>
-          )}
+          <PlayerCardGrid 
+            cardInfos={allExchangeCards}
+            showSender={true} 
+            animate={false}
+            highlightPlayerId={currentMember?.id || null}
+          />
   
           {isCreator && (
-            <Group justify="center">
+            <Group justify="center" mt="md">
               <Button
                 size="md"
                 leftSection={<IconExchange size={18} />}
@@ -271,7 +254,7 @@ export function Endgame({ roomId }: EndgameProp) {
           )}
   
           {!isCreator && (
-            <Text ta="center" c="dimmed">
+            <Text ta="center" c="dimmed" mt="md">
               Waiting for the room creator to start the exchange round...
             </Text>
           )}
@@ -323,7 +306,8 @@ export function Endgame({ roomId }: EndgameProp) {
           <Title order={2} ta="center">
             {room?.is_exchange ? "Exchange Round Complete" : "Game Complete"}
           </Title>
-          <Text ta="center" size="md" c="dimmed">
+          <Text ta="center" size="md" c="dimmed" mb="xs">
+            Thanks for playing! 
             Here's what everyone shared:
           </Text>
         </FadeIn>
@@ -333,22 +317,22 @@ export function Endgame({ roomId }: EndgameProp) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
+          <Group align="center" mb="xs">
+            <IconInfoCircle size={16} color="blue" />
+            <Text size="sm" c="blue" fs="italic">
+              Your card is highlighted in blue
+            </Text>
+          </Group>
+          
           <PlayerCardGrid 
             cardInfos={playerCardsInfo} 
             showSender={false}
+            highlightPlayerId={currentMember?.id || null}
           />
         </motion.div>
 
         {/* Show exchange section if available, otherwise show play again */}
         {renderExchangeSection()}
-
-        {!isCreator && (
-          <Paper p="md" radius="md">
-            <Text ta="center">
-              Thanks for playing! Waiting for room creator to start again or end session.
-            </Text>
-          </Paper>
-        )}
 
       </Stack>
     </Container>

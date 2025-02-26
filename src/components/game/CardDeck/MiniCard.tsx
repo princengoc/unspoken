@@ -67,6 +67,7 @@ export interface MiniCardProps {
   card: CardType;
   mood?: MoodType;
   isSelected?: boolean;
+  isHighlighted?: boolean;
   onClick?: () => void;
   showSender?: boolean;
   contributorName?: string | null;
@@ -80,6 +81,7 @@ export function MiniCard({
   card,
   mood,
   isSelected = false,
+  isHighlighted = false,
   onClick,
   showSender = false,
   contributorAssignment,
@@ -101,6 +103,10 @@ export function MiniCard({
 
   const { width, height, iconSize, fontSize } = cardDimensions[size];
 
+  // Highlight colors and effects
+  const highlightColor = "#228BE6"; // Bright blue
+  const highlightBackgroundColor = "rgba(34, 139, 230, 0.05)";
+
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
@@ -113,11 +119,17 @@ export function MiniCard({
                 "0 0 2px rgba(0, 0, 0, 0.1)",
               ],
             }
+          : isHighlighted
+          ? {
+              boxShadow: [
+                "0 0 5px rgba(34, 139, 230, 0.3)",
+              ],
+            }
           : {}
       }
       transition={{
         duration: 0.3,
-        repeat: isSelected ? Infinity : 0,
+        repeat: (isSelected) ? Infinity : 0,
         repeatType: "reverse",
       }}
     >
@@ -125,13 +137,15 @@ export function MiniCard({
         shadow="sm"
         padding="sm"
         radius="md"
-        withBorder
         style={{
           cursor: onClick ? "pointer" : "default",
-          borderColor: isSelected ? moodStyles?.color : undefined,
-          borderWidth: isSelected ? "2px" : "1px",
+          borderColor: isHighlighted 
+            ? highlightColor 
+            : isSelected ? moodStyles?.color : undefined,
+          borderWidth: (isSelected || isHighlighted) ? "2px" : "1px",
           width: width,
           height: height,
+          backgroundColor: isHighlighted ? highlightBackgroundColor : undefined,
         }}
         onClick={onClick}
       >
@@ -147,6 +161,22 @@ export function MiniCard({
             >
               <IconComponent size={iconSize} />
             </div>
+          )}
+
+          {/* Highlight indicator */}
+          {isHighlighted && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "5px",
+                background: highlightColor,
+                borderTopLeftRadius: "7px",
+                borderTopRightRadius: "7px",
+              }}
+            />
           )}
 
           {/* Player who used this card - top right corner */}
@@ -224,8 +254,7 @@ export function MiniCard({
                   {card.contributor_id.charAt(0).toUpperCase()}
                 </Avatar>
                 <IconEar
-                  size={iconSize}
-                  style={{ marginLeft: rem(2) }}
+                  size={14}
                 />
               </Box>
             </Tooltip>

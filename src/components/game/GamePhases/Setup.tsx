@@ -1,5 +1,3 @@
-// src/components/game/GamePhases/Setup.tsx
-
 import { useState, useEffect } from "react";
 import { Stack, Text, Group, Button, Paper } from "@mantine/core";
 import { IconCheck, IconHourglass } from "@tabler/icons-react";
