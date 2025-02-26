@@ -1,3 +1,4 @@
+// src/components/game/GamePhases/SpeakingRemote.tsx
 import React, { useState } from "react";
 import { Stack, Button, Group, Text, Paper, Title, Modal } from "@mantine/core";
 import { IconMessageCircle, IconMicrophone } from "@tabler/icons-react";
@@ -6,7 +7,7 @@ import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useAuth } from "@/context/AuthProvider";
 import { getPlayerAssignments } from "../statusBarUtils";
-import { PlayerCardGrid, PlayerCardInfo } from "../PlayerCardGrid";
+import { PlayerCardGridRemote, PlayerCardInfo } from "../PlayerCardGridRemote";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import { ListenerReactions } from "../ListenerReactions";
 
@@ -41,7 +42,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
     })
     .filter(Boolean) as PlayerCardInfo[];
 
-  const handleCardClick = (playerId: string, cardId: string) => {
+  const handleReactToCard = (playerId: string, cardId: string) => {
     setReactionForCard({ playerId, cardId });
   };
 
@@ -52,7 +53,6 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   const handleEndReviewingPhase = async () => {
     if (isCreator && currentMember?.id) {
       try {
-        // finishSpeaking can handle remote, though it is quite simple right now and doesn't reset has_spoken etc
         await finishSpeaking();
       } catch (error) {
         console.error("Failed to end reviewing phase:", error);
@@ -68,19 +68,20 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
       </Text>
 
       <Paper p="md" withBorder shadow="sm">
-        <PlayerCardGrid 
+        <PlayerCardGridRemote 
           cardInfos={playerCardsInfo} 
+          roomId={roomId}
           showSender={false}
           animate={false}
           highlightPlayerId={currentMember?.id || null}
-          onCardClick={handleCardClick}
+          playerAssignments={playerAssignments}
           actionButtons={(playerId) => (
-            <Group gap="xs" mt="xs">
+            <Group gap="xs">
               <Button 
                 leftSection={<IconMessageCircle size={16} />} 
                 size="xs" 
                 variant="light"
-                onClick={() => handleCardClick(playerId, cardState.selectedCards[playerId])}
+                onClick={() => handleReactToCard(playerId, cardState.selectedCards[playerId])}
               >
                 React
               </Button>

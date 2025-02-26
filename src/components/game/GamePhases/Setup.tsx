@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Stack, Text, Group, Button, Paper, Box } from "@mantine/core";
 import { IconCheck, IconHourglass, IconMicrophone } from "@tabler/icons-react";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
@@ -9,6 +9,7 @@ import { CardDeck } from "../CardDeck";
 import { Card as GameCard } from "../Card";
 import { useRoom } from "@/context/RoomProvider";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
+import { roomMembersService } from "@/services/supabase/roomMembers";
 
 export function Setup() {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame();
@@ -42,9 +43,19 @@ export function Setup() {
     : null;
   const selectedCard = selectedCardId ? getCardById(selectedCardId) : null;
 
-  const handleRecordComplete = () => {
+  const handleRecordComplete = useCallback(async () => {
     setShowRecorder(false);
-  };
+    try {
+      if (!room?.id || !currentMember?.id) return;
+      
+      await roomMembersService.updatePlayerState(room.id, currentMember.id, {
+        has_spoken: true
+      });
+    } catch (error) {
+      console.error("Failed to update player status:", error);
+    }
+  }, [room?.id, currentMember?.id]);
+  
 
   const renderContentOnCardsView = () => {
     switch (currentMemberStatus) {
@@ -92,7 +103,7 @@ export function Setup() {
                 
                 {isRemoteMode && (
                   <Box>
-                    {!showRecorder ? (
+                    {!showRecorder && !currentMember?.has_spoken ? (
                       <Button 
                         leftSection={<IconMicrophone size={16} />}
                         onClick={() => setShowRecorder(true)}
@@ -100,13 +111,17 @@ export function Setup() {
                       >
                         Record Your Story
                       </Button>
+                    ) : currentMember?.has_spoken ? (
+                      <Text size="sm" c="dimmed" mt="md">
+                        Your recording has been submitted
+                      </Text>
                     ) : (
                       <Paper p="md" withBorder radius="md" shadow="sm" mt="md">
-                          <AudioRecorder 
-                            isPublic={true} 
-                            onComplete={handleRecordComplete}
-                            onCancel={() => setShowRecorder(false)}
-                          />
+                        <AudioRecorder 
+                          isPublic={true} 
+                          onComplete={handleRecordComplete}
+                          onCancel={() => setShowRecorder(false)}
+                        />
                       </Paper>
                     )}
                   </Box>

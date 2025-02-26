@@ -111,8 +111,15 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
   );
 
   const isSetupComplete = useMemo(
-    () => allMembersHaveSelectedCards(members, cardState.selectedCards),
-    [members, cardState.selectedCards],
+    () => {
+      // For remote mode, check if all members have spoken
+      if (room?.game_mode === "remote") {
+        return members.every(member => member.has_spoken);
+      }
+      // For normal mode, keep the existing logic
+      return allMembersHaveSelectedCards(members, cardState.selectedCards);
+    },
+    [members, cardState.selectedCards, room?.game_mode]
   );
 
   const completeSetup = useCallback(
