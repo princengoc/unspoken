@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { Stack, Text, Group, Button, Paper } from "@mantine/core";
-import { IconCheck, IconHourglass } from "@tabler/icons-react";
+import { Stack, Text, Group, Button, Paper, Box } from "@mantine/core";
+import { IconCheck, IconHourglass, IconMicrophone } from "@tabler/icons-react";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useFullRoom } from "@/context/FullRoomProvider";
 import { SlideIn } from "@/components/animations/Motion";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { CardDeck } from "../CardDeck";
 import { Card as GameCard } from "../Card";
+import { useRoom } from "@/context/RoomProvider";
+import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 
 export function Setup() {
   const { cardState, getCardById, getCardsByIds } = useCardsInGame();
   const { currentMember } = useRoomMembers();
+  const { room } = useRoom();
   const {
     handleCardSelection,
     initiateSpeakingPhase,
@@ -21,6 +24,9 @@ export function Setup() {
   } = useFullRoom();
 
   const [isDealing, setIsDealing] = useState(false);
+  const [showRecorder, setShowRecorder] = useState(false);
+
+  const isRemoteMode = room?.game_mode === "remote";
 
   const handleDrawCards = async () => {
     if (!currentMember?.id) return;
@@ -35,6 +41,10 @@ export function Setup() {
     ? cardState.selectedCards[currentMember.id]
     : null;
   const selectedCard = selectedCardId ? getCardById(selectedCardId) : null;
+
+  const handleRecordComplete = () => {
+    setShowRecorder(false);
+  };
 
   const renderContentOnCardsView = () => {
     switch (currentMemberStatus) {
@@ -67,6 +77,7 @@ export function Setup() {
 
       case "browsing":
         // Show waiting view + selected card
+        // In remote mode, also show option to record audio message
         return (
           <Stack gap="md">
             {selectedCard && (
@@ -78,6 +89,28 @@ export function Setup() {
                 <Text size="sm" c="dimmed">
                   This is the card you'll share during your turn
                 </Text>
+                
+                {isRemoteMode && (
+                  <Box>
+                    {!showRecorder ? (
+                      <Button 
+                        leftSection={<IconMicrophone size={16} />}
+                        onClick={() => setShowRecorder(true)}
+                        mt="md"
+                      >
+                        Record Your Story
+                      </Button>
+                    ) : (
+                      <Paper p="md" withBorder radius="md" shadow="sm" mt="md">
+                          <AudioRecorder 
+                            isPublic={true} 
+                            onComplete={handleRecordComplete}
+                            onCancel={() => setShowRecorder(false)}
+                          />
+                      </Paper>
+                    )}
+                  </Box>
+                )}
               </Stack>
             )}
 
@@ -96,7 +129,7 @@ export function Setup() {
                 }
               >
                 {isSetupComplete
-                  ? "Start the game!"
+                  ? `Start ${isRemoteMode ? "Reviewing" : "the game"}!`
                   : "Players choosing cards..."}
               </Button>
             ) : (
@@ -109,7 +142,7 @@ export function Setup() {
                   )}
                   <Text size="sm">
                     {isSetupComplete
-                      ? "Everyone's ready! Waiting for the room creator to start the game."
+                      ? "Everyone's ready! Waiting for the room creator to start."
                       : "Waiting for other players to choose their cards."}
                   </Text>
                 </Group>

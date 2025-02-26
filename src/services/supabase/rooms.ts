@@ -220,6 +220,34 @@ export const roomsService = {
     return data as boolean;    
   },
 
+  // Method for remote mode: start speaking phase without selecting a speaker
+  async startRemoteSpeakingPhase(roomId: string, creatorId: string): Promise<void> {
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        phase: "speaking",
+        active_player_id: null, // No active player needed in remote mode
+      })
+      .eq("id", roomId)
+      .eq("created_by", creatorId); // Only creator can do this
+
+    if (error) throw error;
+  },
+  
+  // Method for remote mode: finish speaking phase and go to endgame
+  async finishRemoteSpeaking(roomId: string, creatorId: string): Promise<void> {
+    const { error } = await supabase
+      .from("rooms")
+      .update({
+        phase: "endgame",
+        active_player_id: null,
+      })
+      .eq("id", roomId)
+      .eq("created_by", creatorId); // Only creator can do this
+
+    if (error) throw error;
+  },  
+
   subscribeToRoom(roomId: string, callback: (room: Room) => void) {
     return supabase
       .channel(`rooms:${roomId}`)

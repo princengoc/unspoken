@@ -21,6 +21,7 @@ import type {
   DerivedPlayerStatus,
   Player,
 } from "@/core/game/types";
+import { AudioMessagesProvider } from "./AudioMessagesProvider";
 
 interface FullRoomContextType {
   initiateSpeakingPhase: () => Promise<void>;
@@ -133,27 +134,36 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      await startSpeakingPhase(currentMemberId);
+      const isRemote = room?.game_mode === "remote";
+      await startSpeakingPhase(currentMemberId, isRemote);
     } catch (error) {
       console.error("Failed to initiate speaking phase:", error);
       throw error;
     }
-  }, [currentMemberId, isCreator, startSpeakingPhase]);
+  }, [currentMemberId, isCreator, startSpeakingPhase, room?.game_mode]);
 
   const finishSpeaking = useCallback(async () => {
-    if (!currentMemberId || !isActiveSpeaker) {
-      console.log(
-        `Invalid finishSpeaking call: member ID ${currentMemberId}, isActiveSpeaker ${isActiveSpeaker}`,
-      );
+    if (!currentMemberId) {
+      console.log(`Invalid finishSpeaking call: member ID ${currentMemberId}`);
       return;
     }
+    
     try {
-      await roomFinishSpeaking(currentMemberId);
+      if (room?.game_mode === "remote") {
+        // In remote mode, this is called by the creator to end the reviewing phase
+        // Skip active speaker check and go directly to endgame
+        await roomFinishSpeaking(currentMemberId, true); // Pass isRemote flag
+      } else if (isActiveSpeaker) {
+        // Normal IRL mode - requires active speaker check
+        await roomFinishSpeaking(currentMemberId);
+      } else {
+        console.log(`User ${currentMemberId} is not the active speaker`);
+      }
     } catch (error) {
       console.error("Failed to finish speaking:", error);
       throw error;
     }
-  }, [currentMemberId, isActiveSpeaker, roomFinishSpeaking]);
+  }, [currentMemberId, isActiveSpeaker, roomFinishSpeaking, room?.game_mode]);
 
   const handleCardSelection = useCallback(
     async (cardId: string) => {
@@ -217,7 +227,9 @@ export function FullRoomProvider({ roomId, children }: FullRoomProviderProps) {
     <CardsInGameProvider roomId={roomId}>
       <RoomMembersProvider roomId={roomId}>
         <ExchangesProvider roomId={roomId}>
-          <FullRoomProviderInner>{children}</FullRoomProviderInner>
+          <AudioMessagesProvider roomId={roomId}>
+            <FullRoomProviderInner>{children}</FullRoomProviderInner>
+          </AudioMessagesProvider>
         </ExchangesProvider>
       </RoomMembersProvider>
     </CardsInGameProvider>

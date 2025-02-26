@@ -13,6 +13,8 @@ import { notifications } from "@mantine/notifications";
 import { Endgame } from "@/components/game/GamePhases/Endgame";
 import { SetupViewType, Room } from "@/core/game/types";
 import { ExchangeTab } from "@/components/game/ExchangeRequests/ExchangeTab";
+import { SpeakingRemote } from "@/components/game/GamePhases/SpeakingRemote";
+
 
 function renderGameContent(currentSetupView: SetupViewType, room: Room) {
   // always allow view of exchange tab
@@ -26,6 +28,9 @@ function renderGameContent(currentSetupView: SetupViewType, room: Room) {
   } else if (room.phase === "endgame") {
     return <Endgame roomId={room.id} />;
   } else {
+    if (room.game_mode === "remote") {
+      return <SpeakingRemote roomId={room.id} />;
+    } 
     return <Speaking roomId={room.id} />;
   }
 }

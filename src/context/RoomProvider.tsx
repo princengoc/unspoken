@@ -26,12 +26,12 @@ interface RoomContextType {
   error: Error | null;
   leaveRoom: () => Promise<void>;
   updateRoom: (updates: Partial<Room>) => Promise<void>;
-  finishSpeaking: (speakerId: string) => Promise<void>;
+  finishSpeaking: (speakerId: string, isRemote?: boolean) => Promise<void>;
   startNextRound: (
     creatorId: string,
     settings: Partial<RoomSettings>,
   ) => Promise<void>;
-  startSpeakingPhase: (creatorId: string) => Promise<void>;
+  startSpeakingPhase: (creatorId: string, isRemote?: boolean) => Promise<void>;
 }
 
 interface RoomProviderProps {
@@ -138,55 +138,90 @@ export function RoomProvider({ roomId, children }: RoomProviderProps) {
   }, [room, user]);
 
   const finishSpeaking = useCallback(
-    async (speakerId: string) => {
+    async (speakerId: string, isRemote?: boolean) => {
       if (!room?.id) throw new Error("No active room");
-
+  
       try {
-        const { next_phase, next_speaker_id } =
-          await roomsService.finishSpeaking(room.id, speakerId);
-
-        // Optimistically update room state before the subscription effect
-        setRoom((prev) =>
-          prev
-            ? {
-                ...prev,
-                phase: next_phase,
-                active_player_id: next_speaker_id,
-              }
-            : null,
-        );
+        if (isRemote) {
+          // For remote mode, the creator can end the reviewing phase
+          // This moves directly to endgame without active_player_id rotation
+          await roomsService.finishRemoteSpeaking(room.id, speakerId);
+          
+          // Optimistically update room state
+          setRoom((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  phase: "endgame" as GamePhase,
+                  active_player_id: null,
+                }
+              : null
+          );
+        } else {
+          // Original behavior for IRL mode
+          const { next_phase, next_speaker_id } =
+            await roomsService.finishSpeaking(room.id, speakerId);
+  
+          // Optimistically update room state before the subscription effect
+          setRoom((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  phase: next_phase,
+                  active_player_id: next_speaker_id,
+                }
+              : null
+          );
+        }
       } catch (error) {
         console.error("Failed to finish speaking:", error);
         throw error;
       }
     },
-    [room?.id],
+    [room?.id]
   );
 
   const startSpeakingPhase = useCallback(
-    async (creatorId: string) => {
+    async (creatorId: string, isRemote?: boolean) => {
       if (!room?.id) throw new Error("No active room");
-
+  
       try {
-        const { next_phase, first_speaker_id } =
-          await roomsService.startSpeakingPhase(room.id, creatorId);
-
-        // Optimistically update room state before the subscription effect
-        setRoom((prev) =>
-          prev
-            ? {
-                ...prev,
-                phase: next_phase,
-                active_player_id: first_speaker_id,
-              }
-            : null,
-        );
+        if (isRemote) {
+          // For remote mode, just update the phase without selecting a speaker
+          await roomsService.startRemoteSpeakingPhase(room.id, creatorId);
+          
+          // Optimistically update room state
+          setRoom((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  phase: "speaking" as GamePhase,
+                  active_player_id: null, // No active player in remote mode
+                }
+              : null
+          );
+        } else {
+          // Original behavior for IRL mode
+          const { next_phase, first_speaker_id } =
+            await roomsService.startSpeakingPhase(room.id, creatorId);
+  
+          // Optimistically update room state before the subscription effect
+          setRoom((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  phase: next_phase,
+                  active_player_id: first_speaker_id,
+                }
+              : null
+          );
+        }
       } catch (error) {
         console.error("Failed to start speaking phase:", error);
         throw error;
       }
     },
-    [room?.id],
+    [room?.id]
   );
 
   const startNextRound = useCallback(

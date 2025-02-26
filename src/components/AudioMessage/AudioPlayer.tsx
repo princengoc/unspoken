@@ -174,20 +174,20 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
           </Badge>
         </Group>
 
-        <Text size="xs" color="dimmed">
+        <Text size="xs" c="dimmed">
           From: {senderName}
         </Text>
 
         {loading ? (
           <Group align="center" my="md">
             <Loader size="sm" />
-            <Text size="sm" color="dimmed">
+            <Text size="sm" c="dimmed">
               Loading audio...
             </Text>
           </Group>
         ) : error ? (
           <Paper p="xs" withBorder color="red" radius="md">
-            <Text size="sm" color="red">
+            <Text size="sm" c="red">
               {error}
             </Text>
           </Paper>

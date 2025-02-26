@@ -11,7 +11,6 @@ import { getPlayerAssignments } from "../statusBarUtils";
 import { useRoom } from "@/context/RoomProvider";
 import { useDisclosure } from "@mantine/hooks";
 import { AudioMessageContainer } from "@/components/AudioMessage";
-import { AudioMessagesProvider } from "@/context/AudioMessagesProvider";
 
 type SpeakingProp = {
   roomId: string;
@@ -100,9 +99,6 @@ export function Speaking({ roomId }: SpeakingProp) {
         </Box>
       </motion.div>
 
-      <AudioMessagesProvider roomId={roomId}>
-        <AudioMessageContainer />
-      </AudioMessagesProvider>
     </Stack>
   );
 }

@@ -19,6 +19,7 @@ interface AudioMessagesContextType {
   sendAudioMessage: (
     audioBlob: Blob,
     privacy: AudioPrivacy,
+    targetPlayerId?: string
   ) => Promise<AudioMessage | null>;
   markAsListened: (messageId: string) => Promise<boolean>;
   getAudioUrl: (
@@ -66,7 +67,7 @@ export function AudioMessagesProvider({
     };
   }, [roomId, user?.id]);
 
-  const sendAudioMessage = async (audioBlob: Blob, privacy: AudioPrivacy) => {
+  const sendAudioMessage = async (audioBlob: Blob, privacy: AudioPrivacy, targetPlayerId?: string) => {
     if (!user?.id) return null;
 
     try {
@@ -75,6 +76,7 @@ export function AudioMessagesProvider({
         user.id,
         audioBlob,
         privacy,
+        targetPlayerId
       );
     } catch (error) {
       console.error("Error sending audio message:", error);

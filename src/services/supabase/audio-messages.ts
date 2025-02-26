@@ -10,6 +10,7 @@ export const audioMessagesService = {
     user_id: string,
     audioBlob: Blob,
     privacy: AudioPrivacy,
+    targetPlayerId?: string,
   ): Promise<AudioMessage | null> {
     try {
       // 1. Generate a unique filename
@@ -37,6 +38,7 @@ export const audioMessagesService = {
           sender_id: user_id,
           file_path: filePath,
           is_public: privacy === "public",
+          receiver_id: targetPlayerId || null,
           expires_at: null, // expiry will be set by backend codes
         })
         .select("*")

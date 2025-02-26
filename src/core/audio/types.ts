@@ -4,6 +4,7 @@ export interface AudioMessage {
   sender_id: string;
   file_path: string;
   is_public: boolean;
+  receiver_id: string | null; 
   created_at: string;
   expires_at: string;
 }

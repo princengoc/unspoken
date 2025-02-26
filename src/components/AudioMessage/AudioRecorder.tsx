@@ -26,9 +26,17 @@ import { AudioPrivacy } from "@/core/audio/types";
 
 interface AudioRecorderProps {
   onCancel?: () => void;
+  onComplete?: () => void;
+  targetPlayerId?: string;
+  isPublic?: boolean;
 }
 
-export function AudioRecorder({ onCancel }: AudioRecorderProps) {
+export function AudioRecorder({ 
+  onCancel, 
+  onComplete,
+  targetPlayerId,
+  isPublic = false
+}: AudioRecorderProps) {
   const {
     recordingState,
     startRecording,
@@ -40,7 +48,7 @@ export function AudioRecorder({ onCancel }: AudioRecorderProps) {
 
   const { sendAudioMessage, setRecording } = useAudioMessages();
 
-  const [privacy, setPrivacy] = useState<AudioPrivacy>("private");
+  const [privacy, setPrivacy] = useState<AudioPrivacy>(isPublic ? "public" : "private");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,11 +76,16 @@ export function AudioRecorder({ onCancel }: AudioRecorderProps) {
       setIsUploading(true);
       setError(null);
 
-      const result = await sendAudioMessage(recordingState.audioBlob, privacy);
+      const result = await sendAudioMessage(
+        recordingState.audioBlob, 
+        privacy, 
+        targetPlayerId
+      );
 
       if (result) {
         resetRecording();
         setRecording(false);
+        onComplete?.();
       } else {
         setError("Failed to upload audio message.");
       }
@@ -96,6 +109,7 @@ export function AudioRecorder({ onCancel }: AudioRecorderProps) {
       <Stack gap="md">
         <Text fw={500} size="lg">
           Record Audio Message
+          {targetPlayerId && " for Specific Player"}
         </Text>
 
         {error && (
@@ -204,28 +218,31 @@ export function AudioRecorder({ onCancel }: AudioRecorderProps) {
 
         {!recordingState.isRecording && recordingState.audioBlob && (
           <>
-            <Group align="center">
-              <Switch
-                label={
-                  <Group gap="xs">
-                    {privacy === "public" ? (
-                      <IconWorldUpload size={16} />
-                    ) : (
-                      <IconLock size={16} />
-                    )}
-                    <Text size="sm">
-                      {privacy === "public"
-                        ? "Public (All players)"
-                        : "Private (Active player only)"}
-                    </Text>
-                  </Group>
-                }
-                checked={privacy === "public"}
-                onChange={(event) =>
-                  setPrivacy(event.currentTarget.checked ? "public" : "private")
-                }
-              />
-            </Group>
+            {/* Only show privacy toggle when appropriate */}
+            {!isPublic && (
+              <Group align="center">
+                <Switch
+                  label={
+                    <Group gap="xs">
+                      {privacy === "public" ? (
+                        <IconWorldUpload size={16} />
+                      ) : (
+                        <IconLock size={16} />
+                      )}
+                      <Text size="sm">
+                        {privacy === "public"
+                          ? "Public (All players)"
+                          : "Private (Target player only)"}
+                      </Text>
+                    </Group>
+                  }
+                  checked={privacy === "public"}
+                  onChange={(event) =>
+                    setPrivacy(event.currentTarget.checked ? "public" : "private")
+                  }
+                />
+              </Group>
+            )}
 
             <Group align="flex-right" gap="sm">
               <Button
