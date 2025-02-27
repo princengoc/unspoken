@@ -18,7 +18,7 @@ import { SpeakingRemote } from "@/components/game/GamePhases/SpeakingRemote";
 function renderGameContent(currentSetupView: SetupViewType, room: Room) {
   // always allow view of exchange tab
   if (currentSetupView === "exchange") {
-    return <ExchangeTab />;
+    return <ExchangeTab roomId={room.id} />;
   }
 
   // otherwise depends on the game phase
@@ -67,7 +67,14 @@ function RoomContent({ roomId }: { roomId: string }) {
 
   if (loading || !room) {
     return (
-      <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        sx={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Loader size="xl" />
         <Text ml="md">Loading room...</Text>
       </Box>
@@ -86,7 +93,7 @@ function RoomContent({ roomId }: { roomId: string }) {
             onViewChange={handleViewChange}
           />
         </AppShell.Header>
-        
+
         <AppShell.Main pt={70} px="md">
           {renderGameContent(currentSetupView, room)}
         </AppShell.Main>

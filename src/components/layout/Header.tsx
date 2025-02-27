@@ -4,12 +4,9 @@ import React, { useMemo, useState, useEffect } from "react";
 import {
   Box,
   Group,
-  ActionIcon,
-  Indicator,
   Badge,
   Menu,
   Drawer,
-  Title,
   SegmentedControl,
   Text,
 } from "@mantine/core";
@@ -18,10 +15,8 @@ import {
   IconMessageCircle,
   IconCards,
   IconHourglass,
-  IconCheck,
   IconExchange,
   IconUser,
-  IconLane,
 } from "@tabler/icons-react";
 import { JoinRequests } from "@/hooks/room/JoinRequests";
 import { SetupViewType, type GamePhase } from "@/core/game/types";
@@ -32,7 +27,10 @@ import { getPlayerAssignments } from "@/components/game/statusBarUtils";
 import { ProfileSettings } from "@/app/auth/ProfileSettings";
 import { useFullRoom } from "@/context/FullRoomProvider";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
-import { UnspokenGameIcon, UnspokenGameIconSmall } from "@/core/game/unspokenIcon";
+import {
+  UnspokenGameIcon,
+  UnspokenGameIconSmall,
+} from "@/core/game/unspokenIcon";
 
 interface HeaderProps {
   roomId: string;
@@ -52,13 +50,14 @@ export function Header({
   const { members, currentMember } = useRoomMembers();
   const { isCreator } = useFullRoom();
   const playerAssignments = getPlayerAssignments(members, roomId);
-  const [profileOpened, { open: openProfile, close: closeProfile }] = useDisclosure(false);
-  const isSmallScreen = useMediaQuery('(max-width: 400px)');
-  const isTinyScreen = useMediaQuery('(max-width: 300px)');
-  
+  const [profileOpened, { open: openProfile, close: closeProfile }] =
+    useDisclosure(false);
+  const isSmallScreen = useMediaQuery("(max-width: 400px)");
+  const isTinyScreen = useMediaQuery("(max-width: 300px)");
+
   // Local state to track view
   const [currentViewState, setCurrentViewState] = useState(currentView);
-  
+
   // Update local state when prop changes
   useEffect(() => {
     setCurrentViewState(currentView);
@@ -79,16 +78,10 @@ export function Header({
   };
 
   // Get phase display info
-  const phaseColors = {
-    setup: "blue",
-    speaking: "green",
-    endgame: "yellow",
-  };
-
   const phaseIcons = {
     setup: <IconHourglass size={isSmallScreen ? 14 : 16} />,
     speaking: <IconMessageCircle size={isSmallScreen ? 14 : 16} />,
-    endgame: <IconCards size={isSmallScreen ? 14 : 16} />
+    endgame: <IconCards size={isSmallScreen ? 14 : 16} />,
   };
 
   const currentUserAssignment = currentMember
@@ -101,7 +94,7 @@ export function Header({
   // Prepare segmented control data based on screen size
   const segmentedControlData = [
     {
-      value: 'cards',
+      value: "cards",
       label: (
         <Group gap={isSmallScreen ? 4 : 8} wrap="nowrap">
           {phaseIcons[gamePhase]}
@@ -112,10 +105,13 @@ export function Header({
       ),
     },
     {
-      value: 'exchange',
+      value: "exchange",
       label: (
         <Group gap={isSmallScreen ? 4 : 8} wrap="nowrap">
-          <IconExchange size={isSmallScreen ? 14 : 16} color={exchangeIconColor} />
+          <IconExchange
+            size={isSmallScreen ? 14 : 16}
+            color={exchangeIconColor}
+          />
           <Text size={isSmallScreen ? "xs" : "sm"} lh={1}>
             {isSmallScreen ? "" : "Ask"}
           </Text>
@@ -134,13 +130,13 @@ export function Header({
       <Group justify="space-between" h="100%" px="md" wrap="nowrap">
         {/* Left section */}
         {
-            // (isTinyScreen ? <UnspokenGameIcon /> : <Title order={4} size="h4" lh={1} lineClamp={1}>Unspoken</Title>)
-            // <IconMessageCirclePause />
-            <Box style={{ position: 'relative', display: 'inline-block' }}>
-                {isTinyScreen ? <UnspokenGameIconSmall /> : <UnspokenGameIcon />}
+          // (isTinyScreen ? <UnspokenGameIcon /> : <Title order={4} size="h4" lh={1} lineClamp={1}>Unspoken</Title>)
+          // <IconMessageCirclePause />
+          <Box style={{ position: "relative", display: "inline-block" }}>
+            {isTinyScreen ? <UnspokenGameIconSmall /> : <UnspokenGameIcon />}
           </Box>
         }
-          
+
         {/* Center section - Takes up available space */}
         <Group align="center">
           <SegmentedControl
@@ -160,7 +156,7 @@ export function Header({
           {currentUserAssignment && currentMember && (
             <Menu position="bottom-end" shadow="md">
               <Menu.Target>
-                <Box style={{ cursor: 'pointer' }}>
+                <Box style={{ cursor: "pointer" }}>
                   <PlayerAvatar
                     assignment={currentUserAssignment}
                     size={isSmallScreen ? "sm" : "md"}
@@ -172,16 +168,16 @@ export function Header({
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Label>{currentMember.username || "You"}</Menu.Label>
-                <Menu.Item 
+                <Menu.Item
                   leftSection={<IconUser size={14} />}
                   onClick={openProfile}
                 >
                   Profile Settings
                 </Menu.Item>
                 <Menu.Divider />
-                <Menu.Item 
+                <Menu.Item
                   leftSection={<IconDoorExit size={14} />}
-                  color="red" 
+                  color="red"
                   onClick={handleLeaveRoom}
                 >
                   Leave Room

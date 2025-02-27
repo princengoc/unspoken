@@ -13,7 +13,6 @@ import {
   Button,
   Modal,
   Divider,
-  Avatar,
 } from "@mantine/core";
 import {
   IconInfoCircle,
@@ -31,13 +30,20 @@ import { MiniDeck } from "../CardDeck/MiniDeck";
 import { useExchanges } from "@/context/ExchangesProvider";
 import type { EnrichedExchangeRequest } from "@/core/game/types";
 import { useAuth } from "@/context/AuthProvider";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
+import { getPlayerAssignments } from "@/components/game/statusBarUtils";
 
-export function ExchangeTab() {
+interface ExchangeTabProps {
+  roomId: string;
+}
+
+export function ExchangeTab({ roomId }: ExchangeTabProps) {
   const { user } = useAuth();
   const { cardState, getCardsByIds } = useCardsInGame();
   const { members } = useRoomMembers();
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const playerAssignments = getPlayerAssignments(members, roomId);
 
   const {
     incomingRequests,
@@ -137,7 +143,7 @@ export function ExchangeTab() {
             style={{ display: "flex", alignItems: "center", gap: "6px" }}
           >
             <IconArrowLeft size={16} />
-            Their Request Will Appear Here
+            Waiting for their question...
           </Text>
         </Box>
       );
@@ -158,7 +164,7 @@ export function ExchangeTab() {
             leftSection={<IconArrowRight size={16} />}
             onClick={() => handleExchangeAction(playerId, "send")}
           >
-            Send Request
+            Pick a question to ask
           </Button>
         </Box>
       );
@@ -168,15 +174,13 @@ export function ExchangeTab() {
 
   return (
     <Box>
-      <Alert icon={<IconInfoCircle size={16} />} color="blue" mb="md">
-        <Text size="sm">
-          Exchange requests let players challenge each other with cards from the
-          discard pile. When both players accept, these cards will be available
-          in encore rounds.
-        </Text>
-      </Alert>
+      <Stack gap="xs">
+        <Alert icon={<IconInfoCircle size={16} />} color="blue">
+          <Text size="sm">
+            Ask one-on-one. But be prepared to answer in return.
+          </Text>
+        </Alert>
 
-      <Stack gap="md">
         {otherPlayers.map((player) => {
           const outgoing = outgoingRequests.find((r) => r.to_id === player.id);
           const incoming = incomingRequests.find(
@@ -184,15 +188,22 @@ export function ExchangeTab() {
           );
           const isMatched =
             outgoing?.status === "matched" && incoming?.status === "matched";
+          const playerAssgn = playerAssignments.get(player.id);
 
           return (
             <Paper key={player.id} p="md" withBorder>
               <Stack gap="md">
                 <Group justify="center" gap="md">
                   <Group>
-                    <Avatar radius="xl" color="blue">
-                      {player.username?.charAt(0).toUpperCase()}
-                    </Avatar>
+                    {playerAssgn && (
+                      <PlayerAvatar
+                        assignment={playerAssgn}
+                        size="md"
+                        highlighted={true}
+                        highlightColor="green"
+                        showTooltip={false}
+                      />
+                    )}
                     <Text fw={500}>{player.username}</Text>
 
                     {isMatched && <Badge color="green">Matched</Badge>}
@@ -232,7 +243,7 @@ export function ExchangeTab() {
                 <Group gap="md" justify="center">
                   <Stack gap="xs" align="center">
                     <Text size="sm" fw={500}>
-                      Your Request
+                      They will answer this ..
                     </Text>
                     {renderOutgoingRequestCard(outgoing, player.id)}
                   </Stack>
@@ -249,7 +260,7 @@ export function ExchangeTab() {
 
                   <Stack gap="xs" align="center">
                     <Text size="sm" fw={500}>
-                      Their Request
+                      ... but first, you answer this
                     </Text>
                     {renderIncomingRequestCard(incoming)}
                   </Stack>
@@ -258,6 +269,13 @@ export function ExchangeTab() {
             </Paper>
           );
         })}
+
+        <Alert color="blue" mb="md">
+          <Text size="sm">
+            If they accept, both questions will be saved for the Ask round,
+            where they will finally be answered.
+          </Text>
+        </Alert>
       </Stack>
 
       {/* Card selection modal */}
