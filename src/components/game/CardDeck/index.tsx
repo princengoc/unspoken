@@ -33,7 +33,7 @@ export function CardDeck({ cards, onSelect }: CardDeckProps) {
   return (
     <Stack gap="md" align="center">
       <Text size="lg" fw={500} ta="center">
-        Choose the card that resonates with you the most
+        Choose the card that sparks a story you want to share
       </Text>
 
       <Group align="flex-start" justify="center" gap="md">

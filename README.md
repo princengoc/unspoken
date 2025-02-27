@@ -8,12 +8,7 @@
 
 ## Feedback
 
-- [ ] tag system confusing
-- [ ] back button -- don't know how to rejoin room
 - [ ] redo card choice (?)
-- [ ] help system not obvious
-- [ ] exchange system undiscovered by first player
-- [ ] encore with just a single card choosing is confusing
 - [ ] need auto-switch (?) between phase tab and exchange tab
 
 * **BUG**:
@@ -25,21 +20,20 @@
 UI
 
 - [ ] Improve instructions, text-based prefered
-- [ ] Move Sidenavbar to top, assume vertical mobile
+- [x] Move Sidenavbar to top, assume vertical mobile
 
 IRL
-
 - [x] Remove start speaking, just do finish speaking
 
 Remote
-
 - [ ] mp3 for iOS compat
 
 Content
 
 - [ ] level 0 for playing with Bong
-- [ ] Curate content
-- [ ] Translate the game into Vietnamese. Add a language button (localized to player)
+- [x] Curate content
+- [ ] Translate the game into Vietnamese. 
+- [ ] Add a language button (localized to player)
 
 - **Room management**
 

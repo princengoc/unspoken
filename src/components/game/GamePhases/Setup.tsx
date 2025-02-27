@@ -77,12 +77,12 @@ export function Setup() {
       case "choosing":
         // Show CardDeck to choose from
         return (
-          <CardDeck
-            cards={
-              getCardsByIds(cardState.playerHands[currentMember!.id]) || []
-            }
-            onSelect={handleCardSelection}
-          />
+            <CardDeck
+              cards={
+                getCardsByIds(cardState.playerHands[currentMember!.id]) || []
+              }
+              onSelect={handleCardSelection}
+            />
         );
 
       case "browsing":
@@ -96,8 +96,8 @@ export function Setup() {
                   Your Selected Card:
                 </Text>
                 <GameCard card={selectedCard} />
-                <Text size="sm" c="dimmed">
-                  This is the card you'll share during your turn
+                <Text size="md">
+                  In your turn, share a story inspired by this card
                 </Text>
 
                 {isRemoteMode && (
@@ -112,7 +112,7 @@ export function Setup() {
                       </Button>
                     ) : currentMember?.has_spoken ? (
                       <Text size="sm" c="dimmed" mt="md">
-                        Your recording has been submitted
+                        Thanks for telling your story!
                       </Text>
                     ) : (
                       <Paper p="md" withBorder radius="md" shadow="sm" mt="md">
@@ -143,8 +143,8 @@ export function Setup() {
                 }
               >
                 {isSetupComplete
-                  ? `Start ${isRemoteMode ? "Reviewing" : "the game"}!`
-                  : "Players choosing cards..."}
+                  ? `Start ${isRemoteMode ? "Reviewing" : "the Share"}!`
+                  : "Others are choosing..."}
               </Button>
             ) : (
               <Paper p="md" radius="md">
@@ -156,8 +156,8 @@ export function Setup() {
                   )}
                   <Text size="sm">
                     {isSetupComplete
-                      ? "Everyone's ready! Waiting for the room creator to start."
-                      : "Waiting for other players to choose their cards."}
+                      ? "Everyone's ready! Waiting for the game master to start the Share."
+                      : "Others are choosing... Why not Ask them with a card?"}
                   </Text>
                 </Group>
               </Paper>
@@ -167,7 +167,6 @@ export function Setup() {
 
       case "done":
       default:
-        // Handle edge case - shouldn't happen in setup
         return <div>Loading...</div>;
     }
   };

@@ -282,12 +282,12 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
       <Modal
         opened={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Send an exchange request"
+        title="Send a question"
         size="lg"
       >
         <Stack gap="md">
           <Text size="sm" c="dimmed">
-            Select a card from the discard pile:
+            Select a card to ask from the discard pile
           </Text>
 
           {cardState.discardPile.length > 0 ? (
@@ -297,7 +297,7 @@ export function ExchangeTab({ roomId }: ExchangeTabProps) {
             />
           ) : (
             <Alert icon={<IconCards size={16} />} color="yellow">
-              <Text>No cards are available in the discard pile yet.</Text>
+              <Text>No cards in the discard pile yet.</Text>
             </Alert>
           )}
         </Stack>

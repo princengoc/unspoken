@@ -159,7 +159,7 @@ export function Header({
                 <Box style={{ cursor: "pointer" }}>
                   <PlayerAvatar
                     assignment={currentUserAssignment}
-                    size={isSmallScreen ? "sm" : "md"}
+                    size={isSmallScreen ? "xs" : "sm"}
                     highlighted={true}
                     highlightColor="green"
                     showTooltip={false}

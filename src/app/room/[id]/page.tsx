@@ -68,7 +68,7 @@ function RoomContent({ roomId }: { roomId: string }) {
   if (loading || !room) {
     return (
       <Box
-        sx={{
+        style={{
           height: "100vh",
           display: "flex",
           alignItems: "center",
