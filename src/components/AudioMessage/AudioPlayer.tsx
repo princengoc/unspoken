@@ -123,7 +123,9 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const handleError = (e: Event) => {
       console.error("Audio playback error:", e);
-      setError("Error playing audio. Please try again.");
+      setError(
+        `Error playing audio. Please try again. ${JSON.stringify(e)} \n ${e}`,
+      );
     };
 
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);

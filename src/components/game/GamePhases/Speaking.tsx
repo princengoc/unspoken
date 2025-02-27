@@ -9,7 +9,6 @@ import { ReactionsFeed } from "../ReactionsFeed";
 import { useAuth } from "@/context/AuthProvider";
 import { getPlayerAssignments } from "../statusBarUtils";
 import { useRoom } from "@/context/RoomProvider";
-import { useDisclosure } from "@mantine/hooks";
 
 type SpeakingProp = {
   roomId: string;
@@ -19,18 +18,10 @@ export function Speaking({ roomId }: SpeakingProp) {
   const { user } = useAuth();
   const { room } = useRoom();
   const { isActiveSpeaker, finishSpeaking } = useFullRoom();
-  const [isSpeaking, { toggle }] = useDisclosure(false);
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
 
   const playerAssignments = getPlayerAssignments(members, roomId);
-
-  const handleSpeakButtonClick = () => {
-    if (isSpeaking) {
-      finishSpeaking();
-    }
-    toggle();
-  };
 
   if (!room?.active_player_id) return null;
   const activeCard = getCardById(
@@ -68,13 +59,12 @@ export function Speaking({ roomId }: SpeakingProp) {
       >
         {isActiveSpeaker ? (
           <Button
-            onClick={handleSpeakButtonClick}
+            onClick={finishSpeaking}
             justify="center"
             size="xs"
             variant="filled"
-            color={isSpeaking ? "green" : "blue"}
           >
-            {isSpeaking ? "Finish Speaking" : "Start Speaking"}
+            Finish sharing your story
           </Button>
         ) : (
           <Stack>

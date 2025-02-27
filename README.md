@@ -19,27 +19,27 @@
 * **BUG**:
 
 - finish sharing doesn't transit for first speaker (RLS policy on rooms? Mobile device issues?)
-- encore on encore is allowed ???!!!
-- exchange bug: should NOT allow choosing of the same exchange card, otherwise only one person can choose it.
 
 ## FEEDBACK
 
-- [x] **UI/UX Improvements**
+UI
 
-  - [x] Display list of rooms on main page, in addition to create room / join room.
-  - [x] Allow reading three cards at once, remove tags
-  - [x] Display the name of the player making a request.
-  - [x] Room Settings: allow card depth filter
+- [ ] Improve instructions, text-based prefered
+- [ ] Move Sidenavbar to top, assume vertical mobile
 
-- [x] **Gameplay Mechanics: Exchange System**
+IRL
 
-  - [x] Make the exchange tab available at all times.
-  - [x] Exchange reset on subsequent round
-  - [x] Automatically transition to the exchange phase when available
+- [x] Remove start speaking, just do finish speaking
 
-- [x] **Gameplay Modes and Features**
+Remote
 
-  - [x] Start a new game with a fresh deck (no discard pile).
+- [ ] mp3 for iOS compat
+
+Content
+
+- [ ] level 0 for playing with Bong
+- [ ] Curate content
+- [ ] Translate the game into Vietnamese. Add a language button (localized to player)
 
 - **Room management**
 
@@ -47,21 +47,11 @@
   - [ ] Allow player to permanently leave a room
   - [ ] Allow direct player invitations (pre-approved join)
 
-- [x] **Implement remote play: audio**
-  - [ ] read game_mode: only allow voice for "remote" play (not "irl")
-  - [ ] "remote" play logic
-    - [ ] allow recording of message at setup. These are public messages.
-    - [ ] speaking phase is just to review public messages. There will be a grid of "here are the shared messages" with icons underneath.
-    - [ ] speaking phase has no "active player".
-    - [ ] player can choose to respond to specific player's cards as public or private.
-
-BUG FIXES on remote play
-
-- [ ] after recording, should mark player status as "has_spoken: true", and if has_spoken, then do NOT show the recording button.
-- [ ] isComplete in setup should be after people have all spoken, NOT after they have selected.
-
-- [ ] **Localization**
-  - [ ] Translate the game into Vietnamese.
+- **Card history**
+  - [ ] Add card history
+  - [ ] Add personalization
+- **Bug**
+- [ ] Exchange: should not allow choosing of same card (server-side update of in_play?)
 
 Good things
 
@@ -74,13 +64,6 @@ Questions
 # TODO
 
 - [ ] cards have two sides: question side and prompt side. Question side is most appropriate for Exchange.
-- [ ] level 0 for playing with Bong
-
-End/Start game
-
-- [ ] Encore: allow individual players to vote: join encore round or not. If creator wants to encore, will exclude players who voted No
-- [ ] End game: allow easy way to start a fresh game (cleared discards, reactions, etc)
-- [ ] Add timers eg when clicked start, say game starts in 30 seconds, finalize your exchange card!
 
 # Minor UIs
 
@@ -138,3 +121,30 @@ Card
   - [x] remove consecutive calls
   - [x] make startNextRound and draw cards more efficient
 - [x] corner case handling: encore with ripple only but no exchange, no ripple cards, so no members have any cards to share.
+
+- [x] **Implement remote play: audio**
+  - [x] read game_mode: only allow voice for "remote" play (not "irl")
+  - [x] "remote" play logic
+    - [x] allow recording of message at setup. These are public messages.
+    - [x] speaking phase is just to review public messages. There will be a grid of "here are the shared messages" with icons underneath.
+    - [x] speaking phase has no "active player".
+    - [x] player can choose to respond to specific player's cards as public or private.
+- [x] after recording, should mark player status as "has_spoken: true", and if has_spoken, then do NOT show the recording button.
+- [x] isComplete in setup should be after people have all spoken, NOT after they have selected.
+
+- [x] **UI/UX Improvements**
+
+  - [x] Display list of rooms on main page, in addition to create room / join room.
+  - [x] Allow reading three cards at once, remove tags
+  - [x] Display the name of the player making a request.
+  - [x] Room Settings: allow card depth filter
+
+- [x] **Gameplay Mechanics: Exchange System**
+
+  - [x] Make the exchange tab available at all times.
+  - [x] Exchange reset on subsequent round
+  - [x] Automatically transition to the exchange phase when available
+
+- [x] **Gameplay Modes and Features**
+
+  - [x] Start a new game with a fresh deck (no discard pile).
