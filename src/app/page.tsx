@@ -5,7 +5,6 @@ import {
   Container,
   Button,
   Stack,
-  Title,
   Text,
   Group,
   Card,
@@ -45,6 +44,7 @@ import {
   GameMode,
 } from "@/core/game/types";
 import { roomsService } from "@/services/supabase/rooms";
+import { UnspokenGameTitle } from "@/core/game/unspokenIcon";
 
 // Extended room interface to track UI states
 interface RoomWithStatus extends RoomMetaDataAndState {
@@ -412,7 +412,7 @@ export default function Home() {
     <Container size="md" py="xl">
       <Stack gap="lg">
         <Stack gap="xs" ta="center" align="center">
-          <Title order={1}>Unspoken</Title>
+          <UnspokenGameTitle />
           <Text size="lg" c="gray.6" fw={500}>
             Stories waiting to be told
           </Text>
