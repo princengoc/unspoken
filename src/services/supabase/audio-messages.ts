@@ -4,6 +4,40 @@ import { supabase } from "./client";
 // Storage bucket for audio messages
 const AUDIO_BUCKET = "audio-messages";
 
+// Get appropriate file extension and content type based on blob
+const getFileInfo = (
+  blob: Blob,
+): { extension: string; contentType: string } => {
+  const type = blob.type;
+
+  // Default to webm if type is not recognized
+  let extension = "webm";
+  let contentType = "audio/webm";
+
+  if (type.includes("webm")) {
+    extension = "webm";
+    contentType = "audio/webm";
+  } else if (
+    type.includes("mp4") ||
+    type.includes("mp4a") ||
+    type.includes("aac")
+  ) {
+    extension = "mp4";
+    contentType = "audio/mp4";
+  } else if (type.includes("ogg")) {
+    extension = "ogg";
+    contentType = "audio/ogg";
+  } else if (type.includes("mp3")) {
+    extension = "mp3";
+    contentType = "audio/mp3";
+  } else if (type.includes("wav")) {
+    extension = "wav";
+    contentType = "audio/wav";
+  }
+
+  return { extension, contentType };
+};
+
 export const audioMessagesService = {
   async uploadAudioMessage(
     roomId: string,
@@ -13,15 +47,20 @@ export const audioMessagesService = {
     targetPlayerId?: string,
   ): Promise<AudioMessage | null> {
     try {
-      // 1. Generate a unique filename
+      // 1. Generate a unique filename with appropriate extension
       const timestamp = Date.now();
-      const filePath = `${roomId}/${user_id}_${timestamp}.webm`;
+      const { extension, contentType } = getFileInfo(audioBlob);
+      const filePath = `${roomId}/${user_id}_${timestamp}.${extension}`;
+
+      console.log(
+        `Uploading audio with type: ${contentType}, extension: ${extension}`,
+      );
 
       // 2. Upload the audio file to Supabase storage
       const { error: storageError } = await supabase.storage
         .from(AUDIO_BUCKET)
         .upload(filePath, audioBlob, {
-          contentType: "audio/webm",
+          contentType: contentType,
           cacheControl: "3600",
         });
 

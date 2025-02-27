@@ -23,16 +23,18 @@ UI
 - [x] Move Sidenavbar to top, assume vertical mobile
 
 IRL
+
 - [x] Remove start speaking, just do finish speaking
 
 Remote
+
 - [ ] mp3 for iOS compat
 
 Content
 
 - [ ] level 0 for playing with Bong
 - [x] Curate content
-- [ ] Translate the game into Vietnamese. 
+- [ ] Translate the game into Vietnamese.
 - [ ] Add a language button (localized to player)
 
 - **Room management**

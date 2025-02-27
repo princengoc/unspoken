@@ -17,6 +17,7 @@ import {
   IconWorldUpload,
   IconLock,
   IconAlertCircle,
+  IconAdjustments,
 } from "@tabler/icons-react";
 
 import { useAudioRecording } from "@/hooks/audio/useAudioRecording";
@@ -130,91 +131,111 @@ export function AudioRecorder({
         )}
       </Group>
 
-      <Group align="center" gap="md">
-        {!recordingState.isRecording && !recordingState.audioBlob && (
+      {/* Show initializing state for Firefox */}
+      {recordingState.initializing && (
+        <Group align="center" gap="md">
           <ActionIcon
-            color="red"
-            variant="filled"
+            color="blue"
+            variant="light"
             radius="xl"
             size="xl"
-            onClick={startRecording}
+            disabled
           >
-            <IconMicrophone size={20} />
+            <IconAdjustments size={20} />
           </ActionIcon>
-        )}
+          <Text size="sm" c="dimmed">
+            Preparing microphone...
+          </Text>
+        </Group>
+      )}
 
-        {recordingState.isRecording && !recordingState.isPaused && (
-          <>
-            <ActionIcon
-              color="yellow"
-              variant="filled"
-              radius="xl"
-              size="xl"
-              onClick={pauseRecording}
-            >
-              <IconPlayerPause size={20} />
-            </ActionIcon>
-
+      {!recordingState.initializing && (
+        <Group align="center" gap="md">
+          {!recordingState.isRecording && !recordingState.audioBlob && (
             <ActionIcon
               color="red"
               variant="filled"
               radius="xl"
               size="xl"
-              onClick={stopRecording}
+              onClick={startRecording}
             >
-              <IconPlayerStop size={20} />
+              <IconMicrophone size={20} />
             </ActionIcon>
-          </>
-        )}
+          )}
 
-        {recordingState.isRecording && recordingState.isPaused && (
-          <>
-            <ActionIcon
-              color="green"
-              variant="filled"
-              radius="xl"
-              size="xl"
-              onClick={resumeRecording}
-            >
-              <IconPlayerPlay size={20} />
-            </ActionIcon>
+          {recordingState.isRecording && !recordingState.isPaused && (
+            <>
+              <ActionIcon
+                color="yellow"
+                variant="filled"
+                radius="xl"
+                size="xl"
+                onClick={pauseRecording}
+              >
+                <IconPlayerPause size={20} />
+              </ActionIcon>
 
-            <ActionIcon
-              color="red"
-              variant="filled"
-              radius="xl"
-              size="xl"
-              onClick={stopRecording}
-            >
-              <IconPlayerStop size={20} />
-            </ActionIcon>
-          </>
-        )}
+              <ActionIcon
+                color="red"
+                variant="filled"
+                radius="xl"
+                size="xl"
+                onClick={stopRecording}
+              >
+                <IconPlayerStop size={20} />
+              </ActionIcon>
+            </>
+          )}
 
-        {!recordingState.isRecording && recordingState.audioBlob && (
-          <>
-            <ActionIcon
-              color="blue"
-              variant="filled"
-              radius="xl"
-              size="xl"
-              onClick={handlePlayPreview}
-            >
-              <IconPlayerPlay size={20} />
-            </ActionIcon>
+          {recordingState.isRecording && recordingState.isPaused && (
+            <>
+              <ActionIcon
+                color="green"
+                variant="filled"
+                radius="xl"
+                size="xl"
+                onClick={resumeRecording}
+              >
+                <IconPlayerPlay size={20} />
+              </ActionIcon>
 
-            <ActionIcon
-              color="gray"
-              variant="filled"
-              radius="xl"
-              size="xl"
-              onClick={resetRecording}
-            >
-              <IconTrash size={20} />
-            </ActionIcon>
-          </>
-        )}
-      </Group>
+              <ActionIcon
+                color="red"
+                variant="filled"
+                radius="xl"
+                size="xl"
+                onClick={stopRecording}
+              >
+                <IconPlayerStop size={20} />
+              </ActionIcon>
+            </>
+          )}
+
+          {!recordingState.isRecording && recordingState.audioBlob && (
+            <>
+              <ActionIcon
+                color="blue"
+                variant="filled"
+                radius="xl"
+                size="xl"
+                onClick={handlePlayPreview}
+              >
+                <IconPlayerPlay size={20} />
+              </ActionIcon>
+
+              <ActionIcon
+                color="gray"
+                variant="filled"
+                radius="xl"
+                size="xl"
+                onClick={resetRecording}
+              >
+                <IconTrash size={20} />
+              </ActionIcon>
+            </>
+          )}
+        </Group>
+      )}
 
       {!recordingState.isRecording && recordingState.audioBlob && (
         <>

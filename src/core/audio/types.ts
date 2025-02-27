@@ -15,6 +15,7 @@ export interface RecordingState {
   duration: number;
   audioBlob?: Blob;
   audioUrl?: string;
+  initializing?: boolean;
 }
 
 export type AudioPrivacy = "public" | "private";

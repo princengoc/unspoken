@@ -123,9 +123,15 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const handleError = (e: Event) => {
       console.error("Audio playback error:", e);
-      setError(
-        `Error playing audio. Please try again. ${JSON.stringify(e)} \n ${e}`,
-      );
+      // More user-friendly error message
+      setError("This audio format may not be supported by your browser.");
+
+      // Attempt to recover by force-reloading the audio element
+      if (audioUrl) {
+        console.log("Attempting to reload audio with different approach");
+        // Force reload the audio element
+        audio.load();
+      }
     };
 
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -153,10 +159,27 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   const handlePlayPause = () => {
     if (!audioRef.current || !audioUrl) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        // Reset error state when attempting to play
+        setError(null);
+        const playPromise = audioRef.current.play();
+
+        // Handle the play promise to catch any autoplay or browser restrictions
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.error("Play error:", err);
+            setError(
+              "Unable to play this audio. It may be an unsupported format.",
+            );
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error in play/pause:", err);
+      setError("Playback error. Please try again.");
     }
   };
 
@@ -166,7 +189,13 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
   return (
     <Card shadow="sm" padding="md" radius="md" withBorder>
-      <audio ref={audioRef} src={audioUrl || undefined} preload="metadata" />
+      {/* Set crossOrigin attribute to help with CORS issues */}
+      <audio
+        ref={audioRef}
+        src={audioUrl || undefined}
+        preload="metadata"
+        crossOrigin="anonymous"
+      />
 
       <Stack gap="xs">
         <Group align="apart">
@@ -192,6 +221,19 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
             <Text size="sm" c="red">
               {error}
             </Text>
+            <Button
+              size="xs"
+              mt="xs"
+              onClick={() => {
+                // Reset error and try again
+                setError(null);
+                if (audioRef.current && audioUrl) {
+                  audioRef.current.load();
+                }
+              }}
+            >
+              Try Again
+            </Button>
           </Paper>
         ) : (
           <>

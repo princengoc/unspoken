@@ -77,12 +77,12 @@ export function Setup() {
       case "choosing":
         // Show CardDeck to choose from
         return (
-            <CardDeck
-              cards={
-                getCardsByIds(cardState.playerHands[currentMember!.id]) || []
-              }
-              onSelect={handleCardSelection}
-            />
+          <CardDeck
+            cards={
+              getCardsByIds(cardState.playerHands[currentMember!.id]) || []
+            }
+            onSelect={handleCardSelection}
+          />
         );
 
       case "browsing":
