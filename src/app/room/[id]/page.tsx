@@ -3,12 +3,12 @@
 "use client";
 import { use, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Container, Box, Text, Loader } from "@mantine/core";
+import { Box, Text, Loader, AppShell } from "@mantine/core";
 import { FullRoomProvider } from "@/context/FullRoomProvider";
 import { RoomProvider, useRoom } from "@/context/RoomProvider";
 import { Setup } from "@/components/game/GamePhases/Setup";
 import { Speaking } from "@/components/game/GamePhases/Speaking";
-import { SideNavbar } from "@/components/layout/SideNavbar";
+import { Header } from "@/components/layout/Header";
 import { notifications } from "@mantine/notifications";
 import { Endgame } from "@/components/game/GamePhases/Endgame";
 import { SetupViewType, Room } from "@/core/game/types";
@@ -67,38 +67,30 @@ function RoomContent({ roomId }: { roomId: string }) {
 
   if (loading || !room) {
     return (
-      <Container py="xl">
-        <Box ta="center">
-          <Loader size="xl" />
-          <Text mt="md">Loading room...</Text>
-        </Box>
-      </Container>
+      <Box sx={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader size="xl" />
+        <Text ml="md">Loading room...</Text>
+      </Box>
     );
   }
 
+  // Only render the full app shell once we have room data
   return (
     <FullRoomProvider roomId={roomId}>
-      <Box style={{ height: "100vh", position: "relative" }}>
-        {/* Side Navigation */}
-        <SideNavbar
-          roomId={room.id}
-          gamePhase={room.phase}
-          handleLeaveRoom={handleLeaveRoom}
-          onViewChange={handleViewChange}
-        />
-
-        {/* Main Content */}
-        <Box
-          style={{
-            marginLeft: "80px",
-            padding: "1rem",
-            height: "100%",
-            overflowY: "auto",
-          }}
-        >
+      <AppShell header={{ height: 60 }}>
+        <AppShell.Header>
+          <Header
+            roomId={room.id}
+            gamePhase={room.phase}
+            handleLeaveRoom={handleLeaveRoom}
+            onViewChange={handleViewChange}
+          />
+        </AppShell.Header>
+        
+        <AppShell.Main pt={70} px="md">
           {renderGameContent(currentSetupView, room)}
-        </Box>
-      </Box>
+        </AppShell.Main>
+      </AppShell>
     </FullRoomProvider>
   );
 }
