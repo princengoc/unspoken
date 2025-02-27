@@ -609,9 +609,10 @@ export default function Home() {
                               value={cardDepthFilter}
                               onChange={setCardDepthFilter}
                               data={[
-                                { value: "1", label: "1" },
-                                { value: "2", label: "2" },
-                                { value: "3", label: "3" },
+                                { value: "0", label: "U13" },
+                                { value: "1", label: "neighbors" },
+                                { value: "2", label: "friends" },
+                                { value: "3", label: "besties" },
                                 { value: "all", label: "allow all" },
                               ]}
                               size="xs"

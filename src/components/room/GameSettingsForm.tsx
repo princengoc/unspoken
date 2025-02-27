@@ -14,7 +14,7 @@ export function GameSettingsForm({
 }: GameSettingsFormProps) {
   const [settings, setSettings] = useState<Partial<RoomSettings>>({
     deal_extras: initialSettings.deal_extras || true,
-    card_depth: initialSettings.card_depth || null,
+    card_depth: initialSettings.card_depth ?? null,
     is_exchange: initialSettings.is_exchange || false,
     game_mode: initialSettings.game_mode || "irl",
   });
@@ -45,16 +45,23 @@ export function GameSettingsForm({
             : "Only deal new cards from this level"
         }
         data={[
-          { value: "all", label: "All Depths" },
-          { value: "1", label: "Light (Level 1)" },
-          { value: "2", label: "Medium (Level 2)" },
-          { value: "3", label: "Deep (Level 3)" },
+          { value: "0", label: "U13" },
+          { value: "1", label: "neighbors" },
+          { value: "2", label: "friends" },
+          { value: "3", label: "besties" },
+          { value: "all", label: "allow all" },
         ]}
-        value={settings.card_depth ? settings.card_depth.toString() : "all"}
+        value={
+          settings.card_depth !== null && settings.card_depth !== undefined
+            ? settings.card_depth.toString()
+            : "all"
+        }
         onChange={(value) =>
           handleSettingChange({
             card_depth:
-              value === "all" ? null : (parseInt(value as string) as 1 | 2 | 3),
+              value === "all"
+                ? null
+                : (parseInt(value as string) as 0 | 1 | 2 | 3),
           })
         }
         disabled={!settings.deal_extras}

@@ -56,7 +56,7 @@ export type RoomMetadata = {
 export type RoomMetaDataAndState = RoomMetadata & GameState;
 
 export type RoomSettings = {
-  card_depth: 1 | 2 | 3 | null; // null means there is no depth restriction
+  card_depth: 0 | 1 | 2 | 3 | null; // null means there is no depth restriction
   deal_extras: boolean; // If true, deal extra cards from cards table, otherwise, use ripples and exchanges only
   is_exchange: boolean; // If true, this is an exchange round. Auto-update by server
   game_mode: GameMode;
@@ -68,7 +68,7 @@ export type Card = {
   id: string;
   content: string;
   category: string;
-  depth: 1 | 2 | 3;
+  depth: 0 | 1 | 2 | 3;
   created_at?: string;
   contributor_id?: string;
 };

@@ -52,9 +52,9 @@ export function Endgame({ roomId }: EndgameProp) {
     Partial<RoomSettings>
   >({
     deal_extras: true,
-    card_depth: null,
+    card_depth: room?.card_depth ?? null,
     is_exchange: true,
-    game_mode: "irl" as GameMode,
+    game_mode: room?.game_mode ? room.game_mode : ("irl" as GameMode),
   });
   const [loading, setLoading] = useState(false);
   const [matchedExchanges, setMatchedExchanges] = useState<
@@ -89,7 +89,7 @@ export function Endgame({ roomId }: EndgameProp) {
   }, [roomId, getCardById]);
 
   useEffect(() => {
-    if (room?.card_depth) {
+    if (room?.card_depth !== null && room?.card_depth !== undefined) {
       setNextRoundSettings((prev) => ({
         ...prev,
         card_depth: room?.card_depth,
@@ -284,7 +284,10 @@ export function Endgame({ roomId }: EndgameProp) {
         <Stack gap="md">
           <Title order={4}>Play Again?</Title>
 
-          <GameSettingsForm onChange={setNextRoundSettings} />
+          <GameSettingsForm
+            initialSettings={nextRoundSettings}
+            onChange={setNextRoundSettings}
+          />
 
           <Group justify="center" mt="sm">
             <Button

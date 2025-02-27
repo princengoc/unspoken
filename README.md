@@ -19,7 +19,7 @@
 
 UI
 
-- [ ] Improve instructions, text-based prefered
+- [x] Improve instructions, text-based prefered
 - [x] Move Sidenavbar to top, assume vertical mobile
 
 IRL
@@ -28,7 +28,7 @@ IRL
 
 Remote
 
-- [ ] mp3 for iOS compat
+- [ ] iOS sound compat (?)
 
 Content
 
@@ -44,8 +44,8 @@ Content
   - [ ] Allow direct player invitations (pre-approved join)
 
 - **Card history**
-  - [ ] Add card history
-  - [ ] Add personalization
+  - [x] Add card history
+  - [x] Add personalization
 - **Bug**
 - [ ] Exchange: should not allow choosing of same card (server-side update of in_play?)
 
