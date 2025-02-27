@@ -21,6 +21,7 @@ import {
   IconCheck,
   IconExchange,
   IconUser,
+  IconLane,
 } from "@tabler/icons-react";
 import { JoinRequests } from "@/hooks/room/JoinRequests";
 import { SetupViewType, type GamePhase } from "@/core/game/types";
@@ -30,7 +31,8 @@ import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { getPlayerAssignments } from "@/components/game/statusBarUtils";
 import { ProfileSettings } from "@/app/auth/ProfileSettings";
 import { useFullRoom } from "@/context/FullRoomProvider";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { UnspokenGameIcon, UnspokenGameIconSmall } from "@/core/game/unspokenIcon";
 
 interface HeaderProps {
   roomId: string;
@@ -51,6 +53,8 @@ export function Header({
   const { isCreator } = useFullRoom();
   const playerAssignments = getPlayerAssignments(members, roomId);
   const [profileOpened, { open: openProfile, close: closeProfile }] = useDisclosure(false);
+  const isSmallScreen = useMediaQuery('(max-width: 400px)');
+  const isTinyScreen = useMediaQuery('(max-width: 300px)');
   
   // Local state to track view
   const [currentViewState, setCurrentViewState] = useState(currentView);
@@ -81,69 +85,74 @@ export function Header({
     endgame: "yellow",
   };
 
-  const phaseLabels = {
-    setup: "Setup",
-    speaking: "Discussion",
-    endgame: "Game End",
-  };
-
   const phaseIcons = {
-    setup: <IconHourglass />,
-    speaking: <IconMessageCircle />,
-    endgame: <IconCards />
+    setup: <IconHourglass size={isSmallScreen ? 14 : 16} />,
+    speaking: <IconMessageCircle size={isSmallScreen ? 14 : 16} />,
+    endgame: <IconCards size={isSmallScreen ? 14 : 16} />
   };
 
   const currentUserAssignment = currentMember
     ? playerAssignments.get(currentMember.id)
     : undefined;
 
+  // Exchange icon color based on match status
+  const exchangeIconColor = hasMatch ? "green" : "gray";
+
+  // Prepare segmented control data based on screen size
+  const segmentedControlData = [
+    {
+      value: 'cards',
+      label: (
+        <Group gap={isSmallScreen ? 4 : 8} wrap="nowrap">
+          {phaseIcons[gamePhase]}
+          <Text size={isSmallScreen ? "xs" : "sm"} lh={1}>
+            {isSmallScreen ? "" : "Say"}
+          </Text>
+        </Group>
+      ),
+    },
+    {
+      value: 'exchange',
+      label: (
+        <Group gap={isSmallScreen ? 4 : 8} wrap="nowrap">
+          <IconExchange size={isSmallScreen ? 14 : 16} color={exchangeIconColor} />
+          <Text size={isSmallScreen ? "xs" : "sm"} lh={1}>
+            {isSmallScreen ? "" : "Ask"}
+          </Text>
+          {exchangeUpdatesCount > 0 && (
+            <Badge size="xs" color="red" p={2} radius="xl" variant="filled">
+              {exchangeUpdatesCount}
+            </Badge>
+          )}
+        </Group>
+      ),
+    },
+  ];
+
   return (
     <>
-      <Group justify="space-between" h="100%" px="md">
+      <Group justify="space-between" h="100%" px="md" wrap="nowrap">
         {/* Left section */}
-        <Group gap="xs">
-          <Title order={4} size="h4" lineClamp={1}>Unspoken</Title>
-        </Group>
-
-        {/* Center section - View toggle */}
+        {
+            // (isTinyScreen ? <UnspokenGameIcon /> : <Title order={4} size="h4" lh={1} lineClamp={1}>Unspoken</Title>)
+            // <IconMessageCirclePause />
+            <Box style={{ position: 'relative', display: 'inline-block' }}>
+                {isTinyScreen ? <UnspokenGameIconSmall /> : <UnspokenGameIcon />}
+          </Box>
+        }
+          
+        {/* Center section - Takes up available space */}
+        <Group align="center">
           <SegmentedControl
             value={currentViewState}
             onChange={handleViewChange}
-            data={[
-              {
-                value: 'cards',
-                label: (
-                //     <Badge color={phaseColors[gamePhase]} leftSection={phaseIcons[gamePhase]}>
-                //     {phaseLabels[gamePhase]}
-                //   </Badge>                    
-                  <Group gap={8}>
-                    {phaseIcons[gamePhase]}
-                    <Text>{phaseLabels[gamePhase]}</Text>
-                  </Group>
-                ),
-              },
-              {
-                value: 'exchange',
-                label: (
-                  <Group gap={8}>
-                    <IconExchange size={16} />
-                    <Text>Trade Cards</Text>
-                    {exchangeUpdatesCount > 0 && (
-                      <Badge size="xs" color="red" p={4} radius="xl" variant="filled">
-                        {exchangeUpdatesCount}
-                      </Badge>
-                    )}
-                    {hasMatch && <Badge color="green" size="xs">Match Found!</Badge>}
-                  </Group>
-                ),
-              },
-            ]}
-            // fullWidth
-            size="sm"
+            data={segmentedControlData}
+            size={isSmallScreen ? "sm" : "md"}
           />
+        </Group>
 
         {/* Right section */}
-        <Group gap="xs">
+        <Group gap="xs" wrap="nowrap">
           {/* Join requests for room creator */}
           {isCreator && <JoinRequests roomId={roomId} />}
 
@@ -154,7 +163,7 @@ export function Header({
                 <Box style={{ cursor: 'pointer' }}>
                   <PlayerAvatar
                     assignment={currentUserAssignment}
-                    size="md"
+                    size={isSmallScreen ? "sm" : "md"}
                     highlighted={true}
                     highlightColor="green"
                     showTooltip={false}
