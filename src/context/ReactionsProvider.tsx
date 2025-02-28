@@ -25,7 +25,7 @@ interface ReactionsContextType {
   ) => Promise<void>;
   
   // Helper functions to check state
-  hasReaction: (toId: string, cardId: string, type: ReactionType) => boolean;
+  hasTellMeMore: (otherPlayerId: string) => boolean;
   isRippled: (toId: string, cardId: string) => boolean;
 }
 
@@ -110,14 +110,12 @@ export function ReactionsProvider({
     }
   };
   
-  // Helper: Check if the current user has a specific outgoing reaction
-  const hasReaction = (
-    toId: string,
-    cardId: string,
-    type: ReactionType
+  // check if other player had a "tellmemore" request for this player
+  const hasTellMeMore = (
+    otherPlayerId: string,
   ): boolean => {
-    return outgoingReactions.some(
-      r => r.toId === toId && r.cardId === cardId && r.type === type
+    return incomingReactions.some(
+      r => r.fromId === otherPlayerId && r.type === "tellmemore"
     );
   };
   
@@ -138,7 +136,7 @@ export function ReactionsProvider({
     loading,
     toggleReaction,
     toggleRipple,
-    hasReaction,
+    hasTellMeMore,
     isRippled,
   };
   

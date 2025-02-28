@@ -18,17 +18,16 @@ const REACTIONS = [
 ] as const;
 
 interface ReactionsProps {
-  userId: string; // currentPlayer
   toId: string;
   cardId: string;     // The card ID
 }
 
-export function Reactions({ userId, toId, cardId }: ReactionsProps) {
-  const { recording, setRecording, refreshMessages } = useAudioMessages();
+export function Reactions({ toId, cardId }: ReactionsProps) {
+  const { recording, setRecording } = useAudioMessages();
   const { 
     toggleReaction, 
     toggleRipple, 
-    hasReaction, 
+    hasTellMeMore, 
     isRippled,
     loading
   } = useReactions();    
@@ -40,7 +39,7 @@ export function Reactions({ userId, toId, cardId }: ReactionsProps) {
   const [rippleDisabled, setRippleDisabled] = useState(false);
 
   // Check if the user has requested a response or rippled this card
-  const hasRequestedResponse = hasReaction(toId, cardId, "tellmemore");
+  const hasRequestedResponse = hasTellMeMore(toId);
   const rippled = isRippled(toId, cardId);
 
   const handleReactionClick = async (id: ReactionType) => {
@@ -76,13 +75,18 @@ export function Reactions({ userId, toId, cardId }: ReactionsProps) {
 
   const handleRecordStart = async () => {
     setRecording(true);
-    // TODO: if this recording was in response to a request, then  toggle that... 
+    if (hasRequestedResponse) {
+      // this recording is specifically in response to the other player's request
+      console.log(`Responding to ${toId} request. CardId: ${cardId}`); 
+    }
+    // send a "metoo"
+    await toggleReaction(toId, cardId, "metoo"); 
   };
 
   const handleRecordComplete = async () => {
     setRecording(false);
-    // Refresh messages to ensure state is updated
-    await refreshMessages();
+    // remove the "metoo"
+    await toggleReaction(toId, cardId, "metoo"); 
   };
 
   return (
@@ -93,7 +97,7 @@ export function Reactions({ userId, toId, cardId }: ReactionsProps) {
           {REACTIONS.map(({ id, icon: Icon, label }) => (
             <Tooltip key={id} label={label}>
               <ActionIcon
-                variant={hasReaction(toId, cardId, id) ? "filled" : "subtle"}
+                variant={hasRequestedResponse ? "filled" : "subtle"}
                 color="blue"
                 onClick={() => handleReactionClick(id)}
                 radius="xl"

@@ -95,7 +95,6 @@ export function PlayerCardGridRemote({
                   {/* Don't show reaction buttons on current user's card */}
                   {!isCurrentUserCard && (
                     <Reactions
-                      userId={userId}
                       toId={info.playerId}
                       cardId={info.card.id}
                     />
