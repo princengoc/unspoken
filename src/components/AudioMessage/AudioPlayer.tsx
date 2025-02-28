@@ -7,7 +7,6 @@ import {
   ActionIcon,
   Loader,
   Progress,
-  Stack,
   Paper,
   Tooltip,
 } from "@mantine/core";
@@ -33,6 +32,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [playedOnce, setPlayedOnce] = useState(false); 
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -150,6 +150,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const handleEnded = () => {
       setIsPlaying(false);
+      setPlayedOnce(true); // played once
       setProgress(100); // Set to 100% when ended
 
       if (progressInterval.current) {
@@ -318,8 +319,9 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
                     // Only call markAsListened through the click handler, not during render
                     handleMarkAsListened();
                   }}
-                  color="orange"
+                  color={playedOnce ? "orange" : "gray"}
                   radius="xl"
+                  disabled={!playedOnce} // need to have played at least once 
                 >
                   {countdown !== null && countdown > 0 ? (
                     <Text size="xs" fw="bold">
