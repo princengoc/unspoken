@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Text, Group, ActionIcon, Stack, Alert } from "@mantine/core";
 import {
   IconMicrophone,
@@ -18,14 +18,12 @@ interface AudioRecorderProps {
   onComplete?: () => void;
   targetPlayerId?: string;
   isPublic?: boolean;
-  isCompact?: boolean;
 }
 
 export function AudioRecorder({
   onComplete,
   targetPlayerId,
   isPublic = false,
-  isCompact = false,
 }: AudioRecorderProps) {
   const {
     recordingState,
@@ -36,7 +34,7 @@ export function AudioRecorder({
     resetRecording,
   } = useAudioRecording();
 
-  const { sendAudioMessage, setRecording } = useAudioMessages();
+  const { sendAudioMessage, setRecording, refreshMessages } = useAudioMessages();
 
   // All reactions are private by default
   const privacy: AudioPrivacy = isPublic ? "public" : "private";
@@ -70,8 +68,14 @@ export function AudioRecorder({
       );
 
       if (result) {
+        // Cleanup the recording state and UI
         resetRecording();
         setRecording(false);
+        
+        // Ensure messages are refreshed across the app
+        await refreshMessages();
+        
+        // Notify parent component
         onComplete?.();
       } else {
         setError("Failed to upload audio message.");
@@ -104,7 +108,7 @@ export function AudioRecorder({
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     // Reset the recording state through the hook
     resetRecording();
 
@@ -122,141 +126,28 @@ export function AudioRecorder({
     // Reset the recording state in context
     setRecording(false);
     
+    // Make sure context knows recording is done
+    await refreshMessages();
+    
     // Call onComplete to notify parent component
     onComplete?.();
   };
 
-  // Compact layout for reactions bar
-  if (isCompact) {
-    return (
-      <Group gap="xs" align="center">
-        {error && (
-          <Alert color="red" icon={<IconAlertCircle size={16} />}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Initial state - show record button if no recording yet */}
-        {!recordingState.isRecording && 
-         !recordingState.audioBlob && 
-         !recordingState.initializing && (
-          <ActionIcon
-            color="red"
-            variant="filled"
-            radius="xl"
-            size="md"
-            onClick={startRecording}
-            title="Start Recording"
-          >
-            <IconMicrophone size={18} />
-          </ActionIcon>
-        )}
-
-        {/* Recording timer */}
-        <Text size="sm" style={{ fontFamily: "monospace" }}>
-          {formatTime(recordingState.duration)}
-        </Text>
-
-        {/* Recording in progress */}
-        {recordingState.isRecording && !recordingState.isPaused && (
-          <>
-            <ActionIcon
-              color="yellow"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={pauseRecording}
-              title="Pause Recording"
-            >
-              <IconPlayerPause size={18} />
-            </ActionIcon>
-
-            <ActionIcon
-              color="red"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={stopRecording}
-              title="Stop Recording"
-            >
-              <IconPlayerStop size={18} />
-            </ActionIcon>
-          </>
-        )}
-
-        {/* Recording paused */}
-        {recordingState.isRecording && recordingState.isPaused && (
-          <>
-            <ActionIcon
-              color="green"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={resumeRecording}
-              title="Resume Recording"
-            >
-              <IconPlayerPlay size={18} />
-            </ActionIcon>
-
-            <ActionIcon
-              color="red"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={stopRecording}
-              title="Stop Recording"
-            >
-              <IconPlayerStop size={18} />
-            </ActionIcon>
-          </>
-        )}
-
-        {/* Recording completed - Show review options with send button at the same level */}
-        {!recordingState.isRecording && recordingState.audioBlob && (
-          <>
-            <ActionIcon
-              color="blue"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={handlePlayPreview}
-              title={isPlaying ? "Pause Preview" : "Play Preview"}
-            >
-              {isPlaying ? (
-                <IconPlayerPause size={18} />
-              ) : (
-                <IconPlayerPlay size={18} />
-              )}
-            </ActionIcon>
-
-            <ActionIcon
-              color="gray"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={handleReset}
-              title="Reset Recording"
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
-
-            <ActionIcon
-              color="green"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={handleSend}
-              loading={isUploading}
-              disabled={isUploading}
-              title="Send Recording"
-            >
-              <IconSend size={18} />
-            </ActionIcon>
-          </>
-        )}
-      </Group>
-    );
-  }
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+      
+      // Make sure recording state is reset when component unmounts
+      if (recordingState.isRecording) {
+        resetRecording();
+        setRecording(false);
+      }
+    };
+  }, [recordingState.isRecording, resetRecording, setRecording]);
 
   // Standard layout
   return (

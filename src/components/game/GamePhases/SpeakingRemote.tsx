@@ -59,7 +59,6 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
       <Paper p="md" withBorder shadow="sm">
         <PlayerCardGridRemote
           cardInfos={playerCardsInfo}
-          roomId={roomId}
           showSender={false}
           animate={false}
           highlightPlayerId={currentMember?.id || null}

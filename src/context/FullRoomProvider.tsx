@@ -14,6 +14,7 @@ import type {
   Player,
 } from "@/core/game/types";
 import { AudioMessagesProvider } from "./AudioMessagesProvider";
+import { ReactionsProvider } from "./ReactionsProvider";
 
 interface FullRoomContextType {
   // states
@@ -123,11 +124,13 @@ export function FullRoomProvider({
     <CardsInGameProvider roomId={roomId} userId={userId}>
       <RoomMembersProvider roomId={roomId} userId={userId}>
         <ExchangesProvider roomId={roomId} userId={userId}>
-          <AudioMessagesProvider roomId={roomId} userId={userId}>
-            <FullRoomProviderInner userId={userId}>
-              {children}
-            </FullRoomProviderInner>
-          </AudioMessagesProvider>
+          <ReactionsProvider roomId={roomId} userId={userId}>
+            <AudioMessagesProvider roomId={roomId} userId={userId}>
+              <FullRoomProviderInner userId={userId}>
+                {children}
+              </FullRoomProviderInner>
+            </AudioMessagesProvider>
+          </ReactionsProvider>
         </ExchangesProvider>
       </RoomMembersProvider>
     </CardsInGameProvider>

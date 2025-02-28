@@ -1,3 +1,5 @@
+// src/components/game/PlayerCardGridRemote.tsx
+
 import React from "react";
 import { Group, Text, Box, Stack, Card } from "@mantine/core";
 import { SlideIn } from "@/components/animations/Motion";
@@ -8,7 +10,7 @@ import { ReactionsFeed } from "./ReactionsFeed";
 import { AudioPlayer } from "@/components/AudioMessage/AudioPlayer";
 import { useAuth } from "@/context/AuthProvider";
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
-import { ListenerReactions } from "./ListenerReactions";
+import { Reactions } from "./Reactions";
 
 export interface PlayerCardInfo {
   playerId: string;
@@ -22,7 +24,6 @@ export interface PlayerCardInfo {
 
 interface PlayerCardGridRemoteProps {
   cardInfos: PlayerCardInfo[];
-  roomId: string;
   showSender?: boolean;
   animate?: boolean;
   highlightPlayerId?: string | null;
@@ -32,7 +33,6 @@ interface PlayerCardGridRemoteProps {
 
 export function PlayerCardGridRemote({
   cardInfos,
-  roomId,
   showSender = false,
   animate = true,
   highlightPlayerId = null,
@@ -84,22 +84,20 @@ export function PlayerCardGridRemote({
 
                   {/* Reaction feed - shows reactions directed at the current user */}
                   {/* Only show on current user's card */}
-                  <ReactionsFeed
-                    roomId={roomId}
-                    speakerId={info.playerId}
-                    cardId={info.card.id}
-                    currentUserId={user.id}
-                    playerAssignments={playerAssignments}
-                  />
+                  {isCurrentUserCard && (
+                    <ReactionsFeed
+                      fromId={info.playerId}
+                      cardId={info.card.id}
+                      playerAssignments={playerAssignments}
+                    />
+                  )}
 
                   {/* Reaction buttons - for reacting to other people's cards */}
                   {/* Don't show reaction buttons on current user's card */}
                   {!isCurrentUserCard && (
-                    <ListenerReactions
-                      speakerId={info.playerId}
+                    <Reactions
+                      toId={info.playerId}
                       cardId={info.card.id}
-                      roomId={roomId}
-                      userId={user.id}
                     />
                   )}
 
