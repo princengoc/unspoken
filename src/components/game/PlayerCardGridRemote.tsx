@@ -40,7 +40,8 @@ export function PlayerCardGridRemote({
   playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
-  const { messagesByPlayer, loading } = useAudioMessages();
+  const userId = user.id
+  const { messagesByPlayer, loading: audioLoading } = useAudioMessages();
 
   return (
     <>
@@ -63,7 +64,7 @@ export function PlayerCardGridRemote({
           const audioMessages = messagesByPlayer.get(info.playerId) || [];
 
           // Is this the current user's card?
-          const isCurrentUserCard = info.playerId === user.id;
+          const isCurrentUserCard = info.playerId === userId;
 
           // Prepare the card component with appropriate props
           const cardContent = (
@@ -82,12 +83,10 @@ export function PlayerCardGridRemote({
                     contributorName={info.contributorName}
                   />
 
-                  {/* Reaction feed - shows reactions directed at the current user */}
+                  {/* Reaction feed - shows ALL reactions directed to the current user */}
                   {/* Only show on current user's card */}
                   {isCurrentUserCard && (
                     <ReactionsFeed
-                      fromId={info.playerId}
-                      cardId={info.card.id}
                       playerAssignments={playerAssignments}
                     />
                   )}
@@ -96,6 +95,7 @@ export function PlayerCardGridRemote({
                   {/* Don't show reaction buttons on current user's card */}
                   {!isCurrentUserCard && (
                     <Reactions
+                      userId={userId}
                       toId={info.playerId}
                       cardId={info.card.id}
                     />
@@ -128,7 +128,7 @@ export function PlayerCardGridRemote({
         })}
       </Group>
 
-      {loading && (
+      {audioLoading && (
         <Text ta="center" c="dimmed" mt="lg">
           Loading audio messages...
         </Text>

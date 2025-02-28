@@ -15,6 +15,7 @@ interface ReactionsContextType {
     toId: string,
     cardId: string,
     type: ReactionType,
+    fromId?: string,
     isPrivate?: boolean
   ) => Promise<void>;
   
@@ -26,7 +27,6 @@ interface ReactionsContextType {
   // Helper functions to check state
   hasReaction: (toId: string, cardId: string, type: ReactionType) => boolean;
   isRippled: (toId: string, cardId: string) => boolean;
-  getReactionsToCard: (cardId: string) => Reaction[];
 }
 
 // Create context
@@ -69,18 +69,19 @@ export function ReactionsProvider({
   }, [roomId]);
   
   // Action: Toggle a reaction
-  // fromId will always be the current userId
+  // we may want to tell someome that we responded to their reaction, so fromId most of the time will be use but not always
   const toggleReaction = async (
     toId: string,
     cardId: string,
     type: ReactionType,
+    fromId: string = userId, 
     isPrivate: boolean = true
   ): Promise<void> => {
     try {
       await reactionsService.toggleReaction(
         roomId,
         toId,
-        userId,
+        fromId,
         cardId,
         type,
         isPrivate
@@ -109,7 +110,7 @@ export function ReactionsProvider({
     }
   };
   
-  // Helper: Check if the current user has a specific reaction
+  // Helper: Check if the current user has a specific outgoing reaction
   const hasReaction = (
     toId: string,
     cardId: string,
@@ -130,11 +131,6 @@ export function ReactionsProvider({
     );
   };
   
-  // Helper: Get all reactions to a specific card
-  const getReactionsToCard = (cardId: string): Reaction[] => {
-    return allReactions.filter(r => r.toId === userId && r.cardId === cardId);
-  };
-  
   const value = {
     allReactions,
     incomingReactions,
@@ -144,7 +140,6 @@ export function ReactionsProvider({
     toggleRipple,
     hasReaction,
     isRippled,
-    getReactionsToCard
   };
   
   return (

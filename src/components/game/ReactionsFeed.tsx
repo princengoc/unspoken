@@ -12,8 +12,6 @@ import type { PlayerAssignment } from "./statusBarUtils";
 import { PlayerAvatar } from "./PlayerAvatar";
 
 interface ReactionsFeedProps {
-  fromId: string;         // the player sending reactions to currentPlayer
-  cardId: string;       
   playerAssignments: Map<string, PlayerAssignment>;
 }
 
@@ -21,8 +19,6 @@ interface ReactionsFeedProps {
  * ReactionsFeed shows incoming reactions directed at the current user's card
  */
 export function ReactionsFeed({
-  fromId,
-  cardId,
   playerAssignments,
 }: ReactionsFeedProps) {
   const theme = useMantineTheme();
@@ -34,9 +30,7 @@ export function ReactionsFeed({
   } = useReactions();
 
   // Filter reactions relevant to this card and user
-  const cardReactions = incomingReactions.filter(
-    r => r.cardId === cardId && r.fromId === fromId
-  );
+  const cardReactions = incomingReactions;
   
   // Group reactions by type
   const resonatesReactions = cardReactions.filter(r => r.type === "resonates");

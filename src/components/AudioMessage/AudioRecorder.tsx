@@ -42,6 +42,7 @@ export function AudioRecorder({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasCompletedSending, setHasCompletedSending] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Format seconds into MM:SS
@@ -75,8 +76,13 @@ export function AudioRecorder({
         // Ensure messages are refreshed across the app
         await refreshMessages();
         
-        // Notify parent component
-        onComplete?.();
+        // Set flag to indicate we completed sending successfully
+        setHasCompletedSending(true);
+        
+        // Notify parent component only after successful send
+        if (onComplete) {
+          onComplete();
+        }
       } else {
         setError("Failed to upload audio message.");
       }
@@ -108,7 +114,7 @@ export function AudioRecorder({
     }
   };
 
-  const handleReset = async () => {
+  const handleReset = () => {
     // Reset the recording state through the hook
     resetRecording();
 
@@ -126,11 +132,21 @@ export function AudioRecorder({
     // Reset the recording state in context
     setRecording(false);
     
-    // Make sure context knows recording is done
-    await refreshMessages();
+    // We only call refreshMessages and onComplete if we had previously completed sending
+    // This prevents premature calls to onComplete
+    if (hasCompletedSending) {
+      // Make sure context knows recording is done
+      refreshMessages();
+      
+      // Only call onComplete if we previously completed sending successfully
+      // and are now resetting after a successful send
+      if (onComplete) {
+        onComplete();
+      }
+    }
     
-    // Call onComplete to notify parent component
-    onComplete?.();
+    // Reset the completed flag
+    setHasCompletedSending(false);
   };
 
   // Cleanup on unmount
@@ -146,6 +162,9 @@ export function AudioRecorder({
         resetRecording();
         setRecording(false);
       }
+      
+      // Do NOT call onComplete here - we don't want to trigger it on unmount
+      // This was likely causing the issue
     };
   }, [recordingState.isRecording, resetRecording, setRecording]);
 

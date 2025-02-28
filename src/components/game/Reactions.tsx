@@ -6,10 +6,10 @@ import {
   IconMicrophone,
   IconQuestionMark
 } from "@tabler/icons-react";
-import { useReactions } from "@/context/ReactionsProvider";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import type { ReactionType } from "@/services/supabase/reactions";
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
+import { useReactions } from "@/context/ReactionsProvider";
 
 // Reaction types
 const REACTIONS = [
@@ -18,22 +18,20 @@ const REACTIONS = [
 ] as const;
 
 interface ReactionsProps {
+  userId: string; // currentPlayer
   toId: string;
   cardId: string;     // The card ID
 }
 
-export function Reactions({ toId, cardId }: ReactionsProps) {
-  const [isRecording, setIsRecording] = useState(false);
+export function Reactions({ userId, toId, cardId }: ReactionsProps) {
   const { recording, setRecording, refreshMessages } = useAudioMessages();
-  
-  // Use the centralized reactions provider
   const { 
     toggleReaction, 
     toggleRipple, 
     hasReaction, 
     isRippled,
     loading
-  } = useReactions();
+  } = useReactions();    
 
   // Store temporary "button disabled" state for UI feedback
   const [disabledButtons, setDisabledButtons] = useState<Record<ReactionType, boolean>>(
@@ -77,53 +75,19 @@ export function Reactions({ toId, cardId }: ReactionsProps) {
   };
 
   const handleRecordStart = async () => {
-    setIsRecording(true);
     setRecording(true);
-    
-    // If we were requesting a response, clear the request when we start recording
-    if (hasRequestedResponse) {
-      try {
-        await toggleReaction(toId, cardId, "tellmemore");
-      } catch (error) {
-        console.error("Failed to clear tellmemore reaction:", error);
-      }
-    }
-    
-    // Set metoo reaction to indicate recording in progress
-    try {
-      await toggleReaction(toId, cardId, "metoo");
-    } catch (error) {
-      console.error("Failed to set metoo reaction:", error);
-    }
+    // TODO: if this recording was in response to a request, then  toggle that... 
   };
 
   const handleRecordComplete = async () => {
-    setIsRecording(false);
     setRecording(false);
-    
-    // Clear the metoo reaction when done recording
-    try {
-      if (hasReaction(toId, cardId, "metoo")) {
-        await toggleReaction(toId, cardId, "metoo");
-      }
-    } catch (error) {
-      console.error("Failed to clear metoo reaction:", error);
-    }
-    
     // Refresh messages to ensure state is updated
     await refreshMessages();
   };
 
-  // Update the recording state based on the context value
-  useEffect(() => {
-    if (!recording && isRecording) {
-      setIsRecording(false);
-    }
-  }, [recording, isRecording]);
-
   return (
     <Group justify="center" gap="xs">
-      {!isRecording ? (
+      {!recording ? (
         <>
           {/* Reaction Buttons */}
           {REACTIONS.map(({ id, icon: Icon, label }) => (
@@ -166,7 +130,7 @@ export function Reactions({ toId, cardId }: ReactionsProps) {
       )}
 
       {/* Record Button */}
-      {!isRecording && (
+      {!recording && (
         <Tooltip label="Record a response">
           <ActionIcon
             variant={hasRequestedResponse ? "filled" : "subtle"}

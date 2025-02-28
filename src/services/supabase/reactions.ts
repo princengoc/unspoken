@@ -45,6 +45,7 @@ export const reactionsService = {
         card_id: cardId,
         type,
       });
+      console.log(`Deleted reactions of type ${type}`);
     } else {
       // Add new reaction
       await supabase.from("reactions").insert([
@@ -57,6 +58,7 @@ export const reactionsService = {
           is_private: isPrivate,
         },
       ]);
+      console.log(`insert reactions of type ${type}`);
     }
   },
 
