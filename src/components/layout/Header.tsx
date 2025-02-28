@@ -17,6 +17,7 @@ import {
   IconHourglass,
   IconExchange,
   IconUser,
+  IconCheck,
 } from "@tabler/icons-react";
 import { JoinRequests } from "@/hooks/room/JoinRequests";
 import { SetupViewType, type GamePhase } from "@/core/game/types";
@@ -102,7 +103,7 @@ export function Header({
             {isSmallScreen ? "" : "Say"}
           </Text>
           {isSetupComplete && gamePhase === 'setup' && (
-            <Badge size="xs" color="green" p={2} radius="xl" variant="filled" />
+            <IconCheck color="green" size={isSmallScreen ? 12 : 14}/>
           )}          
         </Group>
       ),
