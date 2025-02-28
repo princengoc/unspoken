@@ -16,8 +16,8 @@ type SpeakingProp = {
 
 export function Speaking({ roomId }: SpeakingProp) {
   const { user } = useAuth();
-  const { room } = useRoom();
-  const { isActiveSpeaker, finishSpeaking } = useFullRoom();
+  const { room, finishSpeaking } = useRoom();
+  const { isActiveSpeaker } = useFullRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
 

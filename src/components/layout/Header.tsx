@@ -32,6 +32,7 @@ import {
   UnspokenGameIcon,
   UnspokenGameIconSmall,
 } from "@/core/game/unspokenIcon";
+import { useRoom } from "@/context/RoomProvider";
 
 interface HeaderProps {
   roomId: string;
@@ -49,7 +50,8 @@ export function Header({
   currentView = "cards",
 }: HeaderProps) {
   const { members, currentMember } = useRoomMembers();
-  const { isCreator, isSetupComplete } = useFullRoom();
+  const { isCreator } = useRoom();
+  const { isSetupComplete } = useFullRoom();
   const playerAssignments = getPlayerAssignments(members, roomId);
   const [profileOpened, { open: openProfile, close: closeProfile }] =
     useDisclosure(false);

@@ -20,13 +20,8 @@ export function Setup() {
     completePlayerSetup,
   } = useCardsInGame();
   const { currentMember } = useRoomMembers();
-  const { room } = useRoom();
-  const {
-    initiateSpeakingPhase,
-    isSetupComplete,
-    isCreator,
-    currentMemberStatus,
-  } = useFullRoom();
+  const { room, startSpeakingPhase, isCreator } = useRoom();
+  const { isSetupComplete, currentMemberStatus } = useFullRoom();
 
   const [isDealing, setIsDealing] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
@@ -136,7 +131,7 @@ export function Setup() {
               <Button
                 fullWidth
                 size="lg"
-                onClick={initiateSpeakingPhase}
+                onClick={startSpeakingPhase}
                 disabled={!isSetupComplete}
                 leftSection={
                   isSetupComplete ? (

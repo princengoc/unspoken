@@ -193,6 +193,7 @@ export const roomsService = {
     };
   },
 
+  // server function knows about checks like remote vs irl
   async startNextRound(
     roomId: string,
     creatorId: string,

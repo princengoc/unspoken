@@ -41,7 +41,7 @@ function renderGameContent(currentSetupView: SetupViewType, room: Room) {
 function RoomContent({ roomId }: { roomId: string }) {
   const router = useRouter();
   const { room, loading, error, leaveRoom } = useRoom();
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const [currentSetupView, setCurrentSetupView] =
     useState<SetupViewType>("cards");
 
@@ -113,9 +113,9 @@ interface RoomPageProps {
 
 export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
-
+  const { user } = useAuth();
   return (
-    <RoomProvider roomId={roomId}>
+    <RoomProvider roomId={roomId} userId={user.id}>
       <RoomContent roomId={roomId} />
     </RoomProvider>
   );

@@ -2,13 +2,7 @@
 // and turn them into convenient game logic functions for components
 // We use this when we have joined a room already
 // Components that deal with joining/creation of rooms use the useRoomAPI hook.
-import React, {
-  createContext,
-  useContext,
-  ReactNode,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { createContext, useContext, ReactNode, useMemo } from "react";
 import { useRoom } from "./RoomProvider";
 import { RoomMembersProvider, useRoomMembers } from "./RoomMembersProvider";
 import { CardsInGameProvider, useCardsInGame } from "./CardsInGameProvider";
@@ -16,19 +10,13 @@ import { ExchangesProvider } from "./ExchangesProvider";
 import type {
   CardState,
   Room,
-  RoomSettings,
   DerivedPlayerStatus,
   Player,
 } from "@/core/game/types";
 import { AudioMessagesProvider } from "./AudioMessagesProvider";
 
 interface FullRoomContextType {
-  initiateSpeakingPhase: () => Promise<void>;
-  finishSpeaking: () => Promise<void>;
-  startNextRound: (settings: Partial<RoomSettings>) => Promise<void>;
-
   // states
-  isCreator: boolean;
   isSetupComplete: boolean;
   isActiveSpeaker: boolean;
   currentMemberStatus: DerivedPlayerStatus;
@@ -87,21 +75,16 @@ function FullRoomProviderInner({
   userId: string;
   children: ReactNode;
 }) {
-  const {
-    room,
-    finishSpeaking: roomFinishSpeaking,
-    startNextRound: roomStartNextRound,
-    startSpeakingPhase,
-  } = useRoom();
+  const { room } = useRoom();
 
   const { members, currentMember } = useRoomMembers();
 
   const { cardState } = useCardsInGame();
 
   // Destructure currentMember values for easier dependency management
-  const isCreator = userId === room!.created_by;
   const hasSpoken = currentMember?.has_spoken ?? false;
   const isActiveSpeaker = userId === room!.active_player_id && !hasSpoken;
+  const isRemote = room?.game_mode === "remote";
 
   const currentMemberStatus = useMemo(
     () => derivePlayerStatus(userId, cardState, room!),
@@ -110,68 +93,14 @@ function FullRoomProviderInner({
 
   const isSetupComplete = useMemo(() => {
     // For remote mode, check if all members have spoken
-    if (room?.game_mode === "remote") {
+    if (isRemote) {
       return members.every((member) => member.has_spoken);
     }
     // For normal mode, keep the existing logic
     return allMembersHaveSelectedCards(members, cardState.selectedCards);
-  }, [members, cardState.selectedCards, room?.game_mode]);
-
-  const initiateSpeakingPhase = useCallback(async () => {
-    if (!isCreator) {
-      console.warn("Only the room creator can start the speaking phase.");
-      return;
-    }
-    try {
-      const isRemote = room?.game_mode === "remote";
-      await startSpeakingPhase(userId, isRemote);
-    } catch (error) {
-      console.error("Failed to initiate speaking phase:", error);
-      throw error;
-    }
-  }, [isCreator, startSpeakingPhase, room?.game_mode]);
-
-  const finishSpeaking = useCallback(async () => {
-    try {
-      if (room?.game_mode === "remote") {
-        // In remote mode, this is called by the creator to end the reviewing phase
-        // Skip active speaker check and go directly to endgame
-        await roomFinishSpeaking(userId, true); // Pass isRemote flag
-      } else if (isActiveSpeaker) {
-        // Normal IRL mode - requires active speaker check
-        await roomFinishSpeaking(userId);
-      } else {
-        console.log(`User ${userId} is not the active speaker`);
-      }
-    } catch (error) {
-      console.error("Failed to finish speaking:", error);
-      throw error;
-    }
-  }, [userId, isActiveSpeaker, roomFinishSpeaking, room?.game_mode]);
-
-  // Generalized method to start next round (regular or encore)
-  const startNextRound = useCallback(
-    async (settings: Partial<RoomSettings>): Promise<void> => {
-      if (!isCreator) {
-        console.warn("Only the room creator can start the next round.");
-        return;
-      }
-
-      try {
-        await roomStartNextRound(userId, settings);
-      } catch (error) {
-        console.error("Failed to start next round:", error);
-        throw error;
-      }
-    },
-    [userId, isCreator, roomStartNextRound],
-  );
+  }, [members, cardState.selectedCards, isRemote]);
 
   const value = {
-    initiateSpeakingPhase,
-    finishSpeaking,
-    startNextRound,
-    isCreator,
     isSetupComplete,
     isActiveSpeaker,
     currentMemberStatus,

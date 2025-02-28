@@ -21,7 +21,6 @@ import { notifications } from "@mantine/notifications";
 import { motion } from "framer-motion";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
-import { useFullRoom } from "@/context/FullRoomProvider";
 import { roomsService } from "@/services/supabase/rooms";
 import { useRoom } from "@/context/RoomProvider";
 import { FadeIn } from "@/components/animations/Motion";
@@ -44,10 +43,9 @@ type EndgameProp = {
 };
 
 export function Endgame({ roomId }: EndgameProp) {
-  const { room } = useRoom();
+  const { room, startNextRound, isCreator } = useRoom();
   const { members, currentMember } = useRoomMembers();
   const { cardState, getCardById } = useCardsInGame();
-  const { isCreator, startNextRound } = useFullRoom();
   const [nextRoundSettings, setNextRoundSettings] = useState<
     Partial<RoomSettings>
   >({
@@ -154,7 +152,7 @@ export function Endgame({ roomId }: EndgameProp) {
   };
 
   const handleStartExchange = async () => {
-    if (!isCreator || !roomId) return;
+    if (!isCreator) return;
 
     setLoading(true);
     try {

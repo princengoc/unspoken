@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Stack, Button, Group, Text, Paper, Title, Modal } from "@mantine/core";
 import { IconMessageCircle, IconMicrophone } from "@tabler/icons-react";
-import { useFullRoom } from "@/context/FullRoomProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useAuth } from "@/context/AuthProvider";
@@ -10,6 +9,7 @@ import { getPlayerAssignments } from "../statusBarUtils";
 import { PlayerCardGridRemote, PlayerCardInfo } from "../PlayerCardGridRemote";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import { ListenerReactions } from "../ListenerReactions";
+import { useRoom } from "@/context/RoomProvider";
 
 type SpeakingRemoteProp = {
   roomId: string;
@@ -17,7 +17,7 @@ type SpeakingRemoteProp = {
 
 export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   const { user } = useAuth();
-  const { finishSpeaking, isCreator } = useFullRoom();
+  const { finishSpeaking, isCreator } = useRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members, currentMember } = useRoomMembers();
   const [recordingForPlayer, setRecordingForPlayer] = useState<string | null>(
@@ -58,7 +58,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   };
 
   const handleEndReviewingPhase = async () => {
-    if (isCreator && currentMember?.id) {
+    if (isCreator) {
       try {
         await finishSpeaking();
       } catch (error) {
