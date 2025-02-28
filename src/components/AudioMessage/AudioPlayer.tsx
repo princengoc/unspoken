@@ -15,12 +15,9 @@ import {
   IconPlayerPlay,
   IconPlayerPause,
   IconCheck,
-  IconLock,
-  IconWorldUpload,
 } from "@tabler/icons-react";
 
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
-import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { AudioMessage } from "@/core/audio/types";
 
 interface AudioPlayerProps {
@@ -29,21 +26,15 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ message }: AudioPlayerProps) {
   const { getAudioUrl, markAsListened } = useAudioMessages();
-  const { members } = useRoomMembers();
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Get sender username
-  const sender = members.find((m) => m.id === message.sender_id);
-  const senderName = sender?.username || "Unknown user";
 
   // Load the audio URL
   useEffect(() => {
@@ -83,9 +74,6 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const audio = audioRef.current;
 
-    const handleLoadedMetadata = () => {
-      setDuration(audio.duration);
-    };
 
     const handlePlay = () => {
       setIsPlaying(true);
@@ -96,7 +84,6 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       }
 
       progressInterval.current = setInterval(() => {
-        setCurrentTime(audio.currentTime);
         setProgress((audio.currentTime / audio.duration) * 100);
       }, 100);
     };
@@ -112,7 +99,6 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setCurrentTime(0);
       setProgress(0);
 
       if (progressInterval.current) {
@@ -134,27 +120,18 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       }
     };
 
-    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     audio.addEventListener("play", handlePlay);
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
 
     return () => {
-      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
   }, [audioUrl]);
-
-  // Format time in MM:SS
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   const handlePlayPause = () => {
     if (!audioRef.current || !audioUrl) return;
@@ -198,17 +175,6 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       />
 
       <Stack gap="xs">
-        <Group align="apart">
-          <Text fw={500}>Audio Message</Text>
-          <Badge color={message.is_public ? "green" : "yellow"}>
-            {message.is_public ? "Public" : "Private"}
-          </Badge>
-        </Group>
-
-        <Text size="xs" c="dimmed">
-          From: {senderName}
-        </Text>
-
         {loading ? (
           <Group align="center" my="md">
             <Loader size="sm" />
@@ -237,7 +203,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
           </Paper>
         ) : (
           <>
-            <Group align="apart" mt="xs">
+            <Group gap="xs" mt="xs">
               <ActionIcon
                 color={isPlaying ? "red" : "blue"}
                 variant="filled"
@@ -251,35 +217,31 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
                   <IconPlayerPlay size={16} />
                 )}
               </ActionIcon>
+              <Progress
+                value={progress}
+                striped 
+                animated
+                size="sm"
+                radius="xl"
+                transitionDuration={100}
+                style={{flexGrow: 1, width:"50%"}}
+              />
 
-              <Text size="xs" style={{ fontFamily: "monospace" }}>
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </Text>
-            </Group>
+              <Badge color={message.is_public ? "green" : "yellow"} size="xs">
+                {message.is_public ? "Public" : "Private"}
+              </Badge>
 
-            <Progress
-              value={progress}
-              size="sm"
-              radius="xl"
-              transitionDuration={100}
-            />
-
-            <Group align="center" mt="xs">
-              <Button
-                leftSection={<IconCheck size={16} />}
-                size="xs"
+              <ActionIcon
+                variant="filled"
                 onClick={handleMarkAsListened}
+                color="orange"
+                radius="xl"
               >
-                Mark as listened
-              </Button>
+                <IconCheck size={16} />
+              </ActionIcon>
             </Group>
           </>
         )}
-
-        <Group align="right" mt="xs">
-          <IconLock size={14} opacity={message.is_public ? 0.3 : 0.8} />
-          <IconWorldUpload size={14} opacity={message.is_public ? 0.8 : 0.3} />
-        </Group>
       </Stack>
     </Card>
   );

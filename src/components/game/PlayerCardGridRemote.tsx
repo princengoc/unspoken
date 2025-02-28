@@ -42,7 +42,7 @@ export function PlayerCardGridRemote({
   playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
-  const { messagesByPlayer, loading } = useAudioMessages();
+  const { messagesByPlayer, loading } = useAudioMessages();  
 
   return (
     <>
@@ -96,7 +96,6 @@ export function PlayerCardGridRemote({
 
               {/* Render Audio Messages for this card */}
               {audioMessages.length > 0 && (
-                <Paper p="xs" radius="md" withBorder mt="sm">
                   <Stack gap="xs">
                     <Text size="sm" fw={500}>
                       Audio Messages ({audioMessages.length})
@@ -105,7 +104,6 @@ export function PlayerCardGridRemote({
                       <AudioPlayer key={message.id} message={message} />
                     ))}
                   </Stack>
-                </Paper>
               )}
             </Box>
           );
