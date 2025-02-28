@@ -98,7 +98,7 @@ export function PlayerCardGridRemote({
               {audioMessages.length > 0 && (
                 <Stack gap="xs">
                   <Text size="sm" fw={500}>
-                    Audio Messages ({audioMessages.length})
+                    Replies from {info.playerName} ({audioMessages.length})
                   </Text>
                   {audioMessages.map((message) => (
                     <AudioPlayer key={message.id} message={message} />

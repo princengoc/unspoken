@@ -223,7 +223,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   };
 
   return (
-    <Card shadow="sm" padding="md" radius="md" withBorder>
+    <Card shadow="sm" padding="xs" radius="md">
       {/* Set crossOrigin attribute to help with CORS issues */}
       <audio
         ref={audioRef}
@@ -232,7 +232,6 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
         crossOrigin="anonymous"
       />
 
-      <Stack gap="xs">
         {loading ? (
           <Group align="center" my="md">
             <Loader size="sm" />
@@ -334,7 +333,6 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
             </Group>
           </>
         )}
-      </Stack>
     </Card>
   );
 }
