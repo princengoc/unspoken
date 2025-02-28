@@ -9,6 +9,9 @@ import {
   Drawer,
   SegmentedControl,
   Text,
+  Modal,
+  Select,
+  Button,
 } from "@mantine/core";
 import {
   IconDoorExit,
@@ -37,7 +40,8 @@ import { useRoom } from "@/context/RoomProvider";
 interface HeaderProps {
   roomId: string;
   gamePhase: GamePhase;
-  handleLeaveRoom?: () => void;
+  handleLeaveRoom: () => void;
+  handleLeaveRoomPermanently: (newOwnerId: string | null) => void;
   onViewChange?: (view: SetupViewType) => void;
   currentView?: SetupViewType;
 }
@@ -46,6 +50,7 @@ export function Header({
   roomId,
   gamePhase,
   handleLeaveRoom,
+  handleLeaveRoomPermanently,
   onViewChange,
   currentView = "cards",
 }: HeaderProps) {
@@ -55,6 +60,9 @@ export function Header({
   const playerAssignments = getPlayerAssignments(members, roomId);
   const [profileOpened, { open: openProfile, close: closeProfile }] =
     useDisclosure(false);
+  const [leaveModalOpened, { open: openLeaveModal, close: closeLeaveModal }] =
+    useDisclosure(false);
+  const [newOwnerId, setNewOwnerId] = useState<string | null>(null);
   const isSmallScreen = useMediaQuery("(max-width: 400px)");
   const isTinyScreen = useMediaQuery("(max-width: 300px)");
 
@@ -65,6 +73,18 @@ export function Header({
   useEffect(() => {
     setCurrentViewState(currentView);
   }, [currentView]);
+
+  // options for new owner selection
+  const ownerOptions = useMemo(() => {
+    if (!members || !currentMember) return [];
+
+    return members
+      .filter((m) => m.id !== currentMember.id) // Exclude current user
+      .map((m) => ({
+        value: m.id,
+        label: m.username || `Player ${m.id.substring(0, 4)}`,
+      }));
+  }, [members, currentMember]);
 
   // Since ExchangesProvider is at the room level, we can directly use useExchanges here
   const { incomingRequests, hasMatch } = useExchanges();
@@ -186,7 +206,14 @@ export function Header({
                   color="red"
                   onClick={handleLeaveRoom}
                 >
-                  Leave Room
+                  Go to Lobby
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconDoorExit size={14} />}
+                  color="red"
+                  onClick={openLeaveModal}
+                >
+                  Leave Room Permanently
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -204,6 +231,45 @@ export function Header({
       >
         <ProfileSettings />
       </Drawer>
+
+      {/* Permanently leave room modal */}
+      <Modal
+        opened={leaveModalOpened}
+        onClose={closeLeaveModal}
+        title="Permanently Leave Room"
+        size="md"
+      >
+        <Text color="red" mb="md">
+          Warning: This will permanently remove you from this room and delete
+          all of your data associated with it. This action cannot be undone.
+        </Text>
+
+        {isCreator && ownerOptions.length > 0 && (
+          <Select
+            label="Select new room owner (optional)"
+            description="As the room creator, you can transfer ownership before leaving"
+            data={ownerOptions}
+            value={newOwnerId}
+            onChange={setNewOwnerId}
+            mb="md"
+          />
+        )}
+
+        <Group justify="flex-end" mt="md">
+          <Button variant="outline" onClick={closeLeaveModal}>
+            Cancel
+          </Button>
+          <Button
+            color="red"
+            onClick={() => {
+              closeLeaveModal();
+              handleLeaveRoomPermanently(newOwnerId);
+            }}
+          >
+            Permanently Leave
+          </Button>
+        </Group>
+      </Modal>
     </>
   );
 }

@@ -163,6 +163,20 @@ export const roomMembersService = {
     }
   },
 
+  async leaveRoomPermanently(
+    roomId: string,
+    playerId: string,
+    newOwnerId: string | null,
+  ): Promise<void> {
+    const { error } = await supabase.rpc("leave_room", {
+      p_player_id: playerId,
+      p_room_id: roomId,
+      p_new_owner_id: newOwnerId,
+    });
+
+    if (error) throw error;
+  },
+
   // Subscription for player state changes
   subscribeToRoomMembers(
     roomId: string,

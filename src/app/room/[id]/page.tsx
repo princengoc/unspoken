@@ -40,7 +40,7 @@ function renderGameContent(currentSetupView: SetupViewType, room: Room) {
  */
 function RoomContent({ roomId }: { roomId: string }) {
   const router = useRouter();
-  const { room, loading, error, leaveRoom } = useRoom();
+  const { room, loading, error, leaveRoom, leaveRoomPermanently } = useRoom();
   const { user } = useAuth();
   const [currentSetupView, setCurrentSetupView] =
     useState<SetupViewType>("cards");
@@ -48,6 +48,11 @@ function RoomContent({ roomId }: { roomId: string }) {
   // Handle leaving room
   const handleLeaveRoom = async () => {
     await leaveRoom();
+    router.push("/");
+  };
+
+  const handleLeaveRoomPermanently = async (newOwnerId: string | null) => {
+    await leaveRoomPermanently(newOwnerId);
     router.push("/");
   };
 
@@ -92,6 +97,7 @@ function RoomContent({ roomId }: { roomId: string }) {
             roomId={room.id}
             gamePhase={room.phase}
             handleLeaveRoom={handleLeaveRoom}
+            handleLeaveRoomPermanently={handleLeaveRoomPermanently}
             onViewChange={handleViewChange}
           />
         </AppShell.Header>

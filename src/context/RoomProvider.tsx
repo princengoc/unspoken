@@ -6,6 +6,8 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
+  useMemo,
 } from "react";
 import { roomsService } from "@/services/supabase/rooms";
 import { roomMembersService } from "@/services/supabase/roomMembers";
@@ -17,7 +19,7 @@ interface RoomContextType {
   loading: boolean;
   error: Error | null;
   leaveRoom: () => Promise<void>;
-  // leaveRoomPermanently: (newOwnerId?: string) => Promise<void>;
+  leaveRoomPermanently: (newOwnerId: string | null) => Promise<void>;
   finishSpeaking: () => Promise<void>;
   startNextRound: (settings: Partial<RoomSettings>) => Promise<void>;
   startSpeakingPhase: () => Promise<void>;
@@ -75,14 +77,35 @@ export function RoomProvider({ roomId, userId, children }: RoomProviderProps) {
     };
   }, [roomId]);
 
-  const leaveRoom = async (): Promise<void> => {
+  const leaveRoom = useCallback(async (): Promise<void> => {
     await roomMembersService.updatePlayerState(roomId, userId, {
       is_online: false,
     });
     setRoom(null);
-  };
+  }, [roomId, userId]);
 
-  const finishSpeaking = async () => {
+  const leaveRoomPermanently = useCallback(
+    async (newOwnerId: string | null): Promise<void> => {
+      try {
+        await roomMembersService.leaveRoomPermanently(
+          roomId,
+          userId,
+          newOwnerId,
+        );
+        setRoom(null);
+      } catch (err) {
+        const error =
+          err instanceof Error
+            ? err
+            : new Error("Failed to permanently leave room");
+        setError(error);
+        throw error;
+      }
+    },
+    [roomId, userId],
+  );
+
+  const finishSpeaking = useCallback(async () => {
     try {
       if (isRemote) {
         // For remote mode, the creator can end the reviewing phase
@@ -119,10 +142,10 @@ export function RoomProvider({ roomId, userId, children }: RoomProviderProps) {
       console.error("Failed to finish speaking:", error);
       throw error;
     }
-  };
+  }, [roomId, userId, isRemote]);
 
   // NOTE: this should only be called by creator
-  const startSpeakingPhase = async () => {
+  const startSpeakingPhase = useCallback(async () => {
     try {
       let next_active_player: string | null;
       let next_game_phase: GamePhase;
@@ -152,39 +175,56 @@ export function RoomProvider({ roomId, userId, children }: RoomProviderProps) {
       console.error("Failed to start speaking phase:", error);
       throw error;
     }
-  };
+  }, [roomId, userId, isRemote]);
 
   // remote function already deals with the case of remote vs irl
-  const startNextRound = async (settings: Partial<RoomSettings>) => {
-    const nextPhase = await roomsService.startNextRound(
-      roomId,
-      userId,
-      settings,
-    );
+  const startNextRound = useCallback(
+    async (settings: Partial<RoomSettings>) => {
+      const nextPhase = await roomsService.startNextRound(
+        roomId,
+        userId,
+        settings,
+      );
 
-    // Optimistically update room state
-    setRoom((prev) =>
-      prev
-        ? {
-            ...prev,
-            phase: nextPhase as GamePhase,
-            active_player_id: null,
-            ...settings,
-          }
-        : null,
-    );
-  };
+      // Optimistically update room state
+      setRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              phase: nextPhase as GamePhase,
+              active_player_id: null,
+              ...settings,
+            }
+          : null,
+      );
+    },
+    [userId, roomId, isRemote],
+  );
 
-  const value = {
-    room,
-    loading,
-    error,
-    leaveRoom,
-    finishSpeaking,
-    startNextRound,
-    startSpeakingPhase,
-    isCreator,
-  };
+  const value = useMemo(
+    () => ({
+      room,
+      loading,
+      error,
+      leaveRoom,
+      finishSpeaking,
+      startNextRound,
+      startSpeakingPhase,
+      leaveRoomPermanently,
+      isCreator,
+    }),
+    [
+      room,
+      loading,
+      error,
+      leaveRoom,
+      finishSpeaking,
+      startNextRound,
+      startSpeakingPhase,
+      leaveRoomPermanently,
+      isCreator,
+    ],
+  );
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;
 }
