@@ -6,10 +6,10 @@ import React, {
   useEffect,
   ReactNode,
   useMemo,
+  useCallback,
 } from "react";
 import { AudioMessage, AudioPrivacy } from "@/core/audio/types";
 import { audioMessagesService } from "@/services/supabase/audio-messages";
-import { useAuth } from "./AuthProvider";
 
 interface AudioMessagesContextType {
   // Enhanced state with grouped messages
@@ -38,14 +38,15 @@ const AudioMessagesContext = createContext<AudioMessagesContextType | null>(
 
 interface AudioMessagesProviderProps {
   roomId: string;
+  userId: string;
   children: ReactNode;
 }
 
 export function AudioMessagesProvider({
   roomId,
+  userId,
   children,
 }: AudioMessagesProviderProps) {
-  const { user } = useAuth();
   const [messages, setMessages] = useState<AudioMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
@@ -66,14 +67,11 @@ export function AudioMessagesProvider({
   }, [messages]);
 
   useEffect(() => {
-    if (!user?.id || !roomId) return;
-
     setLoading(true);
-
     // Subscribe to messages already has an initial fetch with call back
     const subscription = audioMessagesService.subscribeToAudioMessages(
       roomId,
-      user.id,
+      userId,
       (updatedMessages) => {
         setMessages(updatedMessages);
         setLoading(false);
@@ -83,81 +81,89 @@ export function AudioMessagesProvider({
     return () => {
       subscription.unsubscribe();
     };
-  }, [roomId, user?.id]);
+  }, [roomId, userId]);
 
-  const sendAudioMessage = async (
-    audioBlob: Blob,
-    privacy: AudioPrivacy,
-    targetPlayerId?: string,
-  ) => {
-    if (!user?.id) return null;
+  const sendAudioMessage = useCallback(
+    async (audioBlob: Blob, privacy: AudioPrivacy, targetPlayerId?: string) => {
+      try {
+        return await audioMessagesService.uploadAudioMessage(
+          roomId,
+          userId,
+          audioBlob,
+          privacy,
+          targetPlayerId,
+        );
+      } catch (error) {
+        console.error("Error sending audio message:", error);
+        return null;
+      }
+    },
+    [roomId, userId],
+  );
 
-    try {
-      return await audioMessagesService.uploadAudioMessage(
-        roomId,
-        user.id,
-        audioBlob,
-        privacy,
-        targetPlayerId,
-      );
-    } catch (error) {
-      console.error("Error sending audio message:", error);
-      return null;
-    }
-  };
-
-  const markAsListened = async (messageId: string) => {
-    if (!user?.id) return false;
-
-    try {
-      // Optimistically update UI
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-
-      const success = await audioMessagesService.markMessageAsListened(
-        messageId,
-        user.id,
-      );
-
-      console.log(`Success after mark as listened clicked: ${success}`);
-      return success;
-    } catch (error) {
-      console.error("Error marking message as listened:", error);
-      // On error, refresh to get the correct state
-      await refreshMessages();
-      return false;
-    }
-  };
-
-  const getAudioUrl = async (filePath: string) => {
-    return audioMessagesService.getAudioMessageUrl(filePath);
-  };
-
-  const refreshMessages = async () => {
-    if (!user?.id) return;
-
+  const refreshMessages = useCallback(async () => {
     setLoading(true);
     try {
       const availableMessages =
-        await audioMessagesService.getAvailableAudioMessages(roomId, user.id);
+        await audioMessagesService.getAvailableAudioMessages(roomId, userId);
       setMessages(availableMessages);
     } catch (error) {
       console.error("Error refreshing audio messages:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [roomId, userId]);
 
-  const value = {
+  const markAsListened = useCallback(
+    async (messageId: string) => {
+      try {
+        // Optimistically update UI
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+
+        const success = await audioMessagesService.markMessageAsListened(
+          messageId,
+          userId,
+        );
+
+        console.log(`Success after mark as listened clicked: ${success}`);
+        return success;
+      } catch (error) {
+        console.error("Error marking message as listened:", error);
+        // On error, refresh to get the correct state
+        await refreshMessages();
+        return false;
+      }
+    },
+    [userId, refreshMessages],
+  );
+
+  // memoize
+  const value = useMemo(() => {
+    const getAudioUrl = async (filePath: string) => {
+      return audioMessagesService.getAudioMessageUrl(filePath);
+    };
+
+    return {
+      messages,
+      messagesByPlayer,
+      loading,
+      recording,
+      sendAudioMessage,
+      markAsListened,
+      refreshMessages,
+      setRecording,
+      getAudioUrl,
+    };
+  }, [
     messages,
     messagesByPlayer,
     loading,
     recording,
     sendAudioMessage,
     markAsListened,
-    getAudioUrl,
     refreshMessages,
     setRecording,
-  };
+  ]);
 
   return (
     <AudioMessagesContext.Provider value={value}>

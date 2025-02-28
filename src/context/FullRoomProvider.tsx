@@ -88,7 +88,7 @@ function FullRoomProviderInner({
 
   const currentMemberStatus = useMemo(
     () => derivePlayerStatus(userId, cardState, room!),
-    [cardState, room],
+    [cardState, room, userId],
   );
 
   const isSetupComplete = useMemo(() => {
@@ -121,9 +121,9 @@ export function FullRoomProvider({
   // get the room from RoomProvider and then subsequent contexts can just refer to the room state via useRoom()
   return (
     <CardsInGameProvider roomId={roomId} userId={userId}>
-      <RoomMembersProvider roomId={roomId}>
-        <ExchangesProvider roomId={roomId}>
-          <AudioMessagesProvider roomId={roomId}>
+      <RoomMembersProvider roomId={roomId} userId={userId}>
+        <ExchangesProvider roomId={roomId} userId={userId}>
+          <AudioMessagesProvider roomId={roomId} userId={userId}>
             <FullRoomProviderInner userId={userId}>
               {children}
             </FullRoomProviderInner>

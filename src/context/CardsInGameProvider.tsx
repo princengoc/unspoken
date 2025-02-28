@@ -107,20 +107,23 @@ export function CardsInGameProvider({
       .filter((card): card is Card => !!card);
 
   // Card operations
-  const completePlayerSetup = async (selectedCardId: string) => {
-    try {
-      await cardsInRoomsService.completePlayerSetup(
-        roomId,
-        userId,
-        selectedCardId,
-      );
-    } catch (error) {
-      console.error("Failed to complete player setup:", error);
-      throw error;
-    }
-  };
+  const completePlayerSetup = useCallback(
+    async (selectedCardId: string) => {
+      try {
+        await cardsInRoomsService.completePlayerSetup(
+          roomId,
+          userId,
+          selectedCardId,
+        );
+      } catch (error) {
+        console.error("Failed to complete player setup:", error);
+        throw error;
+      }
+    },
+    [roomId, userId],
+  );
 
-  const dealCardsToPlayer = async (): Promise<Card[]> => {
+  const dealCardsToPlayer = useCallback(async (): Promise<Card[]> => {
     // Get both dealt cards and new state
     const { cardIds, newState } = await cardsInRoomsService.dealCardsToPlayer(
       roomId,
@@ -132,8 +135,10 @@ export function CardsInGameProvider({
     setCardState(newState);
 
     return getCardsByIds(cardIds);
-  };
+  }, [roomId, userId]);
 
+  // this entire context is just wrapping around cardState
+  // so really no need for useMemo
   const value = {
     cardState,
     getCardById,

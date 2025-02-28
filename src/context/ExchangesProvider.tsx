@@ -8,10 +8,8 @@ import React, {
   useCallback,
 } from "react";
 import { exchangeRequestsService } from "@/services/supabase/exchangeRequests";
-import { useAuth } from "@/context/AuthProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
-import { notifications } from "@mantine/notifications";
 import { ExchangeRequest, EnrichedExchangeRequest } from "@/core/game/types";
 
 // Updated context type definition
@@ -35,6 +33,7 @@ interface ExchangesContextType {
 
 interface ExchangesProviderProps {
   roomId: string;
+  userId: string;
   children: ReactNode;
 }
 
@@ -42,9 +41,9 @@ const ExchangesContext = createContext<ExchangesContextType | null>(null);
 
 export function ExchangesProvider({
   roomId,
+  userId,
   children,
 }: ExchangesProviderProps) {
-  const { user } = useAuth();
   const { members } = useRoomMembers();
   const { getCardById } = useCardsInGame();
   const [outgoingRequests, setOutgoingRequests] = useState<ExchangeRequest[]>(
@@ -57,8 +56,7 @@ export function ExchangesProvider({
   const [subscribed, setSubscribed] = useState(false);
 
   useEffect(() => {
-    if (!roomId || !user?.id) return;
-
+    setLoading(true);
     let subscription: any = null;
     let isMounted = true;
 
@@ -67,12 +65,12 @@ export function ExchangesProvider({
         const [outgoing, incoming] = await Promise.all([
           exchangeRequestsService.getExchangeRequests(
             roomId,
-            user.id,
+            userId,
             "outgoing",
           ),
           exchangeRequestsService.getExchangeRequests(
             roomId,
-            user.id,
+            userId,
             "incoming",
           ),
         ]);
@@ -91,7 +89,7 @@ export function ExchangesProvider({
     const setupSubscription = () => {
       subscription = exchangeRequestsService.subscribeToExchangeRequests(
         roomId,
-        user.id,
+        userId,
         (outgoing, incoming) => {
           if (isMounted) {
             setOutgoingRequests(outgoing);
@@ -110,9 +108,10 @@ export function ExchangesProvider({
       isMounted = false;
       if (subscription) subscription.unsubscribe();
     };
-  }, [roomId, user?.id]);
+  }, [roomId, userId]);
 
   // Enhance requests with player and card data
+  // NOTE: getCardById is quite inefficient
   const enrichedRequests = useMemo(() => {
     const getPlayerById = (playerId: string) =>
       members.find((p) => p.id === playerId);
@@ -140,78 +139,61 @@ export function ExchangesProvider({
 
   const requestExchange = useCallback(
     async (toPlayerId: string, cardId: string) => {
-      if (!user?.id || !roomId) return;
-
       try {
         await exchangeRequestsService.createRequest(
           roomId,
-          user.id,
+          userId,
           toPlayerId,
           cardId,
         );
-        notifications.show({
-          title: "Request Sent",
-          message: "Exchange request has been sent.",
-          color: "blue",
-        });
       } catch (error) {
         console.error("Failed to send exchange request:", error);
-        notifications.show({
-          title: "Error",
-          message: "Failed to send exchange request.",
-          color: "red",
-        });
       }
     },
-    [roomId, user?.id],
+    [roomId, userId],
   );
 
-  const acceptRequest = useCallback(async (requestId: string) => {
-    try {
-      await exchangeRequestsService.updateRequestStatus(requestId, "accepted");
-      notifications.show({
-        title: "Request Accepted",
-        message: "You accepted the exchange request.",
-        color: "green",
-      });
-    } catch (error) {
-      console.error("Failed to accept exchange request:", error);
-      notifications.show({
-        title: "Error",
-        message: "Failed to accept exchange request.",
-        color: "red",
-      });
-    }
-  }, []);
+  const value = useMemo(() => {
+    const acceptRequest = async (requestId: string) => {
+      try {
+        await exchangeRequestsService.updateRequestStatus(
+          requestId,
+          "accepted",
+        );
+      } catch (error) {
+        console.error("Failed to accept exchange request:", error);
+      }
+    };
 
-  const declineRequest = useCallback(async (requestId: string) => {
-    try {
-      await exchangeRequestsService.updateRequestStatus(requestId, "declined");
-      notifications.show({
-        title: "Request Declined",
-        message: "You declined the exchange request.",
-        color: "yellow",
-      });
-    } catch (error) {
-      console.error("Failed to decline exchange request:", error);
-      notifications.show({
-        title: "Error",
-        message: "Failed to decline exchange request.",
-        color: "red",
-      });
-    }
-  }, []);
+    const declineRequest = async (requestId: string) => {
+      try {
+        await exchangeRequestsService.updateRequestStatus(
+          requestId,
+          "declined",
+        );
+      } catch (error) {
+        console.error("Failed to decline exchange request:", error);
+      }
+    };
 
-  const value = {
-    incomingRequests: enrichedRequests.incoming,
-    outgoingRequests: enrichedRequests.outgoing,
+    return {
+      incomingRequests: enrichedRequests.incoming,
+      outgoingRequests: enrichedRequests.outgoing,
+      loading,
+      isSubscribed: subscribed,
+      requestExchange,
+      acceptRequest,
+      declineRequest,
+      hasMatch: hasMatchState,
+    };
+  }, [
+    enrichedRequests.incoming,
+    enrichedRequests.outgoing,
     loading,
-    isSubscribed: subscribed,
+    subscribed,
     requestExchange,
-    acceptRequest,
-    declineRequest,
-    hasMatch: hasMatchState,
-  };
+    hasMatchState,
+  ]);
 
   return (
     <ExchangesContext.Provider value={value}>

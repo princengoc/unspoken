@@ -6,7 +6,6 @@ import React, {
   useState,
   useEffect,
   ReactNode,
-  useMemo,
 } from "react";
 import { roomsService } from "@/services/supabase/rooms";
 import { roomMembersService } from "@/services/supabase/roomMembers";

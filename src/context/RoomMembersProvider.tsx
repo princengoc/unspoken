@@ -3,9 +3,10 @@ import {
   useContext,
   useEffect,
   useState,
+  useMemo,
+  useCallback,
   ReactNode,
 } from "react";
-import { useAuth } from "@/context/AuthProvider";
 import { roomMembersService } from "@/services/supabase/roomMembers";
 import type { Player } from "@/core/game/types";
 
@@ -22,24 +23,21 @@ const RoomMembersContext = createContext<RoomMembersContextType | null>(null);
 
 interface RoomMembersProviderProps {
   roomId: string;
+  userId: string;
   children: ReactNode;
 }
 
 export function RoomMembersProvider({
   roomId,
+  userId,
   children,
 }: RoomMembersProviderProps) {
-  const { user } = useAuth();
   const [members, setMembers] = useState<Player[]>([]);
 
   // Set up real-time sync
   useEffect(() => {
-    console.log(
-      `Initializing a subscription in room members provider: ${JSON.stringify(members)}`,
-    );
     // Initial fetch
     const fetchMembers = async () => {
-      console.log(`Fetching members: ${JSON.stringify(members)}`);
       try {
         const initialMembers = await roomMembersService.getRoomMembers(roomId);
         setMembers(initialMembers);
@@ -66,29 +64,35 @@ export function RoomMembersProvider({
   }, [roomId]);
 
   // Keep track of current member
-  const currentMember = members.find((m) => m.id === user?.id) || null;
+  const currentMember = members.find((m) => m.id === userId) || null;
 
   // Member state update actions
-  const updateMember = async (memberId: string, updates: Partial<Player>) => {
-    try {
-      // optimistic update
-      setMembers((prev) =>
-        prev.map((m) => (m.id === memberId ? { ...m, updates } : m)),
-      );
-      await roomMembersService.updatePlayerState(roomId, memberId, updates);
-    } catch (error) {
-      console.error("Failed to update member:", error);
-      throw error;
-    }
-  };
+  const updateMember = useCallback(
+    async (memberId: string, updates: Partial<Player>) => {
+      try {
+        // optimistic update
+        setMembers((prev) =>
+          prev.map((m) => (m.id === memberId ? { ...m, updates } : m)),
+        );
+        await roomMembersService.updatePlayerState(roomId, memberId, updates);
+      } catch (error) {
+        console.error("Failed to update member:", error);
+        throw error;
+      }
+    },
+    [roomId],
+  );
 
-  const value = {
-    // State
-    members,
-    currentMember,
-    // Actions
-    updateMember,
-  };
+  const value = useMemo(
+    () => ({
+      // State
+      members,
+      currentMember,
+      // Actions
+      updateMember,
+    }),
+    [members, currentMember, updateMember],
+  );
 
   return (
     <RoomMembersContext.Provider value={value}>
