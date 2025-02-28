@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Text,
   Group,
@@ -17,7 +17,6 @@ import {
   IconWorldUpload,
   IconLock,
   IconAlertCircle,
-  IconAdjustments,
 } from "@tabler/icons-react";
 
 import { useAudioRecording } from "@/hooks/audio/useAudioRecording";
@@ -53,6 +52,8 @@ export function AudioRecorder({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Format seconds into MM:SS
   const formatTime = (seconds: number): string => {
@@ -65,6 +66,10 @@ export function AudioRecorder({
     resetRecording();
     setError(null);
     setRecording(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
     onCancel?.();
   };
 
@@ -101,26 +106,34 @@ export function AudioRecorder({
 
   const handlePlayPreview = () => {
     if (recordingState.audioUrl) {
-      const audio = new Audio(recordingState.audioUrl);
-      audio.play();
+      if (!audioRef.current) {
+        audioRef.current = new Audio(recordingState.audioUrl);
+        audioRef.current.addEventListener("ended", () => {
+          setIsPlaying(false);
+        });
+      }
+
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
     }
   };
 
   return (
-    <Stack gap="xs">
-      <Text fw={500} size="md">
-        Record Audio Message
-        {targetPlayerId && " for Specific Player"}
-      </Text>
-
+    <Stack align="center" gap="xs">
       {error && (
         <Alert color="red" icon={<IconAlertCircle size={16} />}>
           {error}
         </Alert>
       )}
 
-      <Group align="center">
-        <Text size="xl" style={{ fontFamily: "monospace" }}>
+      <Group align="center" gap="xs">
+        <Text size="md" style={{ fontFamily: "monospace" }}>
           {formatTime(recordingState.duration)}
         </Text>
 
@@ -131,129 +144,126 @@ export function AudioRecorder({
         )}
       </Group>
 
-      {/* Show initializing state for Firefox */}
-      {recordingState.initializing && (
-        <Group align="center" gap="md">
-          <ActionIcon
-            color="blue"
-            variant="light"
-            radius="xl"
-            size="xl"
-            disabled
-          >
-            <IconAdjustments size={20} />
-          </ActionIcon>
-          <Text size="sm" c="dimmed">
-            Preparing microphone...
-          </Text>
-        </Group>
-      )}
-
-      {!recordingState.initializing && (
-        <Group align="center" gap="md">
-          {!recordingState.isRecording && !recordingState.audioBlob && (
+      <Group gap="xs" justify="center">
+        {/* Initial state - Just Record button */}
+        {!recordingState.isRecording &&
+          !recordingState.audioBlob &&
+          !recordingState.initializing && (
             <ActionIcon
               color="red"
               variant="filled"
               radius="xl"
-              size="xl"
+              size="md"
               onClick={startRecording}
+              title="Start Recording"
             >
-              <IconMicrophone size={20} />
+              <IconMicrophone size={18} />
             </ActionIcon>
           )}
 
-          {recordingState.isRecording && !recordingState.isPaused && (
-            <>
-              <ActionIcon
-                color="yellow"
-                variant="filled"
-                radius="xl"
-                size="xl"
-                onClick={pauseRecording}
-              >
-                <IconPlayerPause size={20} />
-              </ActionIcon>
+        {/* Recording in progress */}
+        {recordingState.isRecording && !recordingState.isPaused && (
+          <>
+            <ActionIcon
+              color="yellow"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={pauseRecording}
+              title="Pause Recording"
+            >
+              <IconPlayerPause size={18} />
+            </ActionIcon>
 
-              <ActionIcon
-                color="red"
-                variant="filled"
-                radius="xl"
-                size="xl"
-                onClick={stopRecording}
-              >
-                <IconPlayerStop size={20} />
-              </ActionIcon>
-            </>
-          )}
+            <ActionIcon
+              color="red"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={stopRecording}
+              title="Stop Recording"
+            >
+              <IconPlayerStop size={18} />
+            </ActionIcon>
+          </>
+        )}
 
-          {recordingState.isRecording && recordingState.isPaused && (
-            <>
-              <ActionIcon
-                color="green"
-                variant="filled"
-                radius="xl"
-                size="xl"
-                onClick={resumeRecording}
-              >
-                <IconPlayerPlay size={20} />
-              </ActionIcon>
+        {/* Recording paused */}
+        {recordingState.isRecording && recordingState.isPaused && (
+          <>
+            <ActionIcon
+              color="green"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={resumeRecording}
+              title="Resume Recording"
+            >
+              <IconPlayerPlay size={18} />
+            </ActionIcon>
 
-              <ActionIcon
-                color="red"
-                variant="filled"
-                radius="xl"
-                size="xl"
-                onClick={stopRecording}
-              >
-                <IconPlayerStop size={20} />
-              </ActionIcon>
-            </>
-          )}
+            <ActionIcon
+              color="red"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={stopRecording}
+              title="Stop Recording"
+            >
+              <IconPlayerStop size={18} />
+            </ActionIcon>
+          </>
+        )}
 
-          {!recordingState.isRecording && recordingState.audioBlob && (
-            <>
-              <ActionIcon
-                color="blue"
-                variant="filled"
-                radius="xl"
-                size="xl"
-                onClick={handlePlayPreview}
-              >
-                <IconPlayerPlay size={20} />
-              </ActionIcon>
+        {/* Recording completed - Show review options */}
+        {!recordingState.isRecording && recordingState.audioBlob && (
+          <>
+            <ActionIcon
+              color="blue"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={handlePlayPreview}
+              title={isPlaying ? "Pause Preview" : "Play Preview"}
+            >
+              {isPlaying ? (
+                <IconPlayerPause size={18} />
+              ) : (
+                <IconPlayerPlay size={18} />
+              )}
+            </ActionIcon>
 
-              <ActionIcon
-                color="gray"
-                variant="filled"
-                radius="xl"
-                size="xl"
-                onClick={resetRecording}
-              >
-                <IconTrash size={20} />
-              </ActionIcon>
-            </>
-          )}
-        </Group>
-      )}
+            <ActionIcon
+              color="gray"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={resetRecording}
+              title="Reset Recording"
+            >
+              <IconTrash size={18} />
+            </ActionIcon>
+          </>
+        )}
+      </Group>
 
+      {/* Show send options only after recording is complete */}
       {!recordingState.isRecording && recordingState.audioBlob && (
         <>
-          {/* Only show privacy toggle when appropriate */}
+          {/* More discrete privacy toggle */}
           {!isPublic && (
-            <Group align="center">
+            <Group justify="center" gap="xs">
               <Switch
+                size="xs"
                 label={
                   <Group gap="xs">
                     {privacy === "public" ? (
-                      <IconWorldUpload size={16} />
+                      <IconWorldUpload size={14} />
                     ) : (
-                      <IconLock size={16} />
+                      <IconLock size={14} />
                     )}
-                    <Text size="sm">
-                      {privacy === "public"
-                        ? "Public (All players)"
-                        : "Private (Target player only)"}
+                    <Text size="xs">
+                      {privacy === "public" ? "Public" : "Private"}
                     </Text>
                   </Group>
                 }
@@ -265,9 +275,10 @@ export function AudioRecorder({
             </Group>
           )}
 
-          <Group align="flex-right" gap="sm">
+          <Group justify="center" gap="xs">
             <Button
               variant="subtle"
+              size="xs"
               onClick={handleCancel}
               disabled={isUploading}
             >
@@ -275,13 +286,14 @@ export function AudioRecorder({
             </Button>
 
             <Button
+              size="xs"
               onClick={handleSend}
               loading={isUploading}
               leftSection={
-                isUploading ? undefined : <IconWorldUpload size={16} />
+                isUploading ? undefined : <IconWorldUpload size={14} />
               }
             >
-              Send Message
+              Send
             </Button>
           </Group>
         </>

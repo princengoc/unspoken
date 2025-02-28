@@ -1,9 +1,9 @@
 # Current PR
 
 - [ ] Endgame edits:
-  - [ ] properly close the room.
-  - [ ] Allow room creators to delete a room
-  - [ ] Allow player to permanently leave a room
+  - [x] properly close the room.
+  - [x] Allow room creators to delete a room
+  - [x] Allow player to permanently leave a room
   - [ ] Allow direct player invitations (pre-approved join)
 - [ ] audio player UI revamp
   - [ ] more obvious replay progress etc
