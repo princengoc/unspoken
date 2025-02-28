@@ -1,19 +1,24 @@
 # Current PR
 
 - [ ] Endgame edits:
-  - [x] do NOT allow multiple encore.
   - [ ] properly close the room.
-- [x] Improve explanation texts.
-- [x] Vercel publish!
+  - [ ] Allow room creators to delete a room
+  - [ ] Allow player to permanently leave a room
+  - [ ] Allow direct player invitations (pre-approved join)  
+- [ ] audio player UI revamp
+  - [ ] more obvious replay progress etc
+  - [ ] more obvious that people can REPLY
+  - [ ] CODEC issues? 44 MB for a few minutes is too much
+- [ ] add permission from ALL players to "move on". Otherwise can leave topic. 
+  - [ ] indicate if someone else is recording, to stop game master from moving on prematurely, and to give progress info
+  - [ ] revamp listener reactions for this  
+- [ ] auto-join after create and approved. Could show a Notification. 
 
-## Feedback
-
-- [ ] redo card choice (?)
-- [ ] need auto-switch (?) between phase tab and exchange tab
-
-* **BUG**:
-
-- finish sharing doesn't transit for first speaker (RLS policy on rooms? Mobile device issues?)
+* **BUG / INEFFICIENCIES**:
+- [ ] Transition / refresh: should look at implementation of listener reactions - this is "golden"
+  - Currently: finish sharing doesn't transit for first speaker 
+  - Audio page often needs refreshing
+- [ ] start game in IRL mode still loads audio
 
 ## FEEDBACK
 
@@ -28,20 +33,18 @@ IRL
 
 Remote
 
-- [ ] iOS sound compat (?)
+- [x] iOS sound compat (?)
 
 Content
 
-- [ ] level 0 for playing with Bong
+- [x] level 0 for playing with Bong
 - [x] Curate content
 - [ ] Translate the game into Vietnamese.
 - [ ] Add a language button (localized to player)
 
 - **Room management**
 
-  - [ ] Allow room creators to delete a room
-  - [ ] Allow player to permanently leave a room
-  - [ ] Allow direct player invitations (pre-approved join)
+
 
 - **Card history**
   - [x] Add card history

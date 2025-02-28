@@ -48,7 +48,7 @@ export function Header({
   currentView = "cards",
 }: HeaderProps) {
   const { members, currentMember } = useRoomMembers();
-  const { isCreator } = useFullRoom();
+  const { isCreator, isSetupComplete } = useFullRoom();
   const playerAssignments = getPlayerAssignments(members, roomId);
   const [profileOpened, { open: openProfile, close: closeProfile }] =
     useDisclosure(false);
@@ -101,6 +101,9 @@ export function Header({
           <Text size={isSmallScreen ? "xs" : "sm"} lh={1}>
             {isSmallScreen ? "" : "Say"}
           </Text>
+          {isSetupComplete && gamePhase === 'setup' && (
+            <Badge size="xs" color="green" p={2} radius="xl" variant="filled" />
+          )}          
         </Group>
       ),
     },
