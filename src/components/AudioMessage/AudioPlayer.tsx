@@ -8,13 +8,15 @@ import {
   Loader,
   Progress,
   Stack,
-  Badge,
   Paper,
+  Tooltip,
 } from "@mantine/core";
 import {
   IconPlayerPlay,
   IconPlayerPause,
   IconCheck,
+  IconLock,
+  IconWorld,
 } from "@tabler/icons-react";
 
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
@@ -31,10 +33,11 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
-
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Load the audio URL
   useEffect(() => {
@@ -65,8 +68,56 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
       }
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
+      }
     };
   }, [message.id, message.file_path, getAudioUrl]);
+
+  const resetCountdown = () => {
+    if (countdownInterval.current) {
+      clearInterval(countdownInterval.current);
+      countdownInterval.current = null;
+    }
+    setCountdown(null);
+  };
+
+  const startCountdown = () => {
+    resetCountdown();
+
+    // Start with 15 seconds
+    setCountdown(15);
+
+    countdownInterval.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          // Time's up, clear the interval
+          if (countdownInterval.current) {
+            clearInterval(countdownInterval.current);
+            countdownInterval.current = null;
+          }
+          return 0; // Set to 0 instead of null, we'll handle the marking in useEffect
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Add effect to handle auto-marking when countdown reaches 0
+  useEffect(() => {
+    // When countdown reaches 0, mark as listened
+    if (countdown === 0) {
+      // Using setTimeout to push this operation to the next event loop cycle
+      // This avoids the "setState during render" React error
+      const timeoutId = setTimeout(() => {
+        markAsListened(message.id);
+        setCountdown(null);
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
+    }
+    return;
+  }, [countdown, message.id, markAsListened]);
 
   // Handle audio element events
   useEffect(() => {
@@ -74,9 +125,9 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const audio = audioRef.current;
 
-
     const handlePlay = () => {
       setIsPlaying(true);
+      resetCountdown(); // Reset countdown when playing starts
 
       // Start interval to update progress
       if (progressInterval.current) {
@@ -99,12 +150,15 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setProgress(0);
+      setProgress(100); // Set to 100% when ended
 
       if (progressInterval.current) {
         clearInterval(progressInterval.current);
         progressInterval.current = null;
       }
+
+      // Start the countdown when audio ends
+      startCountdown();
     };
 
     const handleError = (e: Event) => {
@@ -131,7 +185,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
-  }, [audioUrl]);
+  }, [audioUrl, message.id, markAsListened]);
 
   const handlePlayPause = () => {
     if (!audioRef.current || !audioUrl) return;
@@ -142,6 +196,9 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
       } else {
         // Reset error state when attempting to play
         setError(null);
+        // Reset countdown if it's currently active
+        resetCountdown();
+
         const playPromise = audioRef.current.play();
 
         // Handle the play promise to catch any autoplay or browser restrictions
@@ -161,6 +218,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   };
 
   const handleMarkAsListened = async () => {
+    resetCountdown();
     await markAsListened(message.id);
   };
 
@@ -219,26 +277,60 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
               </ActionIcon>
               <Progress
                 value={progress}
-                striped 
-                animated
+                striped
+                animated={isPlaying}
                 size="sm"
                 radius="xl"
                 transitionDuration={100}
-                style={{flexGrow: 1, width:"50%"}}
+                style={{ flexGrow: 1 }}
               />
 
-              <Badge color={message.is_public ? "green" : "yellow"} size="xs">
-                {message.is_public ? "Public" : "Private"}
-              </Badge>
-
-              <ActionIcon
-                variant="filled"
-                onClick={handleMarkAsListened}
-                color="orange"
-                radius="xl"
+              {/* Compact public/private indicator */}
+              <Tooltip
+                label={message.is_public ? "Public message" : "Private message"}
+                withArrow
+                position="top"
               >
-                <IconCheck size={16} />
-              </ActionIcon>
+                <ActionIcon
+                  variant="subtle"
+                  color={message.is_public ? "green" : "orange"}
+                  size="xs"
+                >
+                  {message.is_public ? (
+                    <IconWorld size={14} />
+                  ) : (
+                    <IconLock size={14} />
+                  )}
+                </ActionIcon>
+              </Tooltip>
+
+              <Tooltip
+                label={
+                  countdown !== null && countdown > 0
+                    ? `Auto-marking as listened in ${countdown}s`
+                    : "Mark as listened"
+                }
+                withArrow
+                position="top"
+              >
+                <ActionIcon
+                  variant="filled"
+                  onClick={() => {
+                    // Only call markAsListened through the click handler, not during render
+                    handleMarkAsListened();
+                  }}
+                  color="orange"
+                  radius="xl"
+                >
+                  {countdown !== null && countdown > 0 ? (
+                    <Text size="xs" fw="bold">
+                      {countdown}
+                    </Text>
+                  ) : (
+                    <IconCheck size={16} />
+                  )}
+                </ActionIcon>
+              </Tooltip>
             </Group>
           </>
         )}

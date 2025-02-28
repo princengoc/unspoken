@@ -1,6 +1,6 @@
 // src/components/game/PlayerCardGridRemote.tsx
 import React from "react";
-import { Group, Text, Box, Paper, Stack } from "@mantine/core";
+import { Group, Text, Box, Stack } from "@mantine/core";
 import { SlideIn } from "@/components/animations/Motion";
 import { MiniCard } from "./CardDeck/MiniCard";
 import { PlayerAssignment } from "./statusBarUtils";
@@ -42,7 +42,7 @@ export function PlayerCardGridRemote({
   playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
-  const { messagesByPlayer, loading } = useAudioMessages();  
+  const { messagesByPlayer, loading } = useAudioMessages();
 
   return (
     <>
@@ -96,14 +96,14 @@ export function PlayerCardGridRemote({
 
               {/* Render Audio Messages for this card */}
               {audioMessages.length > 0 && (
-                  <Stack gap="xs">
-                    <Text size="sm" fw={500}>
-                      Audio Messages ({audioMessages.length})
-                    </Text>
-                    {audioMessages.map((message) => (
-                      <AudioPlayer key={message.id} message={message} />
-                    ))}
-                  </Stack>
+                <Stack gap="xs">
+                  <Text size="sm" fw={500}>
+                    Audio Messages ({audioMessages.length})
+                  </Text>
+                  {audioMessages.map((message) => (
+                    <AudioPlayer key={message.id} message={message} />
+                  ))}
+                </Stack>
               )}
             </Box>
           );
