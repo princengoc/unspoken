@@ -1,13 +1,8 @@
 # Current PR
 
 - [ ] Endgame edits:
-  - [x] properly close the room.
-  - [x] Allow room creators to delete a room
-  - [x] Allow player to permanently leave a room
   - [ ] Allow direct player invitations (pre-approved join)
 - [ ] audio player UI revamp
-  - [ ] more obvious replay progress etc
-  - [ ] more obvious that people can REPLY
   - [ ] CODEC issues? 44 MB for a few minutes is too much
 - [ ] add permission from ALL players to "move on". Otherwise can leave topic.
   - [ ] indicate if someone else is recording, to stop game master from moving on prematurely, and to give progress info
@@ -88,6 +83,11 @@ Card
 # Bugs
 
 # DONE
+  - [x] more obvious replay progress etc
+  - [x] more obvious that people can REPLY
+  - [x] properly close the room.
+  - [x] Allow room creators to delete a room
+  - [x] Allow player to permanently leave a room
 
 - [x] resume from given state
 - [x] active player list not unique. Player needs to be able to rejoin

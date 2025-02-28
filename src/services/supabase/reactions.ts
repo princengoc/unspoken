@@ -1,7 +1,7 @@
 // src/services/supabase/reactions.ts
 import { supabase } from "./client";
 
-export type ReactionType = "inspiring" | "resonates" | "metoo";
+export type ReactionType = "tellmemore" | "resonates" | "metoo";
 
 export interface ListenerReaction {
   id: string;

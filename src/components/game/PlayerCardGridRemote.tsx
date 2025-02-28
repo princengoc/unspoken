@@ -1,6 +1,5 @@
-// src/components/game/PlayerCardGridRemote.tsx
 import React from "react";
-import { Group, Text, Box, Stack } from "@mantine/core";
+import { Group, Text, Box, Stack, Card } from "@mantine/core";
 import { SlideIn } from "@/components/animations/Motion";
 import { MiniCard } from "./CardDeck/MiniCard";
 import { PlayerAssignment } from "./statusBarUtils";
@@ -9,6 +8,7 @@ import { ReactionsFeed } from "./ReactionsFeed";
 import { AudioPlayer } from "@/components/AudioMessage/AudioPlayer";
 import { useAuth } from "@/context/AuthProvider";
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
+import { ListenerReactions } from "./ListenerReactions";
 
 export interface PlayerCardInfo {
   playerId: string;
@@ -27,7 +27,6 @@ interface PlayerCardGridRemoteProps {
   animate?: boolean;
   highlightPlayerId?: string | null;
   title?: string | null;
-  actionButtons?: (playerId: string) => React.ReactNode;
   playerAssignments: Map<string, PlayerAssignment>;
 }
 
@@ -38,7 +37,6 @@ export function PlayerCardGridRemote({
   animate = true,
   highlightPlayerId = null,
   title = null,
-  actionButtons,
   playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
@@ -67,44 +65,55 @@ export function PlayerCardGridRemote({
           // Prepare the card component with appropriate props
           const cardContent = (
             <Box>
-              <MiniCard
-                key={`card-${info.playerId}`}
-                card={info.card}
-                showSender={showSender}
-                isHighlighted={isHighlighted}
-                playerAssignment={info.playerAssignment}
-                playerName={info.playerName}
-                contributorAssignment={info.contributorAssignment}
-                contributorName={info.contributorName}
-              />
+              <Card shadow="sm" padding="lg" radius="md" withBorder>
+                <Stack gap="md">
+                  <MiniCard
+                    key={`card-${info.playerId}`}
+                    card={info.card}
+                    showSender={showSender}
+                    isHighlighted={isHighlighted}
+                    playerAssignment={info.playerAssignment}
+                    playerName={info.playerName}
+                    contributorAssignment={info.contributorAssignment}
+                    contributorName={info.contributorName}
+                  />
 
-              {/* Render action buttons if provided */}
-              {actionButtons && !isHighlighted && (
-                <Box mt="xs">{actionButtons(info.playerId)}</Box>
-              )}
+                  {/* Integrated reactions bar directly below the card */}
+                  {!isHighlighted && (
+                    <Box mt="xs">
+                      <ListenerReactions
+                        speakerId={info.playerId}
+                        cardId={info.card.id}
+                        roomId={roomId}
+                        userId={user.id}
+                      />
+                    </Box>
+                  )}
 
-              {/* Render ReactionsFeed for this card */}
-              <Box mt="sm">
-                <ReactionsFeed
-                  roomId={roomId}
-                  speakerId={info.playerId}
-                  cardId={info.card.id}
-                  currentUserId={user.id}
-                  playerAssignments={playerAssignments || new Map()}
-                />
-              </Box>
+                  {/* Show reactions feed */}
+                  <Box mt="sm">
+                    <ReactionsFeed
+                      roomId={roomId}
+                      speakerId={info.playerId}
+                      cardId={info.card.id}
+                      currentUserId={user.id}
+                      playerAssignments={playerAssignments || new Map()}
+                    />
+                  </Box>
 
-              {/* Render Audio Messages for this card */}
-              {audioMessages.length > 0 && (
-                <Stack gap="xs">
-                  <Text size="sm" fw={500}>
-                    Replies from {info.playerName} ({audioMessages.length})
-                  </Text>
-                  {audioMessages.map((message) => (
-                    <AudioPlayer key={message.id} message={message} />
-                  ))}
+                  {/* Render Audio Messages for this card */}
+                  {audioMessages.length > 0 && (
+                    <Stack gap="xs">
+                      <Text size="sm" fw={500}>
+                        Replies from {info.playerName} ({audioMessages.length})
+                      </Text>
+                      {audioMessages.map((message) => (
+                        <AudioPlayer key={message.id} message={message} />
+                      ))}
+                    </Stack>
+                  )}
                 </Stack>
-              )}
+              </Card>
             </Box>
           );
 

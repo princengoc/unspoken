@@ -1,12 +1,12 @@
 import { useEffect, useCallback, useState } from "react";
 import { Group, Avatar, Tooltip, useMantineTheme, Box } from "@mantine/core";
 import {
-  IconSparkles,
   IconHeart,
   IconBulb,
   IconRipple,
   IconLock,
   IconWorld,
+  IconQuestionMark
 } from "@tabler/icons-react";
 import {
   reactionsService,
@@ -19,9 +19,9 @@ import { PlayerAvatar } from "./PlayerAvatar";
 
 // Define reaction display config
 const REACTION_CONFIG = {
-  inspiring: { icon: IconSparkles, color: "blue", label: "Inspiring" },
   resonates: { icon: IconHeart, color: "pink", label: "Resonates" },
   metoo: { icon: IconBulb, color: "yellow", label: "Me too!" },
+  tellmemore: { icon: IconQuestionMark, color: "yellow", label: "Tell me more!" },
 } as const;
 
 type ReactionGroup = {
@@ -160,37 +160,10 @@ export function ReactionsFeed({
                     <Box style={{ position: "relative" }}>
                       <PlayerAvatar
                         assignment={playerAssignments.get(reaction.listenerId)!}
-                        size="md"
+                        size="xs"
                         highlighted={reaction.listenerId === currentUserId}
                         highlightColor="green"
-                        showIndicator={true}
-                        indicatorColor={reaction.isPrivate ? "yellow" : "green"}
-                        indicatorIcon={
-                          reaction.isPrivate ? (
-                            <IconLock size={10} />
-                          ) : (
-                            <IconWorld size={10} />
-                          )
-                        }
                       />
-                      {reaction.isPrivate && (
-                        <Box
-                          style={{
-                            position: "absolute",
-                            bottom: -2,
-                            right: -2,
-                            background: theme.white,
-                            borderRadius: "50%",
-                            width: 12,
-                            height: 12,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <IconLock size={8} />
-                        </Box>
-                      )}
                     </Box>
                   </motion.div>
                 ))}

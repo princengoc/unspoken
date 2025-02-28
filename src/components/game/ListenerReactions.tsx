@@ -1,20 +1,19 @@
 import React, { useState, useMemo } from "react";
-import { Group, ActionIcon, Tooltip, Switch } from "@mantine/core";
+import { Group, ActionIcon, Tooltip } from "@mantine/core";
 import {
-  IconSparkles,
   IconHeart,
-  IconBulb,
   IconRipple,
-  IconLock,
-  IconWorld,
+  IconMicrophone,
+  IconQuestionMark,
 } from "@tabler/icons-react";
 import { useReactions } from "@/hooks/game/useReactions";
+import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import type { ReactionType } from "@/services/supabase/reactions";
 
+// Updated reaction types with "tellmemore" replacing "inspiring"
 const REACTIONS = [
-  { id: "inspiring" as ReactionType, icon: IconSparkles, label: "Inspiring" },
   { id: "resonates" as ReactionType, icon: IconHeart, label: "Resonates" },
-  { id: "metoo" as ReactionType, icon: IconBulb, label: "Me too!" },
+  { id: "tellmemore" as ReactionType, icon: IconQuestionMark, label: "Tell me more" },
 ] as const;
 
 interface ListenerReactionsProps {
@@ -30,16 +29,14 @@ export function ListenerReactions({
   roomId,
   userId,
 }: ListenerReactionsProps) {
-  const [isPrivate, setIsPrivate] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
 
-  const { toggleReaction, toggleRipple, hasReaction, isRippled } = useReactions(
-    {
-      roomId,
-      speakerId,
-      listenerId: userId,
-      cardId,
-    },
-  );
+  const { toggleReaction, toggleRipple, hasReaction, isRippled } = useReactions({
+    roomId,
+    speakerId,
+    listenerId: userId,
+    cardId,
+  });
 
   // Store temporary "button disabled" state
   const [disabledButtons, setDisabledButtons] = useState<
@@ -47,7 +44,7 @@ export function ListenerReactions({
   >({} as Record<ReactionType, boolean>);
   const [rippleDisabled, setRippleDisabled] = useState(false);
 
-  // ✅ Use `useMemo` to prevent unnecessary re-renders
+  // Use `useMemo` to prevent unnecessary re-renders
   const activeReactions = useMemo(
     () =>
       Object.fromEntries(
@@ -59,7 +56,8 @@ export function ListenerReactions({
   const rippled = useMemo(() => isRippled(), [isRippled]);
 
   const handleReactionClick = async (id: ReactionType) => {
-    await toggleReaction(id, isPrivate);
+    // Always use private reactions
+    await toggleReaction(id, true);
 
     // Disable button to prevent spam clicking
     setDisabledButtons((prev) => ({ ...prev, [id]: true }));
@@ -71,62 +69,78 @@ export function ListenerReactions({
   const handleRippleClick = async () => {
     await toggleRipple();
 
-    // ✅ Disable ripple button for 2 seconds
+    // Disable ripple button for 2 seconds
     setRippleDisabled(true);
     setTimeout(() => {
       setRippleDisabled(false);
     }, 2000);
   };
 
-  const PrivacyIcon = isPrivate ? IconLock : IconWorld;
+  const handleRecordStart = async () => {
+    setIsRecording(true);
+    // Send a "hang on, I want to say something" reaction when recording starts
+    await toggleReaction("metoo", true);
+  };
+
+  const handleRecordComplete = () => {
+    setIsRecording(false);
+  };
 
   return (
     <Group justify="center" gap="xs">
-      {REACTIONS.map(({ id, icon: Icon, label }) => (
-        <Tooltip key={id} label={label}>
+      {!isRecording ? (
+        <>
+          {REACTIONS.map(({ id, icon: Icon, label }) => (
+            <Tooltip key={id} label={label}>
+              <ActionIcon
+                variant={activeReactions[id] ? "filled" : "subtle"}
+                color="blue"
+                onClick={() => handleReactionClick(id)}
+                radius="xl"
+                size="lg"
+                disabled={disabledButtons[id]} 
+                style={disabledButtons[id] ? { opacity: 0.5 } : {}}
+              >
+                <Icon size={18} />
+              </ActionIcon>
+            </Tooltip>
+          ))}
+
+          <Tooltip label="Save for later (Ripple)">
+            <ActionIcon
+              variant={rippled ? "filled" : "subtle"}
+              color="violet"
+              onClick={handleRippleClick}
+              radius="xl"
+              size="lg"
+              disabled={rippleDisabled}
+              style={rippleDisabled ? { opacity: 0.5 } : {}}
+            >
+              <IconRipple size={18} />
+            </ActionIcon>
+          </Tooltip>
+        </>
+      ) : (
+        <AudioRecorder
+          onComplete={handleRecordComplete}
+          targetPlayerId={speakerId}
+          isCompact={true}
+        />
+      )}
+
+      {!isRecording && (
+        <Tooltip label="Record a response">
           <ActionIcon
-            variant={activeReactions[id] ? "filled" : "subtle"}
-            color="blue"
-            onClick={() => handleReactionClick(id)}
+            variant="subtle"
+            color="red"
+            onClick={handleRecordStart}
             radius="xl"
             size="lg"
-            disabled={disabledButtons[id]} // ✅ Gray out when disabled
-            style={disabledButtons[id] ? { opacity: 0.5 } : {}}
           >
-            <Icon size={18} />
+            <IconMicrophone size={18} />
           </ActionIcon>
         </Tooltip>
-      ))}
-
-      <Tooltip label="Save for later (Ripple)">
-        <ActionIcon
-          variant={rippled ? "filled" : "subtle"}
-          color="violet"
-          onClick={handleRippleClick}
-          radius="xl"
-          size="lg"
-          disabled={rippleDisabled} // ✅ Gray out ripple button when disabled
-          style={rippleDisabled ? { opacity: 0.5 } : {}}
-        >
-          <IconRipple size={18} />
-        </ActionIcon>
-      </Tooltip>
-
-      {/* Privacy toggle */}
-      <Group justify="center" gap="xs">
-        <Switch
-          checked={!isPrivate}
-          onChange={() => setIsPrivate(!isPrivate)}
-          color="blue"
-          size="xs"
-          label={
-            <Group gap="md">
-              <PrivacyIcon size={14} />
-              {isPrivate ? "Private" : "Public"}
-            </Group>
-          }
-        />
-      </Group>
+      )}
     </Group>
   );
 }

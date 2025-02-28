@@ -1,12 +1,9 @@
-import { Stack, Button, Group, Box } from "@mantine/core";
+import { Stack, Button, Group, Box, Text } from "@mantine/core";
 import { motion } from "framer-motion";
 import { useFullRoom } from "@/context/FullRoomProvider";
-import { ListenerReactions } from "../ListenerReactions";
 import { Card } from "../Card";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
-import { ReactionsFeed } from "../ReactionsFeed";
-import { useAuth } from "@/context/AuthProvider";
 import { getPlayerAssignments } from "../statusBarUtils";
 import { useRoom } from "@/context/RoomProvider";
 
@@ -15,11 +12,11 @@ type SpeakingProp = {
 };
 
 export function Speaking({ roomId }: SpeakingProp) {
-  const { user } = useAuth();
-  const { room, finishSpeaking } = useRoom();
+  const { finishSpeaking } = useRoom();
   const { isActiveSpeaker } = useFullRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members } = useRoomMembers();
+  const { room } = useRoom();
 
   const playerAssignments = getPlayerAssignments(members, roomId);
 
@@ -67,25 +64,10 @@ export function Speaking({ roomId }: SpeakingProp) {
             Finish sharing your story
           </Button>
         ) : (
-          <Stack>
-            <ListenerReactions
-              speakerId={room.active_player_id}
-              cardId={activeCard.id}
-              roomId={roomId}
-              userId={user.id}
-            />
-          </Stack>
+          <Box ta="center">
+            <Text c="dimmed" size="sm">Listen to the speaker's story</Text>
+          </Box>
         )}
-
-        <Box mt="md">
-          <ReactionsFeed
-            roomId={roomId}
-            speakerId={room.active_player_id}
-            cardId={activeCard.id}
-            currentUserId={user.id}
-            playerAssignments={playerAssignments}
-          />
-        </Box>
       </motion.div>
     </Stack>
   );
