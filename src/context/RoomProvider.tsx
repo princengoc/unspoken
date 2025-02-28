@@ -41,7 +41,7 @@ export function RoomProvider({ roomId, userId, children }: RoomProviderProps) {
 
   // convenient states that can be derived from roomId and userId
   const isRemote = room?.game_mode === "remote";
-  const isCreator = userId === room!.created_by;
+  const isCreator = userId === room?.created_by;
 
   useEffect(() => {
     setLoading(true);

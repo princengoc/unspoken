@@ -67,7 +67,7 @@ function RoomContent({ roomId }: { roomId: string }) {
     }
   }, [error, router]);
 
-  if (loading || !room) {
+  if (loading || !roomId || !room || !user) {
     return (
       <Box
         style={{
@@ -113,7 +113,24 @@ interface RoomPageProps {
 
 export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
-  const { user } = useAuth();
+  const { user, loading: userLoading } = useAuth();
+
+  if (userLoading) {
+    return (
+      <Box
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Loader size="xl" />
+        <Text ml="md">Loading user info...</Text>
+      </Box>
+    );
+  }
+
   return (
     <RoomProvider roomId={roomId} userId={user.id}>
       <RoomContent roomId={roomId} />

@@ -1,3 +1,5 @@
+// TODO: could make more efficient by recording the order of the player that they joined the room
+// this way the assignment can be computed independently of the other members' icons
 import {
   IconPawFilled,
   IconPlant2,
