@@ -59,14 +59,18 @@ export function PlayerCardGridRemote({
             ? info.playerId === highlightPlayerId
             : false;
 
-          // Get any audio messages for this card
+          // Get any audio messages for this player
           const audioMessages = messagesByPlayer.get(info.playerId) || [];
+
+          // Is this the current user's card?
+          const isCurrentUserCard = info.playerId === user.id;
 
           // Prepare the card component with appropriate props
           const cardContent = (
             <Box>
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <Stack gap="md">
+                  {/* The card itself */}
                   <MiniCard
                     key={`card-${info.playerId}`}
                     card={info.card}
@@ -78,28 +82,26 @@ export function PlayerCardGridRemote({
                     contributorName={info.contributorName}
                   />
 
-                  {/* Integrated reactions bar directly below the card */}
-                  {!isHighlighted && (
-                    <Box mt="xs">
-                      <ListenerReactions
-                        speakerId={info.playerId}
-                        cardId={info.card.id}
-                        roomId={roomId}
-                        userId={user.id}
-                      />
-                    </Box>
-                  )}
+                  {/* Reaction feed - shows reactions directed at the current user */}
+                  {/* Only show on current user's card */}
+                  <ReactionsFeed
+                    roomId={roomId}
+                    speakerId={info.playerId}
+                    cardId={info.card.id}
+                    currentUserId={user.id}
+                    playerAssignments={playerAssignments}
+                  />
 
-                  {/* Show reactions feed */}
-                  <Box mt="sm">
-                    <ReactionsFeed
-                      roomId={roomId}
+                  {/* Reaction buttons - for reacting to other people's cards */}
+                  {/* Don't show reaction buttons on current user's card */}
+                  {!isCurrentUserCard && (
+                    <ListenerReactions
                       speakerId={info.playerId}
                       cardId={info.card.id}
-                      currentUserId={user.id}
-                      playerAssignments={playerAssignments || new Map()}
+                      roomId={roomId}
+                      userId={user.id}
                     />
-                  </Box>
+                  )}
 
                   {/* Render Audio Messages for this card */}
                   {audioMessages.length > 0 && (

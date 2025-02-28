@@ -102,6 +102,7 @@ export const reactionsService = {
     }
   },
 
+  // Get reactions made by a specific player
   async getPlayerReactions(
     roomId: string,
     listenerId: string,
@@ -111,26 +112,10 @@ export const reactionsService = {
       listener_id: listenerId,
     });
 
-    return data || [];
+    return data?.map(mapReactionResponse) || [];
   },
 
-  async getRippledCards(roomId: string, playerId: string): Promise<string[]> {
-    const { data: reactions } = await supabase
-      .from("reactions")
-      .select("card_id")
-      .match({
-        room_id: roomId,
-        listener_id: playerId,
-        ripple_marked: true,
-      });
-
-    if (!reactions?.length) return [];
-
-    const cardIds = reactions.map((r) => r.card_id) as string[];
-
-    return cardIds || [];
-  },
-
+  // Get reactions to a specific player's card
   async getReactionsForSpeaker(
     roomId: string,
     speakerId: string,
@@ -148,19 +133,28 @@ export const reactionsService = {
     }
 
     return {
-      data: data.map((item) => ({
-        id: item.id,
-        roomId: item.room_id,
-        speakerId: item.speaker_id,
-        listenerId: item.listener_id,
-        cardId: item.card_id,
-        type: item.type as ReactionType,
-        isPrivate: item.is_private,
-        rippleMarked: item.ripple_marked,
-      })),
+      data: data.map(mapReactionResponse),
     };
   },
 
+  // Get all rippled cards for a player
+  async getRippledCards(roomId: string, playerId: string): Promise<string[]> {
+    const { data: reactions } = await supabase
+      .from("reactions")
+      .select("card_id")
+      .match({
+        room_id: roomId,
+        listener_id: playerId,
+        ripple_marked: true,
+      });
+
+    if (!reactions?.length) return [];
+
+    const cardIds = reactions.map((r) => r.card_id) as string[];
+    return cardIds || [];
+  },
+
+  // Subscribe to reactions changes for a room
   subscribeToReactions(
     roomId: string,
     callback: (reactions: ListenerReaction[]) => void,
@@ -170,30 +164,36 @@ export const reactionsService = {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "*", // Listen to all changes (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "reactions",
           filter: `room_id=eq.${roomId}`,
         },
         async () => {
+          // Fetch all reactions for the room
           const { data } = await supabase
             .from("reactions")
             .select("*")
             .eq("room_id", roomId);
 
-          const mappedData = (data || []).map((item) => ({
-            id: item.id,
-            roomId: item.room_id,
-            speakerId: item.speaker_id,
-            listenerId: item.listener_id,
-            cardId: item.card_id,
-            type: item.type as ReactionType,
-            isPrivate: item.is_private,
-            rippleMarked: item.ripple_marked,
-          }));
+          const mappedData = (data || []).map(mapReactionResponse);
           callback(mappedData);
         },
       )
       .subscribe();
   },
 };
+
+// Helper function to map database response to our interface
+function mapReactionResponse(item: any): ListenerReaction {
+  return {
+    id: item.id,
+    roomId: item.room_id,
+    speakerId: item.speaker_id,
+    listenerId: item.listener_id,
+    cardId: item.card_id,
+    type: item.type as ReactionType,
+    isPrivate: item.is_private,
+    rippleMarked: item.ripple_marked,
+  };
+}

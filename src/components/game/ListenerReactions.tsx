@@ -1,26 +1,27 @@
-import React, { useState, useMemo } from "react";
-import { Group, ActionIcon, Tooltip } from "@mantine/core";
+import React, { useState, useEffect } from "react";
+import { Group, ActionIcon, Tooltip, Badge } from "@mantine/core";
 import {
   IconHeart,
   IconRipple,
   IconMicrophone,
-  IconQuestionMark,
+  IconQuestionMark
 } from "@tabler/icons-react";
 import { useReactions } from "@/hooks/game/useReactions";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import type { ReactionType } from "@/services/supabase/reactions";
+import { useAudioMessages } from "@/context/AudioMessagesProvider";
 
-// Updated reaction types with "tellmemore" replacing "inspiring"
+// Updated reaction types
 const REACTIONS = [
   { id: "resonates" as ReactionType, icon: IconHeart, label: "Resonates" },
-  { id: "tellmemore" as ReactionType, icon: IconQuestionMark, label: "Tell me more" },
+  { id: "tellmemore" as ReactionType, icon: IconQuestionMark, label: "Request response" },
 ] as const;
 
 interface ListenerReactionsProps {
-  speakerId: string;
-  cardId: string;
+  speakerId: string;     // The player who owns the card we're reacting to
+  cardId: string;        // The card we're reacting to
   roomId: string;
-  userId: string;
+  userId: string;        // Current user (the one doing the reacting)
 }
 
 export function ListenerReactions({
@@ -30,11 +31,19 @@ export function ListenerReactions({
   userId,
 }: ListenerReactionsProps) {
   const [isRecording, setIsRecording] = useState(false);
-
-  const { toggleReaction, toggleRipple, hasReaction, isRippled } = useReactions({
+  const { recording, setRecording } = useAudioMessages();
+  
+  // Get reaction state
+  const { 
+    reactions,
+    toggleReaction, 
+    toggleRipple, 
+    hasReaction, 
+    isRippled
+  } = useReactions({
     roomId,
-    speakerId,
-    listenerId: userId,
+    speakerId,   // The player who owns the card
+    listenerId: userId,  // Current user doing the reacting
     cardId,
   });
 
@@ -44,47 +53,86 @@ export function ListenerReactions({
   >({} as Record<ReactionType, boolean>);
   const [rippleDisabled, setRippleDisabled] = useState(false);
 
-  // Use `useMemo` to prevent unnecessary re-renders
-  const activeReactions = useMemo(
-    () =>
-      Object.fromEntries(
-        REACTIONS.map(({ id }) => [id, hasReaction(id)]),
-      ) as Record<ReactionType, boolean>,
-    [hasReaction],
-  );
-
-  const rippled = useMemo(() => isRippled(), [isRippled]);
+  // Check if the user has already requested a response
+  const hasRequestedResponse = hasReaction("tellmemore");
+  
+  // Check if the user has already rippled this card
+  const rippled = isRippled();
 
   const handleReactionClick = async (id: ReactionType) => {
-    // Always use private reactions
-    await toggleReaction(id, true);
-
     // Disable button to prevent spam clicking
     setDisabledButtons((prev) => ({ ...prev, [id]: true }));
-    setTimeout(() => {
-      setDisabledButtons((prev) => ({ ...prev, [id]: false }));
-    }, 500);
+    
+    try {
+      // Toggle reaction in the database
+      await toggleReaction(id, true);
+    } catch (error) {
+      console.error(`Failed to toggle ${id} reaction:`, error);
+    } finally {
+      // Re-enable button after a delay
+      setTimeout(() => {
+        setDisabledButtons((prev) => ({ ...prev, [id]: false }));
+      }, 1000);
+    }
   };
 
   const handleRippleClick = async () => {
-    await toggleRipple();
-
-    // Disable ripple button for 2 seconds
+    // Disable ripple button to prevent spam clicking
     setRippleDisabled(true);
-    setTimeout(() => {
-      setRippleDisabled(false);
-    }, 2000);
+    
+    try {
+      await toggleRipple();
+    } catch (error) {
+      console.error("Failed to toggle ripple:", error);
+    } finally {
+      // Re-enable after a delay
+      setTimeout(() => {
+        setRippleDisabled(false);
+      }, 2000);
+    }
   };
 
   const handleRecordStart = async () => {
     setIsRecording(true);
-    // Send a "hang on, I want to say something" reaction when recording starts
-    await toggleReaction("metoo", true);
+    setRecording(true);
+    
+    // If we were requesting a response, clear the request when we start recording
+    if (hasRequestedResponse) {
+      try {
+        await toggleReaction("tellmemore", true);
+      } catch (error) {
+        console.error("Failed to clear tellmemore reaction:", error);
+      }
+    }
+    
+    // Set metoo reaction to indicate recording in progress
+    try {
+      await toggleReaction("metoo", true);
+    } catch (error) {
+      console.error("Failed to set metoo reaction:", error);
+    }
   };
 
-  const handleRecordComplete = () => {
+  const handleRecordComplete = async () => {
     setIsRecording(false);
+    setRecording(false);
+    
+    // Clear the metoo reaction when done recording
+    try {
+      if (hasReaction("metoo")) {
+        await toggleReaction("metoo", true);
+      }
+    } catch (error) {
+      console.error("Failed to clear metoo reaction:", error);
+    }
   };
+
+  // Update the recording state based on the context value
+  useEffect(() => {
+    if (!recording && isRecording) {
+      setIsRecording(false);
+    }
+  }, [recording, isRecording]);
 
   return (
     <Group justify="center" gap="xs">
@@ -93,7 +141,7 @@ export function ListenerReactions({
           {REACTIONS.map(({ id, icon: Icon, label }) => (
             <Tooltip key={id} label={label}>
               <ActionIcon
-                variant={activeReactions[id] ? "filled" : "subtle"}
+                variant={hasReaction(id) ? "filled" : "subtle"}
                 color="blue"
                 onClick={() => handleReactionClick(id)}
                 radius="xl"
@@ -131,7 +179,7 @@ export function ListenerReactions({
       {!isRecording && (
         <Tooltip label="Record a response">
           <ActionIcon
-            variant="subtle"
+            variant={hasRequestedResponse ? "filled" : "subtle"}
             color="red"
             onClick={handleRecordStart}
             radius="xl"

@@ -1,42 +1,40 @@
-import { useEffect, useCallback, useState } from "react";
-import { Group, Avatar, Tooltip, useMantineTheme, Box } from "@mantine/core";
+import { useEffect, useState } from "react";
+import { Group, Avatar, Tooltip, useMantineTheme, Box, Badge, Text } from "@mantine/core";
 import {
   IconHeart,
-  IconBulb,
   IconRipple,
-  IconLock,
-  IconWorld,
-  IconQuestionMark
+  IconMessageCircle,
+  IconQuestionMark,
 } from "@tabler/icons-react";
 import {
   reactionsService,
   ListenerReaction,
   ReactionType,
 } from "@/services/supabase/reactions";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { PlayerAssignment } from "./statusBarUtils";
 import { PlayerAvatar } from "./PlayerAvatar";
 
 // Define reaction display config
 const REACTION_CONFIG = {
   resonates: { icon: IconHeart, color: "pink", label: "Resonates" },
-  metoo: { icon: IconBulb, color: "yellow", label: "Me too!" },
-  tellmemore: { icon: IconQuestionMark, color: "yellow", label: "Tell me more!" },
+  metoo: { icon: IconMessageCircle, color: "blue", label: "Recording" },
+  tellmemore: { icon: IconQuestionMark, color: "orange", label: "Requesting response" },
 } as const;
-
-type ReactionGroup = {
-  type: ReactionType;
-  reactions: (ListenerReaction & { username?: string })[];
-};
 
 interface ReactionsFeedProps {
   roomId: string;
-  speakerId: string;
-  cardId: string;
-  currentUserId: string;
+  speakerId: string;      // The player who owns the card
+  cardId: string;         // The card ID
+  currentUserId: string;  // Current user viewing the reactions
   playerAssignments: Map<string, PlayerAssignment>;
 }
 
+/**
+ * ReactionsFeed shows incoming reactions directed at the specified player/card
+ * If speakerId === currentUserId: Shows reactions from others to the current user
+ * If speakerId !== currentUserId: This component should not display anything
+ */
 export function ReactionsFeed({
   roomId,
   speakerId,
@@ -44,69 +42,40 @@ export function ReactionsFeed({
   currentUserId,
   playerAssignments,
 }: ReactionsFeedProps) {
-  const [reactionGroups, setReactionGroups] = useState<ReactionGroup[]>([]);
-  const [ripples, setRipples] = useState<
-    (ListenerReaction & { username?: string })[]
-  >([]);
+  const [reactions, setReactions] = useState<ListenerReaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const theme = useMantineTheme();
 
-  // Process and group reactions
-  const processReactions = useCallback(
-    (reactions: ListenerReaction[]) => {
-      // Filter and group by type
-      const reactionsByType = Object.keys(REACTION_CONFIG).reduce<
-        Record<string, (ListenerReaction & { username?: string })[]>
-      >((acc, type) => {
-        acc[type] = reactions.filter(
-          (r) =>
-            r.type === type &&
-            (!r.isPrivate ||
-              r.listenerId === currentUserId ||
-              r.speakerId === currentUserId),
-        );
-        return acc;
-      }, {});
-
-      // Create final grouped structure
-      const groups = Object.entries(reactionsByType)
-        .map(([type, reactions]) => ({
-          type: type as ReactionType,
-          reactions,
-        }))
-        .filter((group) => group.reactions.length > 0);
-
-      // Handle ripples separately
-      const relevantRipples = reactions.filter(
-        (r) =>
-          r.rippleMarked &&
-          (!r.isPrivate ||
-            r.listenerId === currentUserId ||
-            r.speakerId === currentUserId),
-      );
-
-      setReactionGroups(groups);
-      setRipples(relevantRipples);
-    },
-    [currentUserId],
-  );
-
-  // Load and subscribe to reactions
+  // Only show if user is looking at their own card
+  const isShowingUserOwnCard = speakerId === currentUserId;
+  
+  // Load reactions from other players directed to this player/card
   useEffect(() => {
     if (!roomId || !speakerId || !cardId) return;
+    
+    // Don't fetch if this isn't for the current user's card
+    if (!isShowingUserOwnCard) {
+      setLoading(false);
+      return;
+    }
 
-    // Initial load of reactions
     const loadReactions = async () => {
+      setLoading(true);
       try {
-        // We're using a specific RPC to get all reactions for a card/speaker
-        // This includes reactions from all listeners, not just the current user
+        // Get all reactions for this speaker's card
         const { data } = await reactionsService.getReactionsForSpeaker(
           roomId,
           speakerId,
           cardId,
         );
-        processReactions(data || []);
+        
+        // Filter out reactions from the current user
+        const reactionsFromOthers = data.filter(r => r.listenerId !== currentUserId);
+        setReactions(reactionsFromOthers);
       } catch (error) {
-        console.error("Failed to load reactions for speaker:", error);
+        console.error("Failed to load reactions:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -116,149 +85,182 @@ export function ReactionsFeed({
     const subscription = reactionsService.subscribeToReactions(
       roomId,
       (allReactions) => {
-        // Filter to only get reactions relevant to this speaker/card
+        // Filter to only get reactions from others to this user's card
         const relevantReactions = allReactions.filter(
-          (r) => r.speakerId === speakerId && r.cardId === cardId,
+          (r) => r.speakerId === speakerId && 
+                 r.cardId === cardId && 
+                 r.listenerId !== currentUserId
         );
-        processReactions(relevantReactions);
+        setReactions(relevantReactions);
       },
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [roomId, speakerId, cardId, playerAssignments, processReactions]);
+  }, [roomId, speakerId, cardId, currentUserId, isShowingUserOwnCard]);
 
-  // Early return if no reactions
-  if (reactionGroups.length === 0 && ripples.length === 0) {
+  // Only show reactions feed for user's own card
+  if (!isShowingUserOwnCard) {
     return null;
   }
 
+  // Group reactions by type
+  const reactionsByType = new Map<ReactionType, ListenerReaction[]>();
+  const rippleReactions: ListenerReaction[] = [];
+  
+  // Sort reactions into groups
+  reactions.forEach(reaction => {
+    if (reaction.rippleMarked) {
+      rippleReactions.push(reaction);
+    } else if (reaction.type) {
+      if (!reactionsByType.has(reaction.type)) {
+        reactionsByType.set(reaction.type, []);
+      }
+      reactionsByType.get(reaction.type)!.push(reaction);
+    }
+  });
+
+  // Special handling for "recording" indicator
+  const someoneIsRecording = reactionsByType.get("metoo").length > 0;
+  
+  // Special handling for "requesting response" indicator
+  const someoneWantsResponse = reactionsByType.get("tellmemore")?.length > 0;
+
+  // If no reactions, show nothing
+  if (reactions.length === 0 && !loading) {
+    return null;
+  }
+
+  // Show loading state
+  if (loading) {
+    return <Text size="xs" c="dimmed">Loading reactions...</Text>;
+  }
+
   return (
-    <Group justify="center" gap="xl">
-      <AnimatePresence>
-        {/* Compact reaction groups */}
-        {reactionGroups.map((group) => {
-          const { icon: Icon, color, label } = REACTION_CONFIG[group.type];
-          return (
-            <Tooltip
-              key={group.type}
-              label={`${label} (${group.reactions.length})`}
-              position="top"
-              withArrow
-            >
-              <Group gap="xs" justify="center">
-                <Icon color={theme.colors[color][6]} size={16} />
-                {group.reactions.slice(0, 3).map((reaction, index) => (
-                  <motion.div
-                    key={reaction.id}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.2, delay: index * 0.1 }}
-                    style={{ marginLeft: -8 * index }}
-                  >
-                    <Box style={{ position: "relative" }}>
-                      <PlayerAvatar
-                        assignment={playerAssignments.get(reaction.listenerId)!}
-                        size="xs"
-                        highlighted={reaction.listenerId === currentUserId}
-                        highlightColor="green"
-                      />
-                    </Box>
-                  </motion.div>
-                ))}
-                {group.reactions.length > 3 && (
-                  <Tooltip label={`${group.reactions.length - 3} more`}>
-                    <Avatar
-                      size="md"
-                      radius="xl"
-                      color={color}
-                      style={{
-                        marginLeft: -8,
-                        border: `1px solid ${theme.white}`,
-                      }}
-                    >
-                      {group.reactions.length - 3}
-                    </Avatar>
-                  </Tooltip>
-                )}
-              </Group>
-            </Tooltip>
-          );
-        })}
-        {/* Compact ripples */}
-        {ripples.length > 0 && (
-          <Tooltip
-            label={`Saved for later (${ripples.length})`}
-            position="top"
-            withArrow
+    <Box>
+      {/* Recording indicator */}
+      {someoneIsRecording && (
+        <Box my="sm">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [0.9, 1, 0.9] 
+            }}
+            transition={{ 
+              duration: 1.5,
+              repeat: Infinity,
+              repeatType: "loop"
+            }}
           >
-            <Group gap="xs" justify="center">
-              <IconRipple color={theme.colors.violet[6]} size={16} />
-              {ripples.slice(0, 3).map((reaction, index) => (
-                <motion.div
-                  key={reaction.id}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.2, delay: index * 0.1 }}
-                  style={{ marginLeft: -8 * index }}
+            <Badge 
+              color="blue" 
+              size="md" 
+              radius="sm" 
+              leftSection={<IconMessageCircle size={14} />}
+            >
+              {reactionsByType.get("metoo")?.length === 1 
+                ? "Someone is recording a response for you"
+                : `${reactionsByType.get("metoo")?.length} people are recording for you`
+              }
+            </Badge>
+          </motion.div>
+        </Box>
+      )}
+
+      {/* Response request indicator */}
+      {someoneWantsResponse && (
+        <Box my="sm">
+          <Badge 
+            color="orange" 
+            size="md" 
+            radius="sm" 
+            leftSection={<IconQuestionMark size={14} />}
+          >
+            {reactionsByType.get("tellmemore")?.length === 1 
+              ? "Someone wants a response from you"
+              : `${reactionsByType.get("tellmemore")?.length} people want a response from you`
+            }
+          </Badge>
+        </Box>
+      )}
+
+      {/* Other reaction types */}
+      <Group justify="center" gap="xl">
+        {/* Display resonates reactions */}
+        {reactionsByType.has("resonates") && reactionsByType.get("resonates")!.length > 0 && (
+          <Group gap="xs" justify="center">
+            <IconHeart color={theme.colors.pink[6]} size={16} />
+            {reactionsByType.get("resonates")!.slice(0, 3).map((reaction, index) => (
+              <Box 
+                key={reaction.id}
+                style={{ 
+                  marginLeft: index > 0 ? -8 : 0,
+                  position: "relative" 
+                }}
+              >
+                <PlayerAvatar
+                  assignment={playerAssignments.get(reaction.listenerId)!}
+                  size="xs"
+                  highlighted={false}
+                />
+              </Box>
+            ))}
+            {reactionsByType.get("resonates")!.length > 3 && (
+              <Tooltip label={`${reactionsByType.get("resonates")!.length - 3} more`}>
+                <Avatar
+                  size="xs"
+                  radius="xl"
+                  color="pink"
+                  style={{
+                    marginLeft: -8,
+                    border: `1px solid ${theme.white}`,
+                  }}
                 >
-                  <Box style={{ position: "relative" }}>
-                    <PlayerAvatar
-                      assignment={playerAssignments.get(reaction.listenerId)!}
-                      size="md"
-                      highlighted={reaction.listenerId === currentUserId}
-                      highlightColor="green"
-                      showIndicator={true}
-                      indicatorColor={reaction.isPrivate ? "yellow" : "green"}
-                      indicatorIcon={
-                        reaction.isPrivate ? (
-                          <IconLock size={10} />
-                        ) : (
-                          <IconWorld size={10} />
-                        )
-                      }
-                    />
-                    {reaction.isPrivate && (
-                      <Box
-                        style={{
-                          position: "absolute",
-                          bottom: -2,
-                          right: -2,
-                          background: theme.white,
-                          borderRadius: "50%",
-                          width: 12,
-                          height: 12,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <IconLock size={8} />
-                      </Box>
-                    )}
-                  </Box>
-                </motion.div>
-              ))}
-              {ripples.length > 3 && (
-                <Tooltip label={`${ripples.length - 3} more`}>
-                  <Avatar
-                    size="xs"
-                    radius="xl"
-                    color="violet"
-                    style={{
-                      marginLeft: -8,
-                      border: `1px solid ${theme.white}`,
-                    }}
-                  >
-                    {ripples.length - 3}
-                  </Avatar>
-                </Tooltip>
-              )}
-            </Group>
-          </Tooltip>
+                  {reactionsByType.get("resonates")!.length - 3}
+                </Avatar>
+              </Tooltip>
+            )}
+          </Group>
         )}
-      </AnimatePresence>
-    </Group>
+        
+        {/* Display ripple reactions */}
+        {rippleReactions.length > 0 && (
+          <Group gap="xs" justify="center">
+            <IconRipple color={theme.colors.violet[6]} size={16} />
+            {rippleReactions.slice(0, 3).map((reaction, index) => (
+              <Box 
+                key={reaction.id}
+                style={{ 
+                  marginLeft: index > 0 ? -8 : 0,
+                  position: "relative" 
+                }}
+              >
+                <PlayerAvatar
+                  assignment={playerAssignments.get(reaction.listenerId)!}
+                  size="xs"
+                  highlighted={false}
+                />
+              </Box>
+            ))}
+            {rippleReactions.length > 3 && (
+              <Tooltip label={`${rippleReactions.length - 3} more`}>
+                <Avatar
+                  size="xs"
+                  radius="xl"
+                  color="violet"
+                  style={{
+                    marginLeft: -8,
+                    border: `1px solid ${theme.white}`,
+                  }}
+                >
+                  {rippleReactions.length - 3}
+                </Avatar>
+              </Tooltip>
+            )}
+          </Group>
+        )}
+      </Group>
+    </Box>
   );
 }
