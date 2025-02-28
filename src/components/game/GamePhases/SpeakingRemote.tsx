@@ -155,7 +155,6 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
             </Text>
             <AudioRecorder
               targetPlayerId={recordingForPlayer}
-              onCancel={() => setRecordingForPlayer(null)}
               onComplete={() => setRecordingForPlayer(null)}
             />
           </Stack>

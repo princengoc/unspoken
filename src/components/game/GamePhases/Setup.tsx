@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Stack, Text, Group, Button, Paper, Box } from "@mantine/core";
-import { IconCheck, IconHourglass, IconMicrophone } from "@tabler/icons-react";
+import { IconCheck, IconHourglass } from "@tabler/icons-react";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useFullRoom } from "@/context/FullRoomProvider";
 import { SlideIn } from "@/components/animations/Motion";
@@ -24,7 +24,6 @@ export function Setup() {
   const { isSetupComplete, currentMemberStatus } = useFullRoom();
 
   const [isDealing, setIsDealing] = useState(false);
-  const [showRecorder, setShowRecorder] = useState(false);
 
   const isRemoteMode = room?.game_mode === "remote";
 
@@ -43,7 +42,6 @@ export function Setup() {
   const selectedCard = selectedCardId ? getCardById(selectedCardId) : null;
 
   const handleRecordComplete = useCallback(async () => {
-    setShowRecorder(false);
     try {
       if (!room?.id || !currentMember?.id) return;
 
@@ -101,15 +99,7 @@ export function Setup() {
 
                 {isRemoteMode && (
                   <Box>
-                    {!showRecorder && !currentMember?.has_spoken ? (
-                      <Button
-                        leftSection={<IconMicrophone size={16} />}
-                        onClick={() => setShowRecorder(true)}
-                        mt="md"
-                      >
-                        Record Your Story
-                      </Button>
-                    ) : currentMember?.has_spoken ? (
+                    {currentMember?.has_spoken ? (
                       <Text size="sm" c="dimmed" mt="md">
                         Thanks for telling your story!
                       </Text>
@@ -118,7 +108,6 @@ export function Setup() {
                         <AudioRecorder
                           isPublic={true}
                           onComplete={handleRecordComplete}
-                          onCancel={() => setShowRecorder(false)}
                         />
                       </Paper>
                     )}

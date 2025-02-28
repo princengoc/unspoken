@@ -1,13 +1,5 @@
 import React, { useState, useRef } from "react";
-import {
-  Text,
-  Group,
-  Button,
-  Switch,
-  ActionIcon,
-  Stack,
-  Alert,
-} from "@mantine/core";
+import { Text, Group, Switch, ActionIcon, Stack, Alert } from "@mantine/core";
 import {
   IconMicrophone,
   IconPlayerPause,
@@ -17,6 +9,7 @@ import {
   IconWorldUpload,
   IconLock,
   IconAlertCircle,
+  IconSend,
 } from "@tabler/icons-react";
 
 import { useAudioRecording } from "@/hooks/audio/useAudioRecording";
@@ -24,14 +17,12 @@ import { useAudioMessages } from "@/context/AudioMessagesProvider";
 import { AudioPrivacy } from "@/core/audio/types";
 
 interface AudioRecorderProps {
-  onCancel?: () => void;
   onComplete?: () => void;
   targetPlayerId?: string;
   isPublic?: boolean;
 }
 
 export function AudioRecorder({
-  onCancel,
   onComplete,
   targetPlayerId,
   isPublic = false,
@@ -60,17 +51,6 @@ export function AudioRecorder({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const handleCancel = () => {
-    resetRecording();
-    setError(null);
-    setRecording(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
-    onCancel?.();
   };
 
   const handleSend = async () => {
@@ -124,6 +104,25 @@ export function AudioRecorder({
     }
   };
 
+  const handleReset = () => {
+    // Reset the recording state through the hook
+    resetRecording();
+
+    // Properly clean up the audio reference
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+
+    // Reset UI states
+    setIsPlaying(false);
+    setError(null);
+
+    // Reset the recording state in context
+    setRecording(false);
+  };
+
   return (
     <Stack align="center" gap="xs">
       {error && (
@@ -145,20 +144,25 @@ export function AudioRecorder({
       </Group>
 
       <Group gap="xs" justify="center">
-        {/* Initial state - Just Record button */}
+        {/* Initial state - Record button */}
         {!recordingState.isRecording &&
           !recordingState.audioBlob &&
           !recordingState.initializing && (
-            <ActionIcon
-              color="red"
-              variant="filled"
-              radius="xl"
-              size="md"
-              onClick={startRecording}
-              title="Start Recording"
-            >
-              <IconMicrophone size={18} />
-            </ActionIcon>
+            <>
+              <Text size="sm" mr="xs">
+                Record your story
+              </Text>
+              <ActionIcon
+                color="red"
+                variant="filled"
+                radius="xl"
+                size="md"
+                onClick={startRecording}
+                title="Start Recording"
+              >
+                <IconMicrophone size={18} />
+              </ActionIcon>
+            </>
           )}
 
         {/* Recording in progress */}
@@ -215,7 +219,7 @@ export function AudioRecorder({
           </>
         )}
 
-        {/* Recording completed - Show review options */}
+        {/* Recording completed - Show review options with send button at the same level */}
         {!recordingState.isRecording && recordingState.audioBlob && (
           <>
             <ActionIcon
@@ -238,65 +242,65 @@ export function AudioRecorder({
               variant="filled"
               radius="xl"
               size="md"
-              onClick={resetRecording}
+              onClick={handleReset}
               title="Reset Recording"
             >
               <IconTrash size={18} />
+            </ActionIcon>
+
+            <ActionIcon
+              color="green"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={handleSend}
+              loading={isUploading}
+              disabled={isUploading}
+              title={`Send Recording (${privacy === "public" ? "Public" : "Private"})`}
+              style={{ position: "relative" }}
+            >
+              <IconSend size={18} />
+              {privacy === "private" && (
+                <IconLock
+                  size={10}
+                  style={{
+                    position: "absolute",
+                    bottom: "2px",
+                    right: "2px",
+                    background: "white",
+                    borderRadius: "50%",
+                    padding: "1px",
+                  }}
+                />
+              )}
             </ActionIcon>
           </>
         )}
       </Group>
 
-      {/* Show send options only after recording is complete */}
-      {!recordingState.isRecording && recordingState.audioBlob && (
-        <>
-          {/* More discrete privacy toggle */}
-          {!isPublic && (
-            <Group justify="center" gap="xs">
-              <Switch
-                size="xs"
-                label={
-                  <Group gap="xs">
-                    {privacy === "public" ? (
-                      <IconWorldUpload size={14} />
-                    ) : (
-                      <IconLock size={14} />
-                    )}
-                    <Text size="xs">
-                      {privacy === "public" ? "Public" : "Private"}
-                    </Text>
-                  </Group>
-                }
-                checked={privacy === "public"}
-                onChange={(event) =>
-                  setPrivacy(event.currentTarget.checked ? "public" : "private")
-                }
-              />
-            </Group>
-          )}
-
-          <Group justify="center" gap="xs">
-            <Button
-              variant="subtle"
-              size="xs"
-              onClick={handleCancel}
-              disabled={isUploading}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              size="xs"
-              onClick={handleSend}
-              loading={isUploading}
-              leftSection={
-                isUploading ? undefined : <IconWorldUpload size={14} />
-              }
-            >
-              Send
-            </Button>
-          </Group>
-        </>
+      {/* Show privacy toggle only after recording is complete */}
+      {!recordingState.isRecording && recordingState.audioBlob && !isPublic && (
+        <Group justify="center" gap="xs">
+          <Switch
+            size="xs"
+            label={
+              <Group gap="xs">
+                {privacy === "public" ? (
+                  <IconWorldUpload size={14} />
+                ) : (
+                  <IconLock size={14} />
+                )}
+                <Text size="xs">
+                  {privacy === "public" ? "Public" : "Private"}
+                </Text>
+              </Group>
+            }
+            checked={privacy === "public"}
+            onChange={(event) =>
+              setPrivacy(event.currentTarget.checked ? "public" : "private")
+            }
+          />
+        </Group>
       )}
     </Stack>
   );
