@@ -4,19 +4,20 @@
   - [ ] properly close the room.
   - [ ] Allow room creators to delete a room
   - [ ] Allow player to permanently leave a room
-  - [ ] Allow direct player invitations (pre-approved join)  
+  - [ ] Allow direct player invitations (pre-approved join)
 - [ ] audio player UI revamp
   - [ ] more obvious replay progress etc
   - [ ] more obvious that people can REPLY
   - [ ] CODEC issues? 44 MB for a few minutes is too much
-- [ ] add permission from ALL players to "move on". Otherwise can leave topic. 
+- [ ] add permission from ALL players to "move on". Otherwise can leave topic.
   - [ ] indicate if someone else is recording, to stop game master from moving on prematurely, and to give progress info
-  - [ ] revamp listener reactions for this  
-- [ ] auto-join after create and approved. Could show a Notification. 
+  - [ ] revamp listener reactions for this
+- [ ] auto-join after create and approved. Could show a Notification.
 
 * **BUG / INEFFICIENCIES**:
+
 - [ ] Transition / refresh: should look at implementation of listener reactions - this is "golden"
-  - Currently: finish sharing doesn't transit for first speaker 
+  - Currently: finish sharing doesn't transit for first speaker
   - Audio page often needs refreshing
 - [ ] start game in IRL mode still loads audio
 
@@ -43,8 +44,6 @@ Content
 - [ ] Add a language button (localized to player)
 
 - **Room management**
-
-
 
 - **Card history**
   - [x] Add card history

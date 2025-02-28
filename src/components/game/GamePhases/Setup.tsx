@@ -12,13 +12,17 @@ import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import { roomMembersService } from "@/services/supabase/roomMembers";
 
 export function Setup() {
-  const { cardState, getCardById, getCardsByIds } = useCardsInGame();
+  const {
+    cardState,
+    getCardById,
+    getCardsByIds,
+    dealCardsToPlayer,
+    completePlayerSetup,
+  } = useCardsInGame();
   const { currentMember } = useRoomMembers();
   const { room } = useRoom();
   const {
-    handleCardSelection,
     initiateSpeakingPhase,
-    dealCards,
     isSetupComplete,
     isCreator,
     currentMemberStatus,
@@ -33,7 +37,7 @@ export function Setup() {
     if (!currentMember?.id) return;
 
     setIsDealing(true);
-    await dealCards(currentMember.id);
+    await dealCardsToPlayer();
     setIsDealing(false);
   };
 
@@ -81,7 +85,7 @@ export function Setup() {
             cards={
               getCardsByIds(cardState.playerHands[currentMember!.id]) || []
             }
-            onSelect={handleCardSelection}
+            onSelect={completePlayerSetup}
           />
         );
 

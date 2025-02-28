@@ -14,6 +14,7 @@ import { Endgame } from "@/components/game/GamePhases/Endgame";
 import { SetupViewType, Room } from "@/core/game/types";
 import { ExchangeTab } from "@/components/game/ExchangeRequests/ExchangeTab";
 import { SpeakingRemote } from "@/components/game/GamePhases/SpeakingRemote";
+import { useAuth } from "@/context/AuthProvider";
 
 function renderGameContent(currentSetupView: SetupViewType, room: Room) {
   // always allow view of exchange tab
@@ -40,6 +41,7 @@ function renderGameContent(currentSetupView: SetupViewType, room: Room) {
 function RoomContent({ roomId }: { roomId: string }) {
   const router = useRouter();
   const { room, loading, error, leaveRoom } = useRoom();
+  const { user } = useAuth(); 
   const [currentSetupView, setCurrentSetupView] =
     useState<SetupViewType>("cards");
 
@@ -83,7 +85,7 @@ function RoomContent({ roomId }: { roomId: string }) {
 
   // Only render the full app shell once we have room data
   return (
-    <FullRoomProvider roomId={roomId}>
+    <FullRoomProvider roomId={roomId} userId={user.id}>
       <AppShell header={{ height: 60 }}>
         <AppShell.Header>
           <Header

@@ -102,9 +102,9 @@ export function Header({
           <Text size={isSmallScreen ? "xs" : "sm"} lh={1}>
             {isSmallScreen ? "" : "Say"}
           </Text>
-          {isSetupComplete && gamePhase === 'setup' && (
-            <IconCheck color="green" size={isSmallScreen ? 12 : 14}/>
-          )}          
+          {isSetupComplete && gamePhase === "setup" && (
+            <IconCheck color="green" size={isSmallScreen ? 12 : 14} />
+          )}
         </Group>
       ),
     },

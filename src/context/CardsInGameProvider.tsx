@@ -19,22 +19,17 @@ interface CardsInGameContextType {
   getCardsByIds: (cardIds: string[]) => Card[];
 
   // Operations
-  completePlayerSetup: (
-    playerId: string,
-    selectedCardId: string,
-  ) => Promise<void>;
+  completePlayerSetup: (selectedCardId: string) => Promise<void>;
 
   // Card dealing helper that includes fetching new cards
-  dealCardsToPlayer: (playerId: string) => Promise<Card[]>;
-
-  // utility functions
-  hasSelected: (playerId: string) => boolean;
+  dealCardsToPlayer: () => Promise<Card[]>;
 }
 
 const CardsInGameContext = createContext<CardsInGameContextType | null>(null);
 
 interface CardsInGameProviderProps {
   roomId: string;
+  userId: string;
   children: ReactNode;
 }
 
@@ -52,6 +47,7 @@ async function fetchCardsByIds(cardIds: string[]): Promise<Card[]> {
 
 export function CardsInGameProvider({
   roomId,
+  userId,
   children,
 }: CardsInGameProviderProps) {
   // Track the current state of cards in the room
@@ -111,14 +107,11 @@ export function CardsInGameProvider({
       .filter((card): card is Card => !!card);
 
   // Card operations
-  const completePlayerSetup = async (
-    playerId: string,
-    selectedCardId: string,
-  ) => {
+  const completePlayerSetup = async (selectedCardId: string) => {
     try {
       await cardsInRoomsService.completePlayerSetup(
         roomId,
-        playerId,
+        userId,
         selectedCardId,
       );
     } catch (error) {
@@ -127,11 +120,11 @@ export function CardsInGameProvider({
     }
   };
 
-  const dealCardsToPlayer = async (playerId: string): Promise<Card[]> => {
+  const dealCardsToPlayer = async (): Promise<Card[]> => {
     // Get both dealt cards and new state
     const { cardIds, newState } = await cardsInRoomsService.dealCardsToPlayer(
       roomId,
-      playerId,
+      userId,
     );
 
     // update the card dictionary to keep getCardsByIds fresh
@@ -141,20 +134,12 @@ export function CardsInGameProvider({
     return getCardsByIds(cardIds);
   };
 
-  const hasSelected = (playerId: string): boolean => {
-    return (
-      playerId in cardState.selectedCards &&
-      cardState.selectedCards[playerId] !== null
-    );
-  };
-
   const value = {
     cardState,
     getCardById,
     getCardsByIds,
     completePlayerSetup,
     dealCardsToPlayer,
-    hasSelected,
   };
 
   return (

@@ -14,7 +14,6 @@ import { RoomMembersProvider, useRoomMembers } from "./RoomMembersProvider";
 import { CardsInGameProvider, useCardsInGame } from "./CardsInGameProvider";
 import { ExchangesProvider } from "./ExchangesProvider";
 import type {
-  Card,
   CardState,
   Room,
   RoomSettings,
@@ -26,8 +25,6 @@ import { AudioMessagesProvider } from "./AudioMessagesProvider";
 interface FullRoomContextType {
   initiateSpeakingPhase: () => Promise<void>;
   finishSpeaking: () => Promise<void>;
-  handleCardSelection: (cardId: string) => Promise<void>;
-  dealCards: (playerId: string) => Promise<Card[]>; // renamed to handleDealCards
   startNextRound: (settings: Partial<RoomSettings>) => Promise<void>;
 
   // states
@@ -41,6 +38,7 @@ const FullRoomContext = createContext<FullRoomContextType | null>(null);
 
 interface FullRoomProviderProps {
   roomId: string;
+  userId: string;
   children: ReactNode;
 }
 
@@ -82,7 +80,13 @@ function allMembersHaveSelectedCards(
   );
 }
 
-function FullRoomProviderInner({ children }: { children: ReactNode }) {
+function FullRoomProviderInner({
+  userId,
+  children,
+}: {
+  userId: string;
+  children: ReactNode;
+}) {
   const {
     room,
     finishSpeaking: roomFinishSpeaking,
@@ -92,22 +96,16 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
 
   const { members, currentMember } = useRoomMembers();
 
-  const { cardState, dealCardsToPlayer, completePlayerSetup } =
-    useCardsInGame();
+  const { cardState } = useCardsInGame();
 
   // Destructure currentMember values for easier dependency management
-  const currentMemberId = currentMember?.id;
-  const isCreator = currentMemberId === room!.created_by;
+  const isCreator = userId === room!.created_by;
   const hasSpoken = currentMember?.has_spoken ?? false;
-  const isActiveSpeaker =
-    currentMemberId === room!.active_player_id && !hasSpoken;
-
-  // Destructure room to keep react hooks and lint happy
-  const roomPhase = room!.phase;
+  const isActiveSpeaker = userId === room!.active_player_id && !hasSpoken;
 
   const currentMemberStatus = useMemo(
-    () => derivePlayerStatus(currentMember?.id, cardState, room!),
-    [currentMember?.id, cardState, room],
+    () => derivePlayerStatus(userId, cardState, room!),
+    [cardState, room],
   );
 
   const isSetupComplete = useMemo(() => {
@@ -119,19 +117,6 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
     return allMembersHaveSelectedCards(members, cardState.selectedCards);
   }, [members, cardState.selectedCards, room?.game_mode]);
 
-  const completeSetup = useCallback(
-    async (cardId: string) => {
-      if (!currentMemberId || roomPhase !== "setup") return;
-      try {
-        await completePlayerSetup(currentMemberId, cardId);
-      } catch (error) {
-        console.error("Failed to complete setup:", error);
-        throw error;
-      }
-    },
-    [currentMemberId, roomPhase, completePlayerSetup],
-  );
-
   const initiateSpeakingPhase = useCallback(async () => {
     if (!isCreator) {
       console.warn("Only the room creator can start the speaking phase.");
@@ -139,78 +124,52 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
     }
     try {
       const isRemote = room?.game_mode === "remote";
-      await startSpeakingPhase(currentMemberId, isRemote);
+      await startSpeakingPhase(userId, isRemote);
     } catch (error) {
       console.error("Failed to initiate speaking phase:", error);
       throw error;
     }
-  }, [currentMemberId, isCreator, startSpeakingPhase, room?.game_mode]);
+  }, [isCreator, startSpeakingPhase, room?.game_mode]);
 
   const finishSpeaking = useCallback(async () => {
-    if (!currentMemberId) {
-      console.log(`Invalid finishSpeaking call: member ID ${currentMemberId}`);
-      return;
-    }
-
     try {
       if (room?.game_mode === "remote") {
         // In remote mode, this is called by the creator to end the reviewing phase
         // Skip active speaker check and go directly to endgame
-        await roomFinishSpeaking(currentMemberId, true); // Pass isRemote flag
+        await roomFinishSpeaking(userId, true); // Pass isRemote flag
       } else if (isActiveSpeaker) {
         // Normal IRL mode - requires active speaker check
-        await roomFinishSpeaking(currentMemberId);
+        await roomFinishSpeaking(userId);
       } else {
-        console.log(`User ${currentMemberId} is not the active speaker`);
+        console.log(`User ${userId} is not the active speaker`);
       }
     } catch (error) {
       console.error("Failed to finish speaking:", error);
       throw error;
     }
-  }, [currentMemberId, isActiveSpeaker, roomFinishSpeaking, room?.game_mode]);
-
-  const handleCardSelection = useCallback(
-    async (cardId: string) => {
-      if (!currentMemberId || roomPhase !== "setup") return;
-      await completeSetup(cardId);
-    },
-    [currentMemberId, roomPhase, completeSetup],
-  );
-
-  // Update the handleDealCards function to use new dealCardsToPlayer
-  const handleDealCards = useCallback(async () => {
-    try {
-      const dealtCards = await dealCardsToPlayer(currentMemberId!);
-      return dealtCards;
-    } catch (error) {
-      console.error("Failed to deal cards:", error);
-      throw error;
-    }
-  }, [dealCardsToPlayer, currentMemberId]);
+  }, [userId, isActiveSpeaker, roomFinishSpeaking, room?.game_mode]);
 
   // Generalized method to start next round (regular or encore)
   const startNextRound = useCallback(
     async (settings: Partial<RoomSettings>): Promise<void> => {
-      if (!currentMemberId || !isCreator) {
+      if (!isCreator) {
         console.warn("Only the room creator can start the next round.");
         return;
       }
 
       try {
-        await roomStartNextRound(currentMemberId, settings);
+        await roomStartNextRound(userId, settings);
       } catch (error) {
         console.error("Failed to start next round:", error);
         throw error;
       }
     },
-    [currentMemberId, isCreator, roomStartNextRound],
+    [userId, isCreator, roomStartNextRound],
   );
 
   const value = {
     initiateSpeakingPhase,
     finishSpeaking,
-    handleCardSelection,
-    dealCards: handleDealCards,
     startNextRound,
     isCreator,
     isSetupComplete,
@@ -225,14 +184,20 @@ function FullRoomProviderInner({ children }: { children: ReactNode }) {
   );
 }
 
-export function FullRoomProvider({ roomId, children }: FullRoomProviderProps) {
+export function FullRoomProvider({
+  roomId,
+  userId,
+  children,
+}: FullRoomProviderProps) {
   // get the room from RoomProvider and then subsequent contexts can just refer to the room state via useRoom()
   return (
-    <CardsInGameProvider roomId={roomId}>
+    <CardsInGameProvider roomId={roomId} userId={userId}>
       <RoomMembersProvider roomId={roomId}>
         <ExchangesProvider roomId={roomId}>
           <AudioMessagesProvider roomId={roomId}>
-            <FullRoomProviderInner>{children}</FullRoomProviderInner>
+            <FullRoomProviderInner userId={userId}>
+              {children}
+            </FullRoomProviderInner>
           </AudioMessagesProvider>
         </ExchangesProvider>
       </RoomMembersProvider>

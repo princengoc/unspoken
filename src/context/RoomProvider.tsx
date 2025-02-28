@@ -25,6 +25,7 @@ interface RoomContextType {
   loading: boolean;
   error: Error | null;
   leaveRoom: () => Promise<void>;
+  // leaveRoomPermanently: (newOwnerId?: string) => Promise<void>;
   updateRoom: (updates: Partial<Room>) => Promise<void>;
   finishSpeaking: (speakerId: string, isRemote?: boolean) => Promise<void>;
   startNextRound: (
