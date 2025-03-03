@@ -41,16 +41,19 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
 
   const initialMountRef = useRef(true);
   // Memoize the message id and file path to detect changes
-  const messageInfo = useMemo(() => ({
-    id: message.id,
-    filePath: message.file_path
-  }), [message.id, message.file_path]);  
+  const messageInfo = useMemo(
+    () => ({
+      id: message.id,
+      filePath: message.file_path,
+    }),
+    [message.id, message.file_path],
+  );
 
   // Load the audio URL
   useEffect(() => {
     // Track if the effect is still relevant
     let isMounted = true;
-    
+
     const loadAudio = async () => {
       try {
         // Only show loading indicator on initial load
@@ -58,7 +61,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
           setLoading(true);
           initialMountRef.current = false;
         }
-        
+
         setError(null);
 
         const result = await getAudioUrl(messageInfo.filePath);

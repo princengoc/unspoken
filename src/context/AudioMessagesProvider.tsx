@@ -154,35 +154,41 @@ export function AudioMessagesProvider({
     [userId, refreshMessages],
   );
 
-  const getAudioUrl = useCallback(async (filePath: string) => {
-    // Check if we have a valid cached URL
-    const cached = urlCache[filePath];
-    const now = Date.now();
-    
-    if (cached && cached.expiresAt > now) {
-      // If URL is still valid, return it
-      return { url: cached.url, expiresIn: Math.floor((cached.expiresAt - now) / 1000) };
-    }
+  const getAudioUrl = useCallback(
+    async (filePath: string) => {
+      // Check if we have a valid cached URL
+      const cached = urlCache[filePath];
+      const now = Date.now();
 
-    try {
-      // If not in cache or expired, fetch new URL
-      const result = await audioMessagesService.getAudioMessageUrl(filePath);
-      
-      if (result?.url) {
-        // Cache the URL with expiration time
-        const expiresAt = now + (result.expiresIn * 1000);
-        setUrlCache(prev => ({
-          ...prev,
-          [filePath]: { url: result.url, expiresAt }
-        }));
-        return result;
+      if (cached && cached.expiresAt > now) {
+        // If URL is still valid, return it
+        return {
+          url: cached.url,
+          expiresIn: Math.floor((cached.expiresAt - now) / 1000),
+        };
       }
-      return null;
-    } catch (err) {
-      console.error("Error getting audio URL:", err);
-      return null;
-    }
-  }, [urlCache]);
+
+      try {
+        // If not in cache or expired, fetch new URL
+        const result = await audioMessagesService.getAudioMessageUrl(filePath);
+
+        if (result?.url) {
+          // Cache the URL with expiration time
+          const expiresAt = now + result.expiresIn * 1000;
+          setUrlCache((prev) => ({
+            ...prev,
+            [filePath]: { url: result.url, expiresAt },
+          }));
+          return result;
+        }
+        return null;
+      } catch (err) {
+        console.error("Error getting audio URL:", err);
+        return null;
+      }
+    },
+    [urlCache],
+  );
 
   // memoize the value to prevent unnecessary re-renders
   const value = useMemo(() => {
@@ -206,7 +212,7 @@ export function AudioMessagesProvider({
     markAsListened,
     refreshMessages,
     setRecording,
-    getAudioUrl
+    getAudioUrl,
   ]);
 
   return (
