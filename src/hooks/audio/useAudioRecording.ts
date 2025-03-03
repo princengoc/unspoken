@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { RecordingState } from "@/core/audio/types";
 import RecordRTC from "recordrtc";
