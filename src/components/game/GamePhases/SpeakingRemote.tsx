@@ -8,12 +8,16 @@ import {
   Title, 
   Tabs, 
   Group, 
-  ScrollArea, 
-  Box
+  Box,
+  Badge,
+  ActionIcon,
+  Divider
 } from "@mantine/core";
 import { 
   IconMessage, 
-  IconUser 
+  IconUser,
+  IconMicrophone,
+  IconPlayerStop
 } from "@tabler/icons-react";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
@@ -21,9 +25,8 @@ import { useRoom } from "@/context/RoomProvider";
 import { PlayerAvatar } from "../PlayerAvatar";
 import { getPlayerAssignments } from "../statusBarUtils";
 import { useAudioMessages } from "@/context/AudioMessagesProvider";
-import { AudioPlayer } from "@/components/AudioMessage/AudioPlayer";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
-import { MiniCard } from "../CardDeck/MiniCard";
+import { ConversationThread } from "./ConversationThread";
 
 type SpeakingRemoteProp = {
   roomId: string;
@@ -95,7 +98,6 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
     
     // Check if there are unread messages for this card
     const cardMessages = messagesByCard.get(cardId) || [];
-    console.log(`messages by card: ${JSON.stringify(messagesByCard)}`);
     const hasUnreadMessages = cardMessages.some(msg => msg.sender_id !== currentMember?.id);
 
     return {
@@ -109,7 +111,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   }).filter(Boolean);
 
   // Render the conversation interface for the active tab
-  const renderConversation = () => {
+  const renderActiveCardContent = () => {
     if (!activeTab) return null;
     
     const playerId = cardPlayerMap[activeTab];
@@ -119,117 +121,79 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
     if (!card || !player) return null;
 
     const isCurrentUserCard = playerId === currentMember?.id;
-    const playerAssignment = playerAssignments.get(playerId);
     const cardMessages = messagesByCard.get(activeTab) || [];
     
-    // Sort messages by creation time
-    const sortedMessages = [...cardMessages].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-
     return (
-      <Stack gap="md">
-        {/* Card Display */}
-        <Paper p="md" withBorder shadow="sm">
-          <Group justify="space-between">
-            <Group>
-              {playerAssignment && (
-                <PlayerAvatar
-                  assignment={playerAssignment}
-                  size="md"
-                  highlighted={isCurrentUserCard}
-                />
-              )}
-              <Text fw={500}>{player.username}'s card</Text>
-            </Group>
-            <MiniCard
-              card={card}
-              size="sm"
-              isHighlighted={isCurrentUserCard}
-            />
+      <Stack gap="sm">
+        {/* Card Preview */}
+        <Paper p="md" withBorder shadow="sm" radius="md">
+          <Group justify="space-between" wrap="nowrap">
+          <Text fw={600} size="md" style={{ flex: 1 }}>
+            "{card.content}"
+            {isCurrentUserCard && (
+              <Badge component="span" size="xs" color="blue" ml="xs">
+                Your card
+              </Badge>
+            )}
+          </Text>
+
+            
+            <ActionIcon 
+              variant="light" 
+              color="blue" 
+              onClick={() => !isRecording && handleRecordToggle(activeTab)}
+              disabled={recording}
+              radius="xl"
+              size="lg"
+            >
+              <IconMicrophone size={18} />
+            </ActionIcon>
           </Group>
+          
+          {/* Recording Interface */}
+          {isRecording && (
+            <>
+              <Divider my="md" />
+              <AudioRecorder
+                isPublic={true}
+                targetPlayerId={playerId}
+                cardId={targetCardId}
+                onComplete={handleRecordComplete}
+              />
+            </>
+          )}
         </Paper>
 
-        {/* Conversation Thread */}
-        <Paper p="md" withBorder shadow="sm">
-          <Stack gap="md">
-            <Text fw={500}>Conversation</Text>
-            
-            <ScrollArea h={400} offsetScrollbars>
-              <Stack gap="md">
-                {sortedMessages.length === 0 ? (
-                  <Text c="dimmed" ta="center" py="xl">
-                    No messages yet. Be the first to respond!
-                  </Text>
-                ) : (
-                  sortedMessages.map((message) => {
-                    const sender = members.find(m => m.id === message.sender_id);
-                    const isSelf = message.sender_id === currentMember?.id;
-                    const senderAssignment = playerAssignments.get(message.sender_id);
-                    
-                    return (
-                      <Box 
-                        key={message.id}
-                        style={{ 
-                          alignSelf: isSelf ? 'flex-end' : 'flex-start',
-                          maxWidth: '80%'
-                        }}
-                      >
-                        <Stack gap="xs">
-                          <Group gap="xs">
-                            {!isSelf && senderAssignment && (
-                              <PlayerAvatar
-                                assignment={senderAssignment}
-                                size="sm"
-                              />
-                            )}
-                            <Text size="sm" c="dimmed">
-                              {isSelf ? "You" : sender?.username || "Unknown"}
-                            </Text>
-                          </Group>
-                          <AudioPlayer key={message.id} message={message} />
-                        </Stack>
-                      </Box>
-                    );
-                  })
-                )}
-              </Stack>
-            </ScrollArea>
-            
-            {/* Audio Recorder */}
-            {!isRecording ? (
-              <Button 
-                onClick={() => handleRecordToggle(activeTab)}
-                disabled={recording}
-                leftSection={<IconMessage size={16} />}
-              >
-                Record Response
-              </Button>
-            ) : (
-              <Paper p="md" withBorder radius="md" shadow="sm">
-                <AudioRecorder
-                  isPublic={true}
-                  targetPlayerId={playerId}
-                  cardId={targetCardId}
-                  onComplete={handleRecordComplete}
-                />
-              </Paper>
-            )}
-          </Stack>
-        </Paper>
+        {/* Conversation Thread as a separate component */}
+        <ConversationThread 
+          cardId={activeTab}
+          playerId={playerId}
+          messages={cardMessages}
+          members={members}
+          currentMemberId={currentMember?.id || ''}
+          playerAssignments={playerAssignments}
+          player={player}
+        />
       </Stack>
     );
   };
 
   return (
     <Stack gap="md">
-      <Title order={3} ta="center">
-        Conversations
-      </Title>
-      <Text ta="center" c="dimmed">
-        Review and respond to each player's card.
-      </Text>
-
+      <Group justify="space-between" align="center">
+        <Title order={4}>Conversations</Title>
+        {isCreator && (
+          <Button 
+            size="sm" 
+            onClick={handleEndReviewingPhase} 
+            variant="outline"
+            rightSection={<IconPlayerStop size={16} />}
+          >
+            End Phase
+          </Button>
+        )}
+      </Group>
+      
       {audioLoading ? (
         <Text ta="center" c="dimmed">Loading conversations...</Text>
       ) : (
@@ -237,8 +201,9 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
           value={activeTab} 
           onChange={setActiveTab}
           keepMounted={false}
+          variant="pills"
         >
-          <Tabs.List grow>
+          <Tabs.List>
             {tabItems.map((item) => (
               <Tabs.Tab 
                 key={item.value} 
@@ -263,16 +228,10 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
             ))}
           </Tabs.List>
 
-          <Box p="md">
-            {renderConversation()}
+          <Box pt="md">
+            {renderActiveCardContent()}
           </Box>
         </Tabs>
-      )}
-
-      {isCreator && (
-        <Stack align="center" mt="md">
-          <Button onClick={handleEndReviewingPhase}>End Reviewing Phase</Button>
-        </Stack>
       )}
     </Stack>
   );
