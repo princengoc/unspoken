@@ -1,5 +1,5 @@
 // src/components/AudioMessage/AudioRecorder.tsx
-
+"use client";
 import React, { useState, useRef } from "react";
 import { Text, Group, ActionIcon, Stack, Alert } from "@mantine/core";
 import {

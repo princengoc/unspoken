@@ -1,3 +1,4 @@
+"use client";
 import { useState, useCallback } from "react";
 import { Stack, Text, Group, Button, Paper, Box } from "@mantine/core";
 import { IconCheck, IconHourglass } from "@tabler/icons-react";
