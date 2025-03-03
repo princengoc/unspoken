@@ -33,6 +33,11 @@ interface AudioMessagesContextType {
   setRecording: (isRecording: boolean) => void;
 }
 
+type AudioUrlCache = {
+  url: string;
+  expiresAt: number; // Timestamp when URL expires
+};
+
 const AudioMessagesContext = createContext<AudioMessagesContextType | null>(
   null,
 );
@@ -51,6 +56,7 @@ export function AudioMessagesProvider({
   const [messages, setMessages] = useState<AudioMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
+  const [urlCache, setUrlCache] = useState<Record<string, AudioUrlCache>>({});
 
   // Group messages by card ID
   const messagesByCard = useMemo(() => {
@@ -148,12 +154,38 @@ export function AudioMessagesProvider({
     [userId, refreshMessages],
   );
 
+  const getAudioUrl = useCallback(async (filePath: string) => {
+    // Check if we have a valid cached URL
+    const cached = urlCache[filePath];
+    const now = Date.now();
+    
+    if (cached && cached.expiresAt > now) {
+      // If URL is still valid, return it
+      return { url: cached.url, expiresIn: Math.floor((cached.expiresAt - now) / 1000) };
+    }
+
+    try {
+      // If not in cache or expired, fetch new URL
+      const result = await audioMessagesService.getAudioMessageUrl(filePath);
+      
+      if (result?.url) {
+        // Cache the URL with expiration time
+        const expiresAt = now + (result.expiresIn * 1000);
+        setUrlCache(prev => ({
+          ...prev,
+          [filePath]: { url: result.url, expiresAt }
+        }));
+        return result;
+      }
+      return null;
+    } catch (err) {
+      console.error("Error getting audio URL:", err);
+      return null;
+    }
+  }, [urlCache]);
+
   // memoize the value to prevent unnecessary re-renders
   const value = useMemo(() => {
-    const getAudioUrl = async (filePath: string) => {
-      return audioMessagesService.getAudioMessageUrl(filePath);
-    };
-
     return {
       messages,
       messagesByCard,
@@ -174,6 +206,7 @@ export function AudioMessagesProvider({
     markAsListened,
     refreshMessages,
     setRecording,
+    getAudioUrl
   ]);
 
   return (

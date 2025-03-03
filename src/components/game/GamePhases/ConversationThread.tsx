@@ -1,5 +1,5 @@
 // src/components/game/GamePhases/ConversationThread.tsx
-import React from "react";
+import React, { memo, useMemo } from "react";
 import {
   Stack,
   Text,
@@ -25,6 +25,47 @@ type ConversationThreadProps = {
   player: Player;
 };
 
+// Create a memoized message component to prevent unnecessary re-renders
+const MessageItem = memo(({ 
+  message,
+  sender,
+  isSelf,
+  senderAssignment,
+  currentMemberId
+}: { 
+  message: any; 
+  sender?: Player;
+  isSelf: boolean;
+  senderAssignment?: PlayerAssignment;
+  currentMemberId: string;
+}) => (
+  <Box
+    key={message.id}
+    style={{
+      alignSelf: isSelf ? "flex-end" : "flex-start",
+      maxWidth: "85%",
+    }}
+  >
+    <Paper
+      p="xs"
+      radius="md"
+      bg={isSelf ? "blue.0" : "gray.0"}
+      withBorder
+    >
+      <Group gap="xs" mb="xs" wrap="nowrap" align="center">
+        {senderAssignment && (
+          <PlayerAvatar assignment={senderAssignment} size="xs" />
+        )}
+        <Text size="xs" c="dimmed">
+          {isSelf ? "You" : sender?.username || "Unknown"}
+        </Text>
+      </Group>
+      <AudioPlayer key={message.id} message={message} />
+    </Paper>
+  </Box>
+));
+
+
 export function ConversationThread({
   messages,
   members,
@@ -32,10 +73,12 @@ export function ConversationThread({
   playerAssignments,
   player,
 }: ConversationThreadProps) {
-  // Sort messages by creation time
-  const sortedMessages = [...messages].sort(
-    (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  // Sort messages by creation time - moved to useMemo for performance
+  const sortedMessages = useMemo(() => 
+    [...messages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    ), 
+    [messages]
   );
 
   return (
@@ -66,30 +109,14 @@ export function ConversationThread({
               const senderAssignment = playerAssignments.get(message.sender_id);
 
               return (
-                <Box
+                <MessageItem
                   key={message.id}
-                  style={{
-                    alignSelf: isSelf ? "flex-end" : "flex-start",
-                    maxWidth: "85%",
-                  }}
-                >
-                  <Paper
-                    p="xs"
-                    radius="md"
-                    bg={isSelf ? "blue.0" : "gray.0"}
-                    withBorder
-                  >
-                    <Group gap="xs" mb="xs" wrap="nowrap" align="center">
-                      {senderAssignment && (
-                        <PlayerAvatar assignment={senderAssignment} size="xs" />
-                      )}
-                      <Text size="xs" c="dimmed">
-                        {isSelf ? "You" : sender?.username || "Unknown"}
-                      </Text>
-                    </Group>
-                    <AudioPlayer key={message.id} message={message} />
-                  </Paper>
-                </Box>
+                  message={message}
+                  sender={sender}
+                  isSelf={isSelf}
+                  senderAssignment={senderAssignment}
+                  currentMemberId={currentMemberId}
+                />
               );
             })
           )}

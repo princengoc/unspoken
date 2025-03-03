@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Card,
   Text,
@@ -39,40 +39,55 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
+  const initialMountRef = useRef(true);
+  // Memoize the message id and file path to detect changes
+  const messageInfo = useMemo(() => ({
+    id: message.id,
+    filePath: message.file_path
+  }), [message.id, message.file_path]);  
+
   // Load the audio URL
   useEffect(() => {
+    // Track if the effect is still relevant
+    let isMounted = true;
+    
     const loadAudio = async () => {
       try {
-        setLoading(true);
+        // Only show loading indicator on initial load
+        if (initialMountRef.current) {
+          setLoading(true);
+          initialMountRef.current = false;
+        }
+        
         setError(null);
 
-        const result = await getAudioUrl(message.file_path);
+        const result = await getAudioUrl(messageInfo.filePath);
 
-        if (result && result.url) {
+        if (result && result.url && isMounted) {
           setAudioUrl(result.url);
-        } else {
+        } else if (isMounted) {
           setError("Failed to load audio message.");
         }
       } catch (err) {
         console.error("Error loading audio message:", err);
-        setError("An error occurred while loading the audio message.");
+        if (isMounted) {
+          setError("An error occurred while loading the audio message.");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadAudio();
 
-    // Clean up on unmount
+    // Cleanup function
     return () => {
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
-      }
-      if (countdownInterval.current) {
-        clearInterval(countdownInterval.current);
-      }
+      isMounted = false;
+      // Existing cleanup code...
     };
-  }, [message.id, message.file_path, getAudioUrl]);
+  }, [messageInfo, getAudioUrl]); // Only re-run if message ID or file path changes
 
   const resetCountdown = () => {
     if (countdownInterval.current) {

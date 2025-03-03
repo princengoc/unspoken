@@ -1,5 +1,5 @@
 // src/components/game/GamePhases/SpeakingRemote.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Stack,
   Button,
@@ -49,13 +49,51 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   const playerAssignments = getPlayerAssignments(members, roomId);
 
   // Create a simple mapping of cards to players for easy lookup
-  const cardPlayerMap = Object.entries(cardState.selectedCards).reduce(
-    (map, [playerId, cardId]) => {
-      map[cardId] = playerId;
-      return map;
-    },
-    {} as Record<string, string>,
+  const cardPlayerMap = useMemo(
+    () => Object.entries(cardState.selectedCards).reduce(
+      (map, [playerId, cardId]) => {
+        map[cardId] = playerId;
+        return map;
+      },
+      {} as Record<string, string>
+    ),
+    [cardState.selectedCards]
+  );  
+
+  // Create tab items from all cards
+  const tabItems = useMemo(() => 
+    Object.entries(cardState.selectedCards)
+      .map(([playerId, cardId]) => {
+        const player = members.find((m) => m.id === playerId);
+        const card = getCardById(cardId);
+        if (!card) return null;
+
+        const playerAssignment = playerAssignments.get(playerId);
+        const isCurrentUser = playerId === currentMember?.id;
+
+        // Check if there are unread messages for this card
+        const cardMessages = messagesByCard.get(cardId) || [];
+        const hasUnreadMessages = cardMessages.some(
+          (msg) => msg.sender_id !== currentMember?.id,
+        );
+
+        return {
+          value: cardId,
+          label: player?.username || "Unknown Player",
+          playerAssignment,
+          isCurrentUser,
+          hasUnreadMessages,
+          card,
+        };
+      })
+      .filter(Boolean), 
+    [cardState.selectedCards, members, getCardById, playerAssignments, messagesByCard, currentMember?.id]
   );
+
+  const activeCardMessages = useMemo(() => 
+    activeTab ? (messagesByCard.get(activeTab) || []) : [],
+    [activeTab, messagesByCard]
+  );    
 
   // Set first tab as active by default
   useEffect(() => {
@@ -83,44 +121,17 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
     }
   };
 
-  const handleRecordToggle = (cardId: string) => {
+  const handleRecordToggle = useCallback((cardId: string) => {
     setTargetCardId(cardId);
     setIsRecording(true);
     setRecording(true);
-  };
+  }, [setRecording]);
 
   const handleRecordComplete = () => {
     setIsRecording(false);
     setRecording(false);
     setTargetCardId(null);
   };
-
-  // Create tab items from all cards
-  const tabItems = Object.entries(cardState.selectedCards)
-    .map(([playerId, cardId]) => {
-      const player = members.find((m) => m.id === playerId);
-      const card = getCardById(cardId);
-      if (!card) return null;
-
-      const playerAssignment = playerAssignments.get(playerId);
-      const isCurrentUser = playerId === currentMember?.id;
-
-      // Check if there are unread messages for this card
-      const cardMessages = messagesByCard.get(cardId) || [];
-      const hasUnreadMessages = cardMessages.some(
-        (msg) => msg.sender_id !== currentMember?.id,
-      );
-
-      return {
-        value: cardId,
-        label: player?.username || "Unknown Player",
-        playerAssignment,
-        isCurrentUser,
-        hasUnreadMessages,
-        card,
-      };
-    })
-    .filter(Boolean);
 
   // Render the conversation interface for the active tab
   const renderActiveCardContent = () => {
@@ -133,7 +144,6 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
     if (!card || !player) return null;
 
     const isCurrentUserCard = playerId === currentMember?.id;
-    const cardMessages = messagesByCard.get(activeTab) || [];
 
     return (
       <Stack gap="sm">
@@ -179,7 +189,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
         <ConversationThread
           cardId={activeTab}
           playerId={playerId}
-          messages={cardMessages}
+          messages={activeCardMessages}
           members={members}
           currentMemberId={currentMember?.id || ""}
           playerAssignments={playerAssignments}
