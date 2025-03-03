@@ -126,9 +126,6 @@ export function AudioRecorder({
 
     // Reset the recording state in context
     setRecording(false);
-
-    // Call onComplete to notify parent component
-    onComplete?.();
   };
 
   // Compact layout for reactions bar

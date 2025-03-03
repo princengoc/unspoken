@@ -307,7 +307,7 @@ export function Endgame({ roomId }: EndgameProp) {
               color="gray"
               onClick={() => (window.location.href = "/")}
             >
-              Exit Game
+              Go to Lobby
             </Button>
           </Group>
         </Stack>

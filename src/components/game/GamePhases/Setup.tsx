@@ -94,7 +94,9 @@ export function Setup() {
                 </Text>
                 <GameCard card={selectedCard} />
                 <Text size="md">
-                  In your turn, share a story inspired by this card
+                  {isRemoteMode
+                    ? "This game is in Remote Play. Record your story inspired by this card as a voicemail to share below."
+                    : "In your turn, share a story inspired by this card"}
                 </Text>
 
                 {isRemoteMode && (

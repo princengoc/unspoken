@@ -13,7 +13,11 @@ import {
   ActionIcon,
   Divider,
 } from "@mantine/core";
-import { IconUser, IconMicrophone, IconPlayerStop } from "@tabler/icons-react";
+import {
+  IconUser,
+  IconMicrophone,
+  IconArrowBarRight,
+} from "@tabler/icons-react";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
 import { useRoom } from "@/context/RoomProvider";
@@ -206,7 +210,6 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
           members={members}
           currentMemberId={currentMember?.id || ""}
           playerAssignments={playerAssignments}
-          player={player}
         />
       </Stack>
     );
@@ -221,9 +224,9 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
             size="sm"
             onClick={handleEndReviewingPhase}
             variant="outline"
-            rightSection={<IconPlayerStop size={16} />}
+            rightSection={<IconArrowBarRight size={16} />}
           >
-            End Phase
+            End Conversations
           </Button>
         )}
       </Group>

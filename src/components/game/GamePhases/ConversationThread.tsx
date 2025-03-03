@@ -9,20 +9,21 @@ import {
   ScrollArea,
   Flex,
 } from "@mantine/core";
+import { formatRelativeTime } from "@/core/game/utils";
 import { IconMessage } from "@tabler/icons-react";
 import { PlayerAvatar } from "../PlayerAvatar";
 import { AudioPlayer } from "@/components/AudioMessage/AudioPlayer";
 import { Player } from "@/core/game/types";
 import { PlayerAssignment } from "../statusBarUtils";
+import { AudioMessage } from "@/core/audio/types";
 
 type ConversationThreadProps = {
   cardId: string;
   playerId: string;
-  messages: any[]; // Replace with actual message type
+  messages: AudioMessage[]; // Replace with actual message type
   members: Player[];
   currentMemberId: string;
   playerAssignments: Map<string, PlayerAssignment>;
-  player: Player;
 };
 
 // Create a memoized message component to prevent unnecessary re-renders
@@ -32,7 +33,7 @@ const MessageItem = memo(function MessageItem({
   isSelf,
   senderAssignment,
 }: {
-  message: any;
+  message: AudioMessage;
   sender?: Player;
   isSelf: boolean;
   senderAssignment?: PlayerAssignment;
@@ -65,7 +66,6 @@ export function ConversationThread({
   members,
   currentMemberId,
   playerAssignments,
-  player,
 }: ConversationThreadProps) {
   // Sort messages by creation time - moved to useMemo for performance
   const sortedMessages = useMemo(
@@ -77,6 +77,13 @@ export function ConversationThread({
     [messages],
   );
 
+  const lastMessageTime = useMemo(() => {
+    if (sortedMessages.length === 0) return null;
+    return formatRelativeTime(
+      new Date(sortedMessages[sortedMessages.length - 1].created_at),
+    );
+  }, [sortedMessages]);
+
   return (
     <Paper p="md" withBorder shadow="sm" radius="md">
       <Group justify="space-between" mb="xs">
@@ -84,8 +91,8 @@ export function ConversationThread({
           Conversation
         </Text>
         <Text size="xs" c="dimmed">
-          {sortedMessages.length} messages •{" "}
-          {player.has_spoken ? "Has spoken" : "Not spoken yet"}
+          {sortedMessages.length} new •{" since "}
+          {lastMessageTime ? lastMessageTime : ""}
         </Text>
       </Group>
 

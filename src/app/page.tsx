@@ -26,7 +26,6 @@ import {
   IconCheck,
   IconCopy,
   IconRefresh,
-  IconUser,
   IconUsers,
   IconCrown,
 } from "@tabler/icons-react";
@@ -45,6 +44,7 @@ import {
 } from "@/core/game/types";
 import { roomsService } from "@/services/supabase/rooms";
 import { UnspokenGameTitle } from "@/core/game/unspokenIcon";
+import { formatRelativeTime } from "@/core/game/utils";
 
 // Extended room interface to track UI states
 interface RoomWithStatus extends RoomMetaDataAndState {
@@ -76,7 +76,7 @@ export default function Home() {
   const [cardDepthFilter, setCardDepthFilter] = useState<string | null>(null);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
-  const [isRemote, setIsRemote] = useState(false);
+  const [isRemote, setIsRemote] = useState(true);
 
   const {
     findRoomByPasscode,
@@ -337,26 +337,6 @@ export default function Home() {
     return undefined; // if pendingRoomIds.length === 0
   }, [rooms, checkJoinStatus]);
 
-  // Format relative time
-  const formatRelativeTime = (date: Date) => {
-    const now = new Date();
-    const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60),
-    );
-
-    if (diffInMinutes < 5) {
-      return "just now";
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInMinutes < 24 * 60) {
-      const hours = Math.floor(diffInMinutes / 60);
-      return `${hours}h ago`;
-    } else {
-      const days = Math.floor(diffInMinutes / (60 * 24));
-      return `${days}d ago`;
-    }
-  };
-
   // Return appropriate badge based on room phase
   const getRoomPhaseIcon = (phase: GamePhase) => {
     switch (phase) {
@@ -414,12 +394,7 @@ export default function Home() {
         <Stack gap="xs" ta="center" align="center">
           <UnspokenGameTitle />
           <Text size="lg" c="gray.6" fw={500}>
-            Stories waiting to be told
-          </Text>
-          <Text size="sm" c="gray.7" maw={500}>
-            A card game designed to spark meaningful conversations. Because the
-            best talks don&apos;t just happen, they start with the right
-            question.
+            A game of cards, a journey of words.
           </Text>
         </Stack>
 
@@ -702,11 +677,20 @@ export default function Home() {
                 </Table>
               )}
 
+              {rooms.length === 0 &&
+                !isAddingRoom &&
+                !isJoiningRoom &&
+                !roomAPILoading && (
+                  <Text ta="center" c="dimmed" py="md">
+                    Create or Join a room to get started.
+                  </Text>
+                )}
+
               {/* Table actions */}
-              <Group mt="md" gap="xs">
+              <Group mt="md" gap="xs" justify="center">
                 {!isAddingRoom && (
                   <Button
-                    leftSection={<IconUser size={16} />}
+                    leftSection={<IconCrown size={16} />}
                     onClick={() => {
                       setIsAddingRoom(true);
                       setIsJoiningRoom(false);
@@ -731,15 +715,6 @@ export default function Home() {
                   </Button>
                 )}
               </Group>
-
-              {rooms.length === 0 &&
-                !isAddingRoom &&
-                !isJoiningRoom &&
-                !roomAPILoading && (
-                  <Text ta="center" c="dimmed" py="md">
-                    No active rooms. Create or join a room to get started.
-                  </Text>
-                )}
             </Card>
           </>
         )}
