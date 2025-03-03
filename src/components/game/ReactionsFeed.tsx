@@ -1,10 +1,18 @@
 // src/components/game/ReactionsFeed.tsx
-import { Group, Avatar, Tooltip, useMantineTheme, Box, Badge, Text } from "@mantine/core";
+import {
+  Group,
+  Avatar,
+  Tooltip,
+  useMantineTheme,
+  Box,
+  Badge,
+  Text,
+} from "@mantine/core";
 import {
   IconHeart,
   IconRipple,
   IconRecordMail,
-  IconMessages
+  IconMessages,
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { useReactions } from "@/context/ReactionsProvider";
@@ -18,28 +26,27 @@ interface ReactionsFeedProps {
 /**
  * ReactionsFeed shows incoming reactions directed at the current user's card
  */
-export function ReactionsFeed({
-  playerAssignments,
-}: ReactionsFeedProps) {
+export function ReactionsFeed({ playerAssignments }: ReactionsFeedProps) {
   const theme = useMantineTheme();
-  
+
   // Use the centralized reactions provider
-  const { 
-    incomingReactions,
-    loading,
-  } = useReactions();
+  const { incomingReactions, loading } = useReactions();
 
   // Filter reactions relevant to this card and user
   const cardReactions = incomingReactions;
-  
+
   // Group reactions by type
-  const resonatesReactions = cardReactions.filter(r => r.type === "resonates");
-  const rippleReactions = cardReactions.filter(r => r.rippleMarked);
-  
+  const resonatesReactions = cardReactions.filter(
+    (r) => r.type === "resonates",
+  );
+  const rippleReactions = cardReactions.filter((r) => r.rippleMarked);
+
   // Special indicators
-  const recordingReactions = cardReactions.filter(r => r.type === "metoo");
-  const responseRequestReactions = cardReactions.filter(r => r.type === "tellmemore");
-  
+  const recordingReactions = cardReactions.filter((r) => r.type === "metoo");
+  const responseRequestReactions = cardReactions.filter(
+    (r) => r.type === "tellmemore",
+  );
+
   const someoneIsRecording = recordingReactions.length > 0;
   const someoneWantsResponse = responseRequestReactions.length > 0;
 
@@ -50,7 +57,11 @@ export function ReactionsFeed({
 
   // Show loading state
   if (loading && cardReactions.length === 0) {
-    return <Text size="xs" c="dimmed">Loading reactions...</Text>;
+    return (
+      <Text size="xs" c="dimmed">
+        Loading reactions...
+      </Text>
+    );
   }
 
   return (
@@ -60,23 +71,26 @@ export function ReactionsFeed({
         {/* Recording indicator */}
         {someoneIsRecording && (
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.05, 1],
-              opacity: [0.9, 1, 0.9] 
+              opacity: [0.9, 1, 0.9],
             }}
-            transition={{ 
+            transition={{
               duration: 1.5,
               repeat: Infinity,
-              repeatType: "loop"
+              repeatType: "loop",
             }}
           >
-            <Tooltip label={recordingReactions.length === 1 
-                ? "Someone is recording a response for you"
-                : `${recordingReactions.length} people are recording for you`
-            }>
-              <Badge 
-                color="blue" 
-                size="md" 
+            <Tooltip
+              label={
+                recordingReactions.length === 1
+                  ? "Someone is recording a response for you"
+                  : `${recordingReactions.length} people are recording for you`
+              }
+            >
+              <Badge
+                color="blue"
+                size="md"
                 radius="sm"
                 leftSection={<IconRecordMail size={14} />}
               >
@@ -88,17 +102,22 @@ export function ReactionsFeed({
 
         {/* Response request indicator */}
         {someoneWantsResponse && (
-          <Tooltip label={responseRequestReactions.length === 1 
-              ? "Someone wants a response from you"
-              : `${responseRequestReactions.length} people want a response from you`
-          }>
-            <Badge 
-              color="orange" 
-              size="md" 
+          <Tooltip
+            label={
+              responseRequestReactions.length === 1
+                ? "Someone wants a response from you"
+                : `${responseRequestReactions.length} people want a response from you`
+            }
+          >
+            <Badge
+              color="orange"
+              size="md"
               radius="sm"
               leftSection={<IconMessages size={14} />}
             >
-              {responseRequestReactions.length > 1 ? responseRequestReactions.length : ""}
+              {responseRequestReactions.length > 1
+                ? responseRequestReactions.length
+                : ""}
             </Badge>
           </Tooltip>
         )}
@@ -111,11 +130,11 @@ export function ReactionsFeed({
           <Group gap="xs" justify="center">
             <IconHeart color={theme.colors.pink[6]} size={16} />
             {resonatesReactions.slice(0, 3).map((reaction, index) => (
-              <Box 
+              <Box
                 key={reaction.id}
-                style={{ 
+                style={{
                   marginLeft: index > 0 ? -8 : 0,
-                  position: "relative" 
+                  position: "relative",
                 }}
               >
                 <PlayerAvatar
@@ -142,17 +161,17 @@ export function ReactionsFeed({
             )}
           </Group>
         )}
-        
+
         {/* Display ripple reactions */}
         {rippleReactions.length > 0 && (
           <Group gap="xs" justify="center">
             <IconRipple color={theme.colors.violet[6]} size={16} />
             {rippleReactions.slice(0, 3).map((reaction, index) => (
-              <Box 
+              <Box
                 key={reaction.id}
-                style={{ 
+                style={{
                   marginLeft: index > 0 ? -8 : 0,
-                  position: "relative" 
+                  position: "relative",
                 }}
               >
                 <PlayerAvatar

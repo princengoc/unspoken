@@ -14,7 +14,7 @@ import { audioMessagesService } from "@/services/supabase/audio-messages";
 interface AudioMessagesContextType {
   // State
   messages: AudioMessage[];
-  messagesByCard: Map<string, AudioMessage[]>;   // New organization by card_id
+  messagesByCard: Map<string, AudioMessage[]>; // New organization by card_id
   loading: boolean;
   recording: boolean;
 
@@ -23,7 +23,7 @@ interface AudioMessagesContextType {
     audioBlob: Blob,
     privacy: AudioPrivacy,
     targetPlayerId?: string,
-    cardId?: string
+    cardId?: string,
   ) => Promise<AudioMessage | null>;
   markAsListened: (messageId: string) => Promise<boolean>;
   getAudioUrl: (
@@ -59,7 +59,7 @@ export function AudioMessagesProvider({
     messages.forEach((message) => {
       // Ensure all messages have a card_id
       const cardId = message.card_id;
-      
+
       if (cardId) {
         if (!grouped.has(cardId)) {
           grouped.set(cardId, []);
@@ -90,10 +90,10 @@ export function AudioMessagesProvider({
 
   const sendAudioMessage = useCallback(
     async (
-      audioBlob: Blob, 
-      privacy: AudioPrivacy, 
+      audioBlob: Blob,
+      privacy: AudioPrivacy,
       targetPlayerId?: string,
-      cardId?: string
+      cardId?: string,
     ) => {
       try {
         return await audioMessagesService.uploadAudioMessage(
@@ -102,7 +102,7 @@ export function AudioMessagesProvider({
           audioBlob,
           privacy,
           targetPlayerId,
-          cardId
+          cardId,
         );
       } catch (error) {
         console.error("Error sending audio message:", error);

@@ -44,7 +44,7 @@ export function AudioRecorder({
 
   // All reactions are private by default
   const privacy: AudioPrivacy = isPublic ? "public" : "private";
-  
+
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -71,7 +71,7 @@ export function AudioRecorder({
         recordingState.audioBlob,
         privacy,
         targetPlayerId,
-        cardId
+        cardId,
       );
 
       if (result) {
@@ -126,7 +126,7 @@ export function AudioRecorder({
 
     // Reset the recording state in context
     setRecording(false);
-    
+
     // Call onComplete to notify parent component
     onComplete?.();
   };
@@ -142,20 +142,20 @@ export function AudioRecorder({
         )}
 
         {/* Initial state - show record button if no recording yet */}
-        {!recordingState.isRecording && 
-         !recordingState.audioBlob && 
-         !recordingState.initializing && (
-          <ActionIcon
-            color="red"
-            variant="filled"
-            radius="xl"
-            size="md"
-            onClick={startRecording}
-            title="Start Recording"
-          >
-            <IconMicrophone size={18} />
-          </ActionIcon>
-        )}
+        {!recordingState.isRecording &&
+          !recordingState.audioBlob &&
+          !recordingState.initializing && (
+            <ActionIcon
+              color="red"
+              variant="filled"
+              radius="xl"
+              size="md"
+              onClick={startRecording}
+              title="Start Recording"
+            >
+              <IconMicrophone size={18} />
+            </ActionIcon>
+          )}
 
         {/* Recording timer */}
         <Text size="sm" style={{ fontFamily: "monospace" }}>

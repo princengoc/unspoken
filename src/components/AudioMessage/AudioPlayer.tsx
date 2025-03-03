@@ -32,7 +32,7 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [playedOnce, setPlayedOnce] = useState(false); 
+  const [playedOnce, setPlayedOnce] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -233,108 +233,108 @@ export function AudioPlayer({ message }: AudioPlayerProps) {
         crossOrigin="anonymous"
       />
 
-        {loading ? (
-          <Group align="center" my="md">
-            <Loader size="sm" />
-            <Text size="sm" c="dimmed">
-              Loading audio...
-            </Text>
-          </Group>
-        ) : error ? (
-          <Paper p="xs" withBorder color="red" radius="md">
-            <Text size="sm" c="red">
-              {error}
-            </Text>
-            <Button
-              size="xs"
-              mt="xs"
-              onClick={() => {
-                // Reset error and try again
-                setError(null);
-                if (audioRef.current && audioUrl) {
-                  audioRef.current.load();
-                }
-              }}
+      {loading ? (
+        <Group align="center" my="md">
+          <Loader size="sm" />
+          <Text size="sm" c="dimmed">
+            Loading audio...
+          </Text>
+        </Group>
+      ) : error ? (
+        <Paper p="xs" withBorder color="red" radius="md">
+          <Text size="sm" c="red">
+            {error}
+          </Text>
+          <Button
+            size="xs"
+            mt="xs"
+            onClick={() => {
+              // Reset error and try again
+              setError(null);
+              if (audioRef.current && audioUrl) {
+                audioRef.current.load();
+              }
+            }}
+          >
+            Try Again
+          </Button>
+        </Paper>
+      ) : (
+        <>
+          <Group gap="xs" mt="xs">
+            <ActionIcon
+              color={isPlaying ? "red" : "blue"}
+              variant="filled"
+              onClick={handlePlayPause}
+              disabled={!audioUrl}
+              radius="xl"
             >
-              Try Again
-            </Button>
-          </Paper>
-        ) : (
-          <>
-            <Group gap="xs" mt="xs">
+              {isPlaying ? (
+                <IconPlayerPause size={16} />
+              ) : (
+                <IconPlayerPlay size={16} />
+              )}
+            </ActionIcon>
+            <Progress
+              value={progress}
+              striped
+              animated={isPlaying}
+              size="sm"
+              radius="xl"
+              transitionDuration={100}
+              style={{ flexGrow: 1 }}
+            />
+
+            {/* Compact public/private indicator */}
+            <Tooltip
+              label={message.is_public ? "Public message" : "Private message"}
+              withArrow
+              position="top"
+            >
               <ActionIcon
-                color={isPlaying ? "red" : "blue"}
-                variant="filled"
-                onClick={handlePlayPause}
-                disabled={!audioUrl}
-                radius="xl"
+                variant="subtle"
+                color={message.is_public ? "green" : "orange"}
+                size="xs"
               >
-                {isPlaying ? (
-                  <IconPlayerPause size={16} />
+                {message.is_public ? (
+                  <IconWorld size={14} />
                 ) : (
-                  <IconPlayerPlay size={16} />
+                  <IconLock size={14} />
                 )}
               </ActionIcon>
-              <Progress
-                value={progress}
-                striped
-                animated={isPlaying}
-                size="sm"
+            </Tooltip>
+
+            <Tooltip
+              label={
+                countdown !== null && countdown > 0
+                  ? `Auto-marking as listened in ${countdown}s`
+                  : "Mark as listened"
+              }
+              withArrow
+              position="top"
+            >
+              <ActionIcon
+                variant="filled"
+                onClick={() => {
+                  // Only call markAsListened through the click handler, not during render
+                  handleMarkAsListened();
+                }}
+                color={playedOnce ? "orange" : "gray"}
                 radius="xl"
-                transitionDuration={100}
-                style={{ flexGrow: 1 }}
-              />
-
-              {/* Compact public/private indicator */}
-              <Tooltip
-                label={message.is_public ? "Public message" : "Private message"}
-                withArrow
-                position="top"
+                disabled={!playedOnce} // need to have played at least once
               >
-                <ActionIcon
-                  variant="subtle"
-                  color={message.is_public ? "green" : "orange"}
-                  size="xs"
-                >
-                  {message.is_public ? (
-                    <IconWorld size={14} />
-                  ) : (
-                    <IconLock size={14} />
-                  )}
-                </ActionIcon>
-              </Tooltip>
-
-              <Tooltip
-                label={
-                  countdown !== null && countdown > 0
-                    ? `Auto-marking as listened in ${countdown}s`
-                    : "Mark as listened"
-                }
-                withArrow
-                position="top"
-              >
-                <ActionIcon
-                  variant="filled"
-                  onClick={() => {
-                    // Only call markAsListened through the click handler, not during render
-                    handleMarkAsListened();
-                  }}
-                  color={playedOnce ? "orange" : "gray"}
-                  radius="xl"
-                  disabled={!playedOnce} // need to have played at least once 
-                >
-                  {countdown !== null && countdown > 0 ? (
-                    <Text size="xs" fw="bold">
-                      {countdown}
-                    </Text>
-                  ) : (
-                    <IconCheck size={16} />
-                  )}
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </>
-        )}
+                {countdown !== null && countdown > 0 ? (
+                  <Text size="xs" fw="bold">
+                    {countdown}
+                  </Text>
+                ) : (
+                  <IconCheck size={16} />
+                )}
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        </>
+      )}
     </Card>
   );
 }

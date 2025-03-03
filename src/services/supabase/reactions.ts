@@ -7,7 +7,7 @@ export interface Reaction {
   id: string;
   roomId: string;
   fromId: string; // the player that is sending this reaction
-  toId: string;  // the player that receives this reaction
+  toId: string; // the player that receives this reaction
   cardId: string;
   type: ReactionType;
   isPrivate: boolean;
@@ -104,11 +104,9 @@ export const reactionsService = {
     }
   },
 
-  async getReactionsForRoom(
-    roomId: string
-  ): Promise<Reaction[]> {
+  async getReactionsForRoom(roomId: string): Promise<Reaction[]> {
     const { data, error } = await supabase.from("reactions").select("*").match({
-      room_id: roomId
+      room_id: roomId,
     });
 
     if (error) {
@@ -117,8 +115,7 @@ export const reactionsService = {
     }
 
     return data.map(mapReactionResponse);
-  },  
-
+  },
 
   // Subscribe to reactions changes for a room
   subscribeToReactions(
@@ -126,37 +123,37 @@ export const reactionsService = {
     callback: (reactions: Reaction[]) => void,
   ) {
     // Immediately get initial data
-    this.getReactionsForRoom(roomId).then(reactions => {
+    this.getReactionsForRoom(roomId).then((reactions) => {
       callback(reactions);
     });
-    
+
     // Subscribe to all changes
     return supabase
       .channel(`reactions:${roomId}`)
       .on(
         "postgres_changes",
         {
-          event: "*", 
+          event: "*",
           schema: "public",
           table: "reactions",
           filter: `room_id=eq.${roomId}`,
         },
         async (payload) => {
           console.log("Reaction change detected:", payload.eventType);
-          
+
           // Add small delay to ensure database consistency
-          await new Promise(resolve => setTimeout(resolve, 50));
-          
+          await new Promise((resolve) => setTimeout(resolve, 50));
+
           try {
             const reactions = await this.getReactionsForRoom(roomId);
             callback(reactions);
           } catch (error) {
             console.error("Error processing reaction change:", error);
           }
-        }
+        },
       )
       .subscribe();
-  }
+  },
 };
 
 // Helper function to map database response to our interface
@@ -164,8 +161,8 @@ function mapReactionResponse(item: any): Reaction {
   return {
     id: item.id,
     roomId: item.room_id,
-    toId: item.to_id,      // Speaker receiving the reaction
-    fromId: item.from_id,  // Listener giving the reaction
+    toId: item.to_id, // Speaker receiving the reaction
+    fromId: item.from_id, // Listener giving the reaction
     cardId: item.card_id,
     type: item.type as ReactionType,
     isPrivate: item.is_private,

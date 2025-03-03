@@ -83,11 +83,12 @@ Card
 # Bugs
 
 # DONE
-  - [x] more obvious replay progress etc
-  - [x] more obvious that people can REPLY
-  - [x] properly close the room.
-  - [x] Allow room creators to delete a room
-  - [x] Allow player to permanently leave a room
+
+- [x] more obvious replay progress etc
+- [x] more obvious that people can REPLY
+- [x] properly close the room.
+- [x] Allow room creators to delete a room
+- [x] Allow player to permanently leave a room
 
 - [x] resume from given state
 - [x] active player list not unique. Player needs to be able to rejoin

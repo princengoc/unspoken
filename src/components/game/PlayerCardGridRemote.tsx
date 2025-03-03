@@ -40,7 +40,7 @@ export function PlayerCardGridRemote({
   playerAssignments,
 }: PlayerCardGridRemoteProps) {
   const { user } = useAuth();
-  const userId = user.id
+  const userId = user.id;
   const { messagesByPlayer, loading: audioLoading } = useAudioMessages();
 
   return (
@@ -86,18 +86,13 @@ export function PlayerCardGridRemote({
                   {/* Reaction feed - shows ALL reactions directed to the current user */}
                   {/* Only show on current user's card */}
                   {isCurrentUserCard && (
-                    <ReactionsFeed
-                      playerAssignments={playerAssignments}
-                    />
+                    <ReactionsFeed playerAssignments={playerAssignments} />
                   )}
 
                   {/* Reaction buttons - for reacting to other people's cards */}
                   {/* Don't show reaction buttons on current user's card */}
                   {!isCurrentUserCard && (
-                    <Reactions
-                      toId={info.playerId}
-                      cardId={info.card.id}
-                    />
+                    <Reactions toId={info.playerId} cardId={info.card.id} />
                   )}
 
                   {/* Render Audio Messages for this card */}

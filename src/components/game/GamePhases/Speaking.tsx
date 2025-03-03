@@ -65,7 +65,9 @@ export function Speaking({ roomId }: SpeakingProp) {
           </Button>
         ) : (
           <Box ta="center">
-            <Text c="dimmed" size="sm">Listen to the speaker's story</Text>
+            <Text c="dimmed" size="sm">
+              Listen to the speaker's story
+            </Text>
           </Box>
         )}
       </motion.div>

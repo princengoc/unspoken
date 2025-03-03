@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Group, ActionIcon, Tooltip } from "@mantine/core";
 import {
   IconHeart,
   IconRipple,
   IconMicrophone,
-  IconQuestionMark
+  IconQuestionMark,
 } from "@tabler/icons-react";
 import { AudioRecorder } from "@/components/AudioMessage/AudioRecorder";
 import type { ReactionType } from "@/services/supabase/reactions";
@@ -14,28 +14,27 @@ import { useReactions } from "@/context/ReactionsProvider";
 // Reaction types
 const REACTIONS = [
   { id: "resonates" as ReactionType, icon: IconHeart, label: "Resonates" },
-  { id: "tellmemore" as ReactionType, icon: IconQuestionMark, label: "Request response" },
+  {
+    id: "tellmemore" as ReactionType,
+    icon: IconQuestionMark,
+    label: "Request response",
+  },
 ] as const;
 
 interface ReactionsProps {
   toId: string;
-  cardId: string;     // The card ID
+  cardId: string; // The card ID
 }
 
 export function Reactions({ toId, cardId }: ReactionsProps) {
   const { recording, setRecording } = useAudioMessages();
-  const { 
-    toggleReaction, 
-    toggleRipple, 
-    hasTellMeMore, 
-    isRippled,
-    loading
-  } = useReactions();    
+  const { toggleReaction, toggleRipple, hasTellMeMore, isRippled, loading } =
+    useReactions();
 
   // Store temporary "button disabled" state for UI feedback
-  const [disabledButtons, setDisabledButtons] = useState<Record<ReactionType, boolean>>(
-    {} as Record<ReactionType, boolean>
-  );
+  const [disabledButtons, setDisabledButtons] = useState<
+    Record<ReactionType, boolean>
+  >({} as Record<ReactionType, boolean>);
   const [rippleDisabled, setRippleDisabled] = useState(false);
 
   // Check if the user has requested a response or rippled this card
@@ -45,7 +44,7 @@ export function Reactions({ toId, cardId }: ReactionsProps) {
   const handleReactionClick = async (id: ReactionType) => {
     // Disable button to prevent spam clicking
     setDisabledButtons((prev) => ({ ...prev, [id]: true }));
-    
+
     try {
       // Toggle reaction using provider method
       await toggleReaction(toId, cardId, id);
@@ -61,7 +60,7 @@ export function Reactions({ toId, cardId }: ReactionsProps) {
 
   const handleRippleClick = async () => {
     setRippleDisabled(true);
-    
+
     try {
       await toggleRipple(toId, cardId);
     } catch (error) {
@@ -77,16 +76,16 @@ export function Reactions({ toId, cardId }: ReactionsProps) {
     setRecording(true);
     if (hasRequestedResponse) {
       // this recording is specifically in response to the other player's request
-      console.log(`Responding to ${toId} request. CardId: ${cardId}`); 
+      console.log(`Responding to ${toId} request. CardId: ${cardId}`);
     }
     // send a "metoo"
-    await toggleReaction(toId, cardId, "metoo"); 
+    await toggleReaction(toId, cardId, "metoo");
   };
 
   const handleRecordComplete = async () => {
     setRecording(false);
     // remove the "metoo"
-    await toggleReaction(toId, cardId, "metoo"); 
+    await toggleReaction(toId, cardId, "metoo");
   };
 
   return (
@@ -102,7 +101,7 @@ export function Reactions({ toId, cardId }: ReactionsProps) {
                 onClick={() => handleReactionClick(id)}
                 radius="xl"
                 size="lg"
-                disabled={disabledButtons[id] || loading} 
+                disabled={disabledButtons[id] || loading}
                 style={disabledButtons[id] ? { opacity: 0.5 } : {}}
               >
                 <Icon size={18} />

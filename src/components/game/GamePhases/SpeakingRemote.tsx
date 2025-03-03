@@ -1,23 +1,22 @@
 // src/components/game/GamePhases/SpeakingRemote.tsx
 import React, { useState, useEffect } from "react";
-import { 
-  Stack, 
-  Button, 
-  Text, 
-  Paper, 
-  Title, 
-  Tabs, 
-  Group, 
+import {
+  Stack,
+  Button,
+  Text,
+  Paper,
+  Title,
+  Tabs,
+  Group,
   Box,
   Badge,
   ActionIcon,
-  Divider
+  Divider,
 } from "@mantine/core";
-import { 
-  IconMessage, 
+import {
   IconUser,
   IconMicrophone,
-  IconPlayerStop
+  IconPlayerStop,
 } from "@tabler/icons-react";
 import { useCardsInGame } from "@/context/CardsInGameProvider";
 import { useRoomMembers } from "@/context/RoomMembersProvider";
@@ -36,8 +35,13 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   const { finishSpeaking, isCreator } = useRoom();
   const { cardState, getCardById } = useCardsInGame();
   const { members, currentMember } = useRoomMembers();
-  const { messagesByCard, loading: audioLoading, recording, setRecording } = useAudioMessages();
-  
+  const {
+    messagesByCard,
+    loading: audioLoading,
+    recording,
+    setRecording,
+  } = useAudioMessages();
+
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [targetCardId, setTargetCardId] = useState<string | null>(null);
@@ -45,16 +49,20 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   const playerAssignments = getPlayerAssignments(members, roomId);
 
   // Create a simple mapping of cards to players for easy lookup
-  const cardPlayerMap = Object.entries(cardState.selectedCards).reduce((map, [playerId, cardId]) => {
-    map[cardId] = playerId;
-    return map;
-  }, {} as Record<string, string>);
+  const cardPlayerMap = Object.entries(cardState.selectedCards).reduce(
+    (map, [playerId, cardId]) => {
+      map[cardId] = playerId;
+      return map;
+    },
+    {} as Record<string, string>,
+  );
 
   // Set first tab as active by default
   useEffect(() => {
     if (Object.keys(cardState.selectedCards).length > 0 && !activeTab) {
       // If current user's card exists, select it first
-      const currentUserCardId = cardState.selectedCards[currentMember?.id || ''];
+      const currentUserCardId =
+        cardState.selectedCards[currentMember?.id || ""];
       if (currentUserCardId) {
         setActiveTab(currentUserCardId);
       } else {
@@ -88,59 +96,62 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
   };
 
   // Create tab items from all cards
-  const tabItems = Object.entries(cardState.selectedCards).map(([playerId, cardId]) => {
-    const player = members.find(m => m.id === playerId);
-    const card = getCardById(cardId);
-    if (!card) return null;
+  const tabItems = Object.entries(cardState.selectedCards)
+    .map(([playerId, cardId]) => {
+      const player = members.find((m) => m.id === playerId);
+      const card = getCardById(cardId);
+      if (!card) return null;
 
-    const playerAssignment = playerAssignments.get(playerId);
-    const isCurrentUser = playerId === currentMember?.id;
-    
-    // Check if there are unread messages for this card
-    const cardMessages = messagesByCard.get(cardId) || [];
-    const hasUnreadMessages = cardMessages.some(msg => msg.sender_id !== currentMember?.id);
+      const playerAssignment = playerAssignments.get(playerId);
+      const isCurrentUser = playerId === currentMember?.id;
 
-    return {
-      value: cardId,
-      label: player?.username || "Unknown Player",
-      playerAssignment,
-      isCurrentUser,
-      hasUnreadMessages,
-      card
-    };
-  }).filter(Boolean);
+      // Check if there are unread messages for this card
+      const cardMessages = messagesByCard.get(cardId) || [];
+      const hasUnreadMessages = cardMessages.some(
+        (msg) => msg.sender_id !== currentMember?.id,
+      );
+
+      return {
+        value: cardId,
+        label: player?.username || "Unknown Player",
+        playerAssignment,
+        isCurrentUser,
+        hasUnreadMessages,
+        card,
+      };
+    })
+    .filter(Boolean);
 
   // Render the conversation interface for the active tab
   const renderActiveCardContent = () => {
     if (!activeTab) return null;
-    
+
     const playerId = cardPlayerMap[activeTab];
     const card = getCardById(activeTab);
-    const player = members.find(m => m.id === playerId);
-    
+    const player = members.find((m) => m.id === playerId);
+
     if (!card || !player) return null;
 
     const isCurrentUserCard = playerId === currentMember?.id;
     const cardMessages = messagesByCard.get(activeTab) || [];
-    
+
     return (
       <Stack gap="sm">
         {/* Card Preview */}
         <Paper p="md" withBorder shadow="sm" radius="md">
           <Group justify="space-between" wrap="nowrap">
-          <Text fw={600} size="md" style={{ flex: 1 }}>
-            "{card.content}"
-            {isCurrentUserCard && (
-              <Badge component="span" size="xs" color="blue" ml="xs">
-                Your card
-              </Badge>
-            )}
-          </Text>
+            <Text fw={600} size="md" style={{ flex: 1 }}>
+              "{card.content}"
+              {isCurrentUserCard && (
+                <Badge component="span" size="xs" color="blue" ml="xs">
+                  Your card
+                </Badge>
+              )}
+            </Text>
 
-            
-            <ActionIcon 
-              variant="light" 
-              color="blue" 
+            <ActionIcon
+              variant="light"
+              color="blue"
               onClick={() => !isRecording && handleRecordToggle(activeTab)}
               disabled={recording}
               radius="xl"
@@ -149,7 +160,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
               <IconMicrophone size={18} />
             </ActionIcon>
           </Group>
-          
+
           {/* Recording Interface */}
           {isRecording && (
             <>
@@ -165,12 +176,12 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
         </Paper>
 
         {/* Conversation Thread as a separate component */}
-        <ConversationThread 
+        <ConversationThread
           cardId={activeTab}
           playerId={playerId}
           messages={cardMessages}
           members={members}
-          currentMemberId={currentMember?.id || ''}
+          currentMemberId={currentMember?.id || ""}
           playerAssignments={playerAssignments}
           player={player}
         />
@@ -183,9 +194,9 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
       <Group justify="space-between" align="center">
         <Title order={4}>Conversations</Title>
         {isCreator && (
-          <Button 
-            size="sm" 
-            onClick={handleEndReviewingPhase} 
+          <Button
+            size="sm"
+            onClick={handleEndReviewingPhase}
             variant="outline"
             rightSection={<IconPlayerStop size={16} />}
           >
@@ -193,25 +204,27 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
           </Button>
         )}
       </Group>
-      
+
       {audioLoading ? (
-        <Text ta="center" c="dimmed">Loading conversations...</Text>
+        <Text ta="center" c="dimmed">
+          Loading conversations...
+        </Text>
       ) : (
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          value={activeTab}
           onChange={setActiveTab}
           keepMounted={false}
           variant="pills"
         >
           <Tabs.List>
             {tabItems.map((item) => (
-              <Tabs.Tab 
-                key={item.value} 
+              <Tabs.Tab
+                key={item.value}
                 value={item.value}
                 leftSection={
                   item.playerAssignment ? (
-                    <PlayerAvatar 
-                      assignment={item.playerAssignment} 
+                    <PlayerAvatar
+                      assignment={item.playerAssignment}
                       size="xs"
                       highlighted={item.isCurrentUser}
                     />
@@ -219,18 +232,25 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
                     <IconUser size={16} />
                   )
                 }
-                rightSection={item.hasUnreadMessages ? (
-                  <Box style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'red' }} />
-                ) : null}
+                rightSection={
+                  item.hasUnreadMessages ? (
+                    <Box
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        backgroundColor: "red",
+                      }}
+                    />
+                  ) : null
+                }
               >
                 {item.label}
               </Tabs.Tab>
             ))}
           </Tabs.List>
 
-          <Box pt="md">
-            {renderActiveCardContent()}
-          </Box>
+          <Box pt="md">{renderActiveCardContent()}</Box>
         </Tabs>
       )}
     </Stack>
