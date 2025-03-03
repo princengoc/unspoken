@@ -69,19 +69,15 @@ export const useAudioRecording = () => {
 
       // Wait for the microphone to stabilize before recording
       // Longer delay for Firefox which needs more time
-      const delayTime = isFirefox ? 750 : 500;
+      const delayTime = isFirefox ? 500 : 250;
       await new Promise((resolve) => setTimeout(resolve, delayTime));
 
       // Choose optimal format for the platform
       // Use type assertion to handle the TypeScript type constraint
       let mimeType = "audio/webm" as const; // Default
-      let recorderType: any = RecordRTC.StereoAudioRecorder;
+      let recorderType: any = RecordRTC.MediaStreamRecorder;
 
-      if (isChrome) {
-        // Chrome works best with these settings
-        mimeType = "audio/webm;codecs=opus" as any;
-        recorderType = RecordRTC.StereoAudioRecorder;
-      } else if (isIOS || isSafari) {
+      if (isIOS || isSafari) {
         // For iOS/Safari better compatibility
         // We're using any here because RecordRTC types are strict about valid MIME types
         // but we need to use formats that might not be in the type definitions

@@ -14,7 +14,6 @@ import { audioMessagesService } from "@/services/supabase/audio-messages";
 interface AudioMessagesContextType {
   // State
   messages: AudioMessage[];
-  messagesByPlayer: Map<string, AudioMessage[]>; // Maintain for backward compatibility
   messagesByCard: Map<string, AudioMessage[]>;   // New organization by card_id
   loading: boolean;
   recording: boolean;
@@ -53,22 +52,7 @@ export function AudioMessagesProvider({
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
 
-  // Group messages by player ID (sender_id) - keeping for backward compatibility
-  const messagesByPlayer = useMemo(() => {
-    const grouped = new Map<string, AudioMessage[]>();
-
-    messages.forEach((message) => {
-      const playerId = message.sender_id;
-      if (!grouped.has(playerId)) {
-        grouped.set(playerId, []);
-      }
-      grouped.get(playerId)!.push(message);
-    });
-
-    return grouped;
-  }, [messages]);
-
-  // Group messages by card ID - NEW organization for conversation threads
+  // Group messages by card ID
   const messagesByCard = useMemo(() => {
     const grouped = new Map<string, AudioMessage[]>();
 
@@ -172,7 +156,6 @@ export function AudioMessagesProvider({
 
     return {
       messages,
-      messagesByPlayer,
       messagesByCard,
       loading,
       recording,
@@ -184,7 +167,6 @@ export function AudioMessagesProvider({
     };
   }, [
     messages,
-    messagesByPlayer,
     messagesByCard,
     loading,
     recording,
