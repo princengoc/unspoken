@@ -7,6 +7,7 @@ export interface AudioMessage {
   receiver_id: string | null;
   created_at: string;
   expires_at: string;
+  card_id: string | null;
 }
 
 export interface RecordingState {

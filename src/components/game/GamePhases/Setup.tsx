@@ -108,6 +108,7 @@ export function Setup() {
                         <AudioRecorder
                           isPublic={true}
                           onComplete={handleRecordComplete}
+                          cardId={selectedCard.id}
                         />
                       </Paper>
                     )}

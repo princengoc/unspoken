@@ -1,3 +1,5 @@
+// src/services/supabase/audio-messages.ts
+
 import { AudioMessage, AudioPrivacy } from "@/core/audio/types";
 import { supabase } from "./client";
 
@@ -45,6 +47,7 @@ export const audioMessagesService = {
     audioBlob: Blob,
     privacy: AudioPrivacy,
     targetPlayerId?: string,
+    cardId?: string,  // Add card_id parameter
   ): Promise<AudioMessage | null> {
     try {
       // 1. Generate a unique filename with appropriate extension
@@ -78,6 +81,7 @@ export const audioMessagesService = {
           file_path: filePath,
           is_public: privacy === "public",
           receiver_id: targetPlayerId || null,
+          card_id: cardId || null,  // Include card_id in the database record
           expires_at: null, // expiry will be set by backend codes
         })
         .select("*")

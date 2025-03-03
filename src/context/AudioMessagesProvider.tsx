@@ -12,9 +12,10 @@ import { AudioMessage, AudioPrivacy } from "@/core/audio/types";
 import { audioMessagesService } from "@/services/supabase/audio-messages";
 
 interface AudioMessagesContextType {
-  // Enhanced state with grouped messages
+  // State
   messages: AudioMessage[];
-  messagesByPlayer: Map<string, AudioMessage[]>;
+  messagesByPlayer: Map<string, AudioMessage[]>; // Maintain for backward compatibility
+  messagesByCard: Map<string, AudioMessage[]>;   // New organization by card_id
   loading: boolean;
   recording: boolean;
 
@@ -23,6 +24,7 @@ interface AudioMessagesContextType {
     audioBlob: Blob,
     privacy: AudioPrivacy,
     targetPlayerId?: string,
+    cardId?: string
   ) => Promise<AudioMessage | null>;
   markAsListened: (messageId: string) => Promise<boolean>;
   getAudioUrl: (
@@ -51,7 +53,7 @@ export function AudioMessagesProvider({
   const [loading, setLoading] = useState(true);
   const [recording, setRecording] = useState(false);
 
-  // Group messages by player ID (sender_id)
+  // Group messages by player ID (sender_id) - keeping for backward compatibility
   const messagesByPlayer = useMemo(() => {
     const grouped = new Map<string, AudioMessage[]>();
 
@@ -61,6 +63,25 @@ export function AudioMessagesProvider({
         grouped.set(playerId, []);
       }
       grouped.get(playerId)!.push(message);
+    });
+
+    return grouped;
+  }, [messages]);
+
+  // Group messages by card ID - NEW organization for conversation threads
+  const messagesByCard = useMemo(() => {
+    const grouped = new Map<string, AudioMessage[]>();
+
+    messages.forEach((message) => {
+      // Ensure all messages have a card_id
+      const cardId = message.card_id;
+      
+      if (cardId) {
+        if (!grouped.has(cardId)) {
+          grouped.set(cardId, []);
+        }
+        grouped.get(cardId)!.push(message);
+      }
     });
 
     return grouped;
@@ -84,7 +105,12 @@ export function AudioMessagesProvider({
   }, [roomId, userId]);
 
   const sendAudioMessage = useCallback(
-    async (audioBlob: Blob, privacy: AudioPrivacy, targetPlayerId?: string) => {
+    async (
+      audioBlob: Blob, 
+      privacy: AudioPrivacy, 
+      targetPlayerId?: string,
+      cardId?: string
+    ) => {
       try {
         return await audioMessagesService.uploadAudioMessage(
           roomId,
@@ -92,6 +118,7 @@ export function AudioMessagesProvider({
           audioBlob,
           privacy,
           targetPlayerId,
+          cardId
         );
       } catch (error) {
         console.error("Error sending audio message:", error);
@@ -137,7 +164,7 @@ export function AudioMessagesProvider({
     [userId, refreshMessages],
   );
 
-  // memoize
+  // memoize the value to prevent unnecessary re-renders
   const value = useMemo(() => {
     const getAudioUrl = async (filePath: string) => {
       return audioMessagesService.getAudioMessageUrl(filePath);
@@ -146,6 +173,7 @@ export function AudioMessagesProvider({
     return {
       messages,
       messagesByPlayer,
+      messagesByCard,
       loading,
       recording,
       sendAudioMessage,
@@ -157,6 +185,7 @@ export function AudioMessagesProvider({
   }, [
     messages,
     messagesByPlayer,
+    messagesByCard,
     loading,
     recording,
     sendAudioMessage,

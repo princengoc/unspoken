@@ -1,3 +1,5 @@
+// src/components/AudioMessage/AudioRecorder.tsx
+
 import React, { useState, useRef } from "react";
 import { Text, Group, ActionIcon, Stack, Alert } from "@mantine/core";
 import {
@@ -17,6 +19,7 @@ import { AudioPrivacy } from "@/core/audio/types";
 interface AudioRecorderProps {
   onComplete?: () => void;
   targetPlayerId?: string;
+  cardId: string;
   isPublic?: boolean;
   isCompact?: boolean;
 }
@@ -24,6 +27,7 @@ interface AudioRecorderProps {
 export function AudioRecorder({
   onComplete,
   targetPlayerId,
+  cardId,
   isPublic = false,
   isCompact = false,
 }: AudioRecorderProps) {
@@ -67,6 +71,7 @@ export function AudioRecorder({
         recordingState.audioBlob,
         privacy,
         targetPlayerId,
+        cardId
       );
 
       if (result) {
@@ -286,7 +291,7 @@ export function AudioRecorder({
           !recordingState.initializing && (
             <>
               <Text size="sm" mr="xs">
-                Record your story
+                Record your response
               </Text>
               <ActionIcon
                 color="red"
