@@ -95,7 +95,7 @@ export function SpeakingRemote({ roomId }: SpeakingRemoteProp) {
     
     // Check if there are unread messages for this card
     const cardMessages = messagesByCard.get(cardId) || [];
-    const hasMessages = cardMessages.length > 0;
+    console.log(`messages by card: ${JSON.stringify(messagesByCard)}`);
     const hasUnreadMessages = cardMessages.some(msg => msg.sender_id !== currentMember?.id);
 
     return {
