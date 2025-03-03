@@ -1,0 +1,100 @@
+// src/components/game/GamePhases/ConversationThread.tsx
+import React from "react";
+import {
+  Stack,
+  Text,
+  Paper,
+  Group,
+  Box,
+  ScrollArea,
+  Flex,
+} from "@mantine/core";
+import { IconMessage } from "@tabler/icons-react";
+import { PlayerAvatar } from "../PlayerAvatar";
+import { AudioPlayer } from "@/components/AudioMessage/AudioPlayer";
+import { Player } from "@/core/game/types";
+import { PlayerAssignment } from "../statusBarUtils";
+
+type ConversationThreadProps = {
+  cardId: string;
+  playerId: string;
+  messages: any[]; // Replace with actual message type
+  members: Player[];
+  currentMemberId: string;
+  playerAssignments: Map<string, PlayerAssignment>;
+  player: Player;
+};
+
+export function ConversationThread({
+  messages,
+  members,
+  currentMemberId,
+  playerAssignments,
+  player,
+}: ConversationThreadProps) {
+  // Sort messages by creation time
+  const sortedMessages = [...messages].sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+
+  return (
+    <Paper p="md" withBorder shadow="sm" radius="md">
+      <Group justify="space-between" mb="xs">
+        <Text fw={500} size="sm">
+          Conversation
+        </Text>
+        <Text size="xs" c="dimmed">
+          {sortedMessages.length} messages •{" "}
+          {player.has_spoken ? "Has spoken" : "Not spoken yet"}
+        </Text>
+      </Group>
+
+      <ScrollArea h={350} offsetScrollbars scrollbarSize={6}>
+        <Stack gap="sm">
+          {sortedMessages.length === 0 ? (
+            <Flex direction="column" align="center" justify="center" h={200}>
+              <IconMessage size={24} opacity={0.3} />
+              <Text c="dimmed" ta="center" size="sm" mt="xs">
+                No messages yet. Tap the microphone to begin.
+              </Text>
+            </Flex>
+          ) : (
+            sortedMessages.map((message) => {
+              const sender = members.find((m) => m.id === message.sender_id);
+              const isSelf = message.sender_id === currentMemberId;
+              const senderAssignment = playerAssignments.get(message.sender_id);
+
+              return (
+                <Box
+                  key={message.id}
+                  style={{
+                    alignSelf: isSelf ? "flex-end" : "flex-start",
+                    maxWidth: "85%",
+                  }}
+                >
+                  <Paper
+                    p="xs"
+                    radius="md"
+                    bg={isSelf ? "blue.0" : "gray.0"}
+                    withBorder
+                  >
+                    <Group gap="xs" mb="xs" wrap="nowrap" align="center">
+                      {senderAssignment && (
+                        <PlayerAvatar assignment={senderAssignment} size="xs" />
+                      )}
+                      <Text size="xs" c="dimmed">
+                        {isSelf ? "You" : sender?.username || "Unknown"}
+                      </Text>
+                    </Group>
+                    <AudioPlayer key={message.id} message={message} />
+                  </Paper>
+                </Box>
+              );
+            })
+          )}
+        </Stack>
+      </ScrollArea>
+    </Paper>
+  );
+}
