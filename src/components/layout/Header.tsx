@@ -14,13 +14,14 @@ import {
   Button,
 } from "@mantine/core";
 import {
-  IconDoorExit,
+  IconArrowBackUp,
   IconMessageCircle,
   IconCards,
   IconHourglass,
   IconExchange,
   IconUser,
   IconCheck,
+  IconLogout,
 } from "@tabler/icons-react";
 import { JoinRequests } from "@/hooks/room/JoinRequests";
 import { SetupViewType, type GamePhase } from "@/core/game/types";
@@ -40,6 +41,7 @@ import { useRoom } from "@/context/RoomProvider";
 interface HeaderProps {
   roomId: string;
   gamePhase: GamePhase;
+  handleSignout: () => void;
   handleLeaveRoom: () => void;
   handleLeaveRoomPermanently: (newOwnerId: string | null) => void;
   onViewChange?: (view: SetupViewType) => void;
@@ -49,6 +51,7 @@ interface HeaderProps {
 export function Header({
   roomId,
   gamePhase,
+  handleSignout,
   handleLeaveRoom,
   handleLeaveRoomPermanently,
   onViewChange,
@@ -202,14 +205,22 @@ export function Header({
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
-                  leftSection={<IconDoorExit size={14} />}
-                  color="red"
+                  leftSection={<IconLogout size={14} />}
+                  color="purple"
+                  onClick={handleSignout}
+                >
+                  Sign Out
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item
+                  leftSection={<IconArrowBackUp size={14} />}
+                  color="blue"
                   onClick={handleLeaveRoom}
                 >
                   Go to Lobby
                 </Menu.Item>
                 <Menu.Item
-                  leftSection={<IconDoorExit size={14} />}
+                  leftSection={<IconArrowBackUp size={14} />}
                   color="red"
                   onClick={openLeaveModal}
                 >

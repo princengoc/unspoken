@@ -41,7 +41,7 @@ function renderGameContent(currentSetupView: SetupViewType, room: Room) {
 function RoomContent({ roomId }: { roomId: string }) {
   const router = useRouter();
   const { room, loading, error, leaveRoom, leaveRoomPermanently } = useRoom();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [currentSetupView, setCurrentSetupView] =
     useState<SetupViewType>("cards");
 
@@ -54,6 +54,12 @@ function RoomContent({ roomId }: { roomId: string }) {
   const handleLeaveRoomPermanently = async (newOwnerId: string | null) => {
     await leaveRoomPermanently(newOwnerId);
     router.push("/");
+  };
+
+  // handle signout
+  const handleSignout = async () => {
+    await Promise.all([leaveRoom(), logout()]);
+    router.push("/auth");
   };
 
   // Memoized callback to prevent unnecessary renders
@@ -96,6 +102,7 @@ function RoomContent({ roomId }: { roomId: string }) {
           <Header
             roomId={room.id}
             gamePhase={room.phase}
+            handleSignout={handleSignout}
             handleLeaveRoom={handleLeaveRoom}
             handleLeaveRoomPermanently={handleLeaveRoomPermanently}
             onViewChange={handleViewChange}
@@ -121,7 +128,7 @@ export default function RoomPage({ params }: RoomPageProps) {
   const { id: roomId } = use(params);
   const { user, loading: userLoading } = useAuth();
 
-  if (userLoading) {
+  if (userLoading || !user) {
     return (
       <Box
         style={{
