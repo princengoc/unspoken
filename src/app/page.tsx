@@ -16,7 +16,7 @@ import {
   CopyButton,
   Tooltip,
   Switch,
-  Select,
+  NativeSelect,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -579,10 +579,11 @@ export default function Home() {
                         </Table.Td>
                         <Table.Td>
                           <Group gap="xs">
-                            <Select
-                              placeholder="Card depth filter"
-                              value={cardDepthFilter}
-                              onChange={setCardDepthFilter}
+                            <NativeSelect
+                              value={cardDepthFilter ? cardDepthFilter : "all"}
+                              onChange={(event) =>
+                                setCardDepthFilter(event.currentTarget.value)
+                              }
                               data={[
                                 { value: "0", label: "U13" },
                                 { value: "1", label: "neighbors" },

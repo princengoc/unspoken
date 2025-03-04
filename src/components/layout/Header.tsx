@@ -10,7 +10,7 @@ import {
   SegmentedControl,
   Text,
   Modal,
-  Select,
+  NativeSelect,
   Button,
 } from "@mantine/core";
 import {
@@ -245,12 +245,12 @@ export function Header({
         </Text>
 
         {isCreator && ownerOptions.length > 0 && (
-          <Select
+          <NativeSelect
             label="Select new room owner (optional)"
             description="As the room creator, you can transfer ownership before leaving"
             data={ownerOptions}
-            value={newOwnerId}
-            onChange={setNewOwnerId}
+            value={newOwnerId ? newOwnerId : ""}
+            onChange={(event) => setNewOwnerId(event.currentTarget.value)}
             mb="md"
           />
         )}
@@ -263,7 +263,7 @@ export function Header({
             color="red"
             onClick={() => {
               closeLeaveModal();
-              handleLeaveRoomPermanently(newOwnerId);
+              handleLeaveRoomPermanently(newOwnerId === "" ? null : newOwnerId);
             }}
           >
             Permanently Leave

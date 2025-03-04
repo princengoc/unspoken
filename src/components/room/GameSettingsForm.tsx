@@ -1,6 +1,6 @@
 // src/components/room/GameSettingsForm.tsx
 import { useState } from "react";
-import { Select, Group, Switch } from "@mantine/core";
+import { NativeSelect, Group, Switch } from "@mantine/core";
 import type { RoomSettings } from "@/core/game/types";
 
 interface GameSettingsFormProps {
@@ -25,6 +25,14 @@ export function GameSettingsForm({
     onChange(newSettings);
   };
 
+  const selectData = [
+    { value: "0", label: "U13" },
+    { value: "1", label: "neighbors" },
+    { value: "2", label: "friends" },
+    { value: "3", label: "besties" },
+    { value: "all", label: "allow all" },
+  ];
+
   return (
     <Group gap="xs" justify="flex-start">
       <Switch
@@ -37,34 +45,29 @@ export function GameSettingsForm({
           });
         }}
       />
-      <Select
+      <NativeSelect
         label="Card Depth"
         description={
           !settings.deal_extras
             ? "Need to enable Deal New Cards"
             : "Only deal new cards from this level"
         }
-        data={[
-          { value: "0", label: "U13" },
-          { value: "1", label: "neighbors" },
-          { value: "2", label: "friends" },
-          { value: "3", label: "besties" },
-          { value: "all", label: "allow all" },
-        ]}
+        data={selectData}
         value={
           settings.card_depth !== null && settings.card_depth !== undefined
             ? settings.card_depth.toString()
             : "all"
         }
-        onChange={(value) =>
+        onChange={(event) =>
           handleSettingChange({
             card_depth:
-              value === "all"
+              event.currentTarget.value === "all"
                 ? null
-                : (parseInt(value as string) as 0 | 1 | 2 | 3),
+                : (parseInt(event.currentTarget.value, 10) as 0 | 1 | 2 | 3),
           })
         }
         disabled={!settings.deal_extras}
+        size="xs"
       />
     </Group>
   );
