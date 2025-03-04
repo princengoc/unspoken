@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { RecordingState } from "@/core/audio/types";
-import RecordRTC from "recordrtc";
 
 const MAX_RECORDING_DURATION = 5 * 60; // 5 minutes in seconds
 
@@ -12,7 +11,7 @@ export const useAudioRecording = () => {
     duration: 0,
   });
 
-  const recorderRef = useRef<RecordRTC | null>(null);
+  const recorderRef = useRef<any | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isPausedRef = useRef<boolean>(false);
@@ -21,6 +20,9 @@ export const useAudioRecording = () => {
     try {
       // Reset any existing recording
       stopRecording();
+
+      // Dynamically import RecordRTC only when needed (in the browser)
+      const { default: RecordRTC } = await import("recordrtc");
 
       // Browser detection
       const isFirefox = navigator.userAgent.indexOf("Firefox") !== -1;
