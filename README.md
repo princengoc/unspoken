@@ -11,10 +11,8 @@
 
 * **BUG / INEFFICIENCIES**:
 
-- [ ] Transition / refresh: should look at implementation of listener reactions - this is "golden"
-  - Currently: finish sharing doesn't transit for first speaker
-  - Audio page often needs refreshing
 - [ ] start game in IRL mode still loads audio
+- [ ] need to implement webm to mp4 for playback on iOS
 
 ## FEEDBACK
 
