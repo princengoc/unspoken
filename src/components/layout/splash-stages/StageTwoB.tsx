@@ -28,7 +28,7 @@ const AudioProgressBar = () => (
     <motion.div
       initial={{ width: '0%' }}
       animate={{ width: '100%' }}
-      transition={{ duration: 2.2 }}
+      transition={{ duration: 1.5 }}
       style={{
         height: '100%',
         backgroundColor: '#fd7e14',
@@ -121,7 +121,7 @@ const StageTwoB = ({ selectedCardContent, onContinue }: StageTwoBProps) => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
+                      transition={{ duration: 0.3 }}
                       style={{ 
                         marginLeft: 12
                       }}
@@ -140,7 +140,7 @@ const StageTwoB = ({ selectedCardContent, onContinue }: StageTwoBProps) => {
                           <AudioWave delay={0} />
                           <motion.div
                             animate={{ scale: [1, 1.1, 1] }}
-                            transition={{ repeat: Infinity, duration: 1.5 }}
+                            transition={{ repeat: Infinity, duration: 1 }}
                             style={{
                               width: iconButtonSize,
                               height: iconButtonSize,
@@ -182,7 +182,7 @@ const StageTwoB = ({ selectedCardContent, onContinue }: StageTwoBProps) => {
                           <Flex justify="center" align="center">
                             <motion.div
                               animate={!playbackStarted ? { scale: [1, 1.1, 1] } : { scale: 1 }}
-                              transition={{ repeat: !playbackStarted ? Infinity : 0, duration: 1.5 }}
+                              transition={{ repeat: !playbackStarted ? Infinity : 0, duration: 1 }}
                               style={{
                                 width: iconButtonSize,
                                 height: iconButtonSize,
