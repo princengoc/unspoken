@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Stack, Title, Group, Text, Paper, Button, Box, Flex, Center, rem } from "@mantine/core";
-import { IconCoffee, IconHeart, IconCar, IconMessageCircle } from "@tabler/icons-react";
+import { IconCoffee, IconHeart, IconCar, IconDots } from "@tabler/icons-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerAvatar } from './SharedComponents';
 
@@ -28,6 +28,11 @@ const InPersonOccasions = [
     icon: <IconCar style={{ color: '#5c7cfa' }} stroke={1.5} />,
     title: 'Road Trip',
   },
+  {
+    id: 'more',
+    icon: <IconDots style={{ color: '#495057' }} stroke={1.5} />,
+    title: 'and more...'
+  }
 ];
 
 const StageTwoA = ({ selectedCardContent, onContinue }: StageTwoAProps) => {
@@ -38,159 +43,132 @@ const StageTwoA = ({ selectedCardContent, onContinue }: StageTwoAProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.6 }}
       >
         <Stack align="center" gap="md">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Title order={3} ta="center" mb="xs" c="white">
-              Take turns sharing your stories
-            </Title>
-          </motion.div>
+          <Title order={3} ta="center" mb="xs" c="white">
+            Take turns sharing your stories
+          </Title>
 
-          <Paper shadow="md" p="lg" radius="md" withBorder style={{ maxWidth: 540 }}>
-            <Stack gap="xl">              
+          <Paper shadow="md" p="lg" radius="md" withBorder style={{ maxWidth: 520 }}>
+            <Stack gap="xl">
+              {/* Occasion icons */}
               <Group justify="center" gap="xl">
-                {InPersonOccasions.map((occasion, index) => (
-                  <motion.div
-                    key={occasion.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + (index * 0.1) }}
-                  >
-                    <Box style={{ cursor: 'default' }}>
-                      <Flex 
-                        direction="column" 
-                        align="center" 
-                        gap={4}
+                {InPersonOccasions.map((occasion) => (
+                  <Box key={occasion.id} style={{ cursor: 'default' }}>
+                    <Flex 
+                      direction="column" 
+                      align="center" 
+                      gap={4}
+                    >
+                      <Center 
+                        style={{ 
+                          width: rem(50), 
+                          height: rem(50),
+                          borderRadius: rem(25),
+                          backgroundColor: 'rgba(241, 243, 245, 0.5)',
+                          border: '2px solid transparent',
+                        }}
                       >
-                        <Center 
-                          style={{ 
-                            width: rem(56), 
-                            height: rem(56),
-                            borderRadius: rem(28),
-                            backgroundColor: 'rgba(241, 243, 245, 0.5)',
-                            transition: 'all 0.2s ease-in-out',
-                            border: '2px solid transparent',
-                          }}
-                        >
-                          <Box style={{ transform: 'scale(1.4)' }}>
-                            {occasion.icon}
-                          </Box>
-                        </Center>
+                        <Box style={{ transform: 'scale(1.3)' }}>
+                          {occasion.icon}
+                        </Box>
+                      </Center>
+                      {occasion.title && 
                         <Text fw={600} ta="center" size="sm" mt={4}>
-                          {occasion.title}
+                            {occasion.title }
                         </Text>
-                      </Flex>
-                    </Box>
-                  </motion.div>
+                        }
+                    </Flex>
+                  </Box>
                 ))}
               </Group>
 
-              {/* Group conversation visualization */}
+              {/* Conversation visualization */}
               <Box 
                 style={{ 
-                  height: 180, 
+                  minHeight: 200, 
                   borderTop: '1px solid rgba(0, 0, 0, 0.1)',
                   paddingTop: 16
                 }}
               >
-                <Flex align="flex-start" h="100%" style={{ position: 'relative' }}>
-                  {/* Player A - first person */}
+                <Flex align="flex-start">
+                  {/* Left: You */}
                   <Stack align="center" style={{ width: 60 }}>
                     <PlayerAvatar color="#228be6" delay={0} size={40} />
                     <Text size="xs" fw={600}>You</Text>
                   </Stack>
                   
-                  {/* Speech flow */}
+                  {/* Middle: Conversation */}
                   <Flex 
-                    align="center" 
-                    justify="center" 
                     direction="column"
+                    align="stretch"
                     gap="md"
-                    style={{ flex: 1, position: 'relative' }}
+                    style={{ flex: 1, marginLeft: 8, marginRight: 8 }}
                   >
-                    <motion.div
-                      initial={{ width: '0%', opacity: 0 }}
-                      animate={{ width: '100%', opacity: 1 }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                      style={{
-                        height: 2,
-                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                        position: 'absolute',
-                        top: 20,
-                        left: 0,
-                        right: 0,
-                        zIndex: 0
-                      }}
-                    />
-                  
-                    {/* Speech bubble from You */}
+                    {/* Your message bubble */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
+                      transition={{ delay: 0.5, duration: 0.5 }}
                       style={{ 
                         backgroundColor: '#e7f5ff', 
                         borderRadius: 12,
-                        padding: '8px 14px',
-                        maxWidth: '80%',
+                        padding: '12px 16px',
+                        alignSelf: 'flex-start',
+                        maxWidth: '85%',
                         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-                        zIndex: 1
                       }}
                     >
-                      <Flex align="center" gap="xs">
-                        <IconMessageCircle size={16} color="#228be6" />
-                        <Text size="sm" fw={500}>{selectedCardContent}</Text>
-                      </Flex>
+                      <Text size="sm" fw={500}>{selectedCardContent}</Text>
                     </motion.div>
                     
-                    {/* Response bubble from Friend 1 */}
+                    {/* Friend 1's message bubble */}
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.8 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.5, duration: 0.5 }}
                       style={{ 
                         backgroundColor: '#fff3bf', 
                         borderRadius: 12,
-                        padding: '8px 14px',
-                        maxWidth: '80%',
+                        padding: '12px 16px',
+                        alignSelf: 'flex-end',
+                        maxWidth: '85%',
                         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
                       }}
                     >
-                      <Text size="sm" fw={500}>That's amazing! I remember when...</Text>
+                      <Text size="sm" fw={500}>Tell us more!</Text>
                     </motion.div>
 
-                    {/* Response bubble from Friend 2 */}
+                    {/* Friend 2's message bubble */}
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 1.2 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 2.2, duration: 0.5 }}
                       style={{ 
                         backgroundColor: '#e6fcf5', 
                         borderRadius: 12,
-                        padding: '8px 14px',
-                        maxWidth: '80%',
+                        padding: '12px 16px',
+                        alignSelf: 'flex-end',
+                        maxWidth: '85%',
                         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
                       }}
                     >
-                      <Text size="sm" fw={500}>I had a similar experience!</Text>
+                      <Text size="sm" fw={500}>That reminds of me when I ...</Text>
                     </motion.div>
                   </Flex>
                   
-                  {/* Two friends on the right with slight vertical offset */}
-                  <Flex direction="column" style={{ width: 120 }}>
+                  {/* Right: Friends */}
+                  <Flex direction="column" style={{ width: 60 }}>
                     {/* Friend 1 */}
-                    <Stack align="center" style={{ width: 60, marginBottom: 30 }}>
-                      <PlayerAvatar color="#fd7e14" delay={0.2} size={40} />
+                    <Stack align="center" style={{ marginBottom: 20 }}>
+                      <PlayerAvatar color="#fd7e14" delay={0} size={40} />
                       <Text size="xs" fw={600}>Friend 1</Text>
                     </Stack>
                     
                     {/* Friend 2 */}
-                    <Stack align="center" style={{ width: 60, marginLeft: 30 }}>
-                      <PlayerAvatar color="#12b886" delay={0.3} size={40} />
+                    <Stack align="center" style={{ marginLeft: 10 }}>
+                      <PlayerAvatar color="#12b886" delay={0} size={40} />
                       <Text size="xs" fw={600}>Friend 2</Text>
                     </Stack>
                   </Flex>
@@ -200,9 +178,9 @@ const StageTwoA = ({ selectedCardContent, onContinue }: StageTwoAProps) => {
           </Paper>
           
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.2, duration: 0.5 }}
           >
             <Button
               variant="light"

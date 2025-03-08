@@ -42,15 +42,15 @@ const EnhancedSplashScreen = ({ visible, user, loading, onLogin, onEnterLobby }:
 
   // Card content for the different stages
   const cards = [
-    "What fear did you overcome that made you stronger?",
-    "Describe a moment when you felt truly peaceful",
-    "Share a time when you were proud of yourself"
+    "I pretend I don’t care about .... but I do.",
+    "My most irrational fear is ...",
+    "A movie I would live in is ..."
   ];
-
+  
   const exchangeCards = [
-    "What's a hope you have for the future?",
-    "Describe a childhood memory that shaped you"
-  ];
+    "I wish you knew that I...",
+    "A memory I have of us that you might not remember..."
+  ];  
 
   // Function to complete the tutorial and enter lobby
   const completeAndEnterLobby = () => {
