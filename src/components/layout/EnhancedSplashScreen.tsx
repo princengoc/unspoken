@@ -10,7 +10,8 @@ import { SplashScreenProps } from './types';
 // Import stage components
 import { 
   StageOne, 
-  StageTwo, 
+  StageTwoA,
+  StageTwoB, 
   StageThree, 
   StageFour, 
   StageFive 
@@ -70,25 +71,32 @@ const EnhancedSplashScreen = ({ visible, user, loading, onLogin, onEnterLobby }:
         );
       case 1:
         return (
-          <StageTwo 
+          <StageTwoA 
             selectedCardContent={cards[selectedCard !== null ? selectedCard : 0]}
             onContinue={goToNextStage}
           />
         );
       case 2:
         return (
+          <StageTwoB 
+            selectedCardContent={cards[selectedCard !== null ? selectedCard : 0]}
+            onContinue={goToNextStage}
+          />
+        );        
+      case 3:
+        return (
           <StageThree 
             exchangeCards={exchangeCards}
             onContinue={goToNextStage}
           />
         );
-      case 3:
+      case 4:
         return (
           <StageFour 
             onContinue={goToNextStage}
           />
         );
-      case 4:
+      case 5:
         return (
           <StageFive 
             isLoggedIn={!!user}
