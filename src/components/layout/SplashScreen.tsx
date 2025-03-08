@@ -1,17 +1,8 @@
 // src/components/layout/SplashScreen.tsx
-
 import React from 'react';
-import { Box } from "@mantine/core";
 import { useViewportSize } from '@mantine/hooks';
 import EnhancedSplashScreen from './EnhancedSplashScreen';
-
-interface SplashScreenProps {
-  visible: boolean;
-  user: any;
-  loading: boolean;
-  onLogin: () => void;
-  onEnterLobby: () => void;
-}
+import { SplashScreenProps } from './types';
 
 const SplashScreen = ({ visible, user, loading, onLogin, onEnterLobby }: SplashScreenProps) => {
   const { height } = useViewportSize();
