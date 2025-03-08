@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Stack, Title, Group, Text, Paper, Button, Box, Flex, Center, rem } from "@mantine/core";
-import { IconCoffee, IconHeart, IconCar, IconDots } from "@tabler/icons-react";
+import { IconCoffee, IconHeart, IconCar } from "@tabler/icons-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerAvatar } from './SharedComponents';
 
@@ -30,8 +30,7 @@ const InPersonOccasions = [
   },
   {
     id: 'more',
-    icon: <IconDots style={{ color: '#495057' }} stroke={1.5} />,
-    title: 'and more...'
+    title: '...',
   }
 ];
 
@@ -52,44 +51,11 @@ const StageTwoA = ({ selectedCardContent, onContinue }: StageTwoAProps) => {
 
           <Paper shadow="md" p="lg" radius="md" withBorder style={{ maxWidth: 520 }}>
             <Stack gap="xl">
-              {/* Occasion icons */}
-              <Group justify="center" gap="xl">
-                {InPersonOccasions.map((occasion) => (
-                  <Box key={occasion.id} style={{ cursor: 'default' }}>
-                    <Flex 
-                      direction="column" 
-                      align="center" 
-                      gap={4}
-                    >
-                      <Center 
-                        style={{ 
-                          width: rem(50), 
-                          height: rem(50),
-                          borderRadius: rem(25),
-                          backgroundColor: 'rgba(241, 243, 245, 0.5)',
-                          border: '2px solid transparent',
-                        }}
-                      >
-                        <Box style={{ transform: 'scale(1.3)' }}>
-                          {occasion.icon}
-                        </Box>
-                      </Center>
-                      {occasion.title && 
-                        <Text fw={600} ta="center" size="sm" mt={4}>
-                            {occasion.title }
-                        </Text>
-                        }
-                    </Flex>
-                  </Box>
-                ))}
-              </Group>
-
-              {/* Conversation visualization */}
+              {/* Conversation visualization - Shown First */}
               <Box 
                 style={{ 
-                  minHeight: 200, 
-                  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
-                  paddingTop: 16
+                  minHeight: 200,
+                  paddingBottom: 16
                 }}
               >
                 <Flex align="flex-start">
@@ -174,13 +140,70 @@ const StageTwoA = ({ selectedCardContent, onContinue }: StageTwoAProps) => {
                   </Flex>
                 </Flex>
               </Box>
+
+              {/* Divider - Appears after 3 seconds */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 3, duration: 0.4 }}
+                style={{
+                  width: '100%',
+                  height: '1px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.1)'
+                }}
+              />
+
+              {/* Occasion icons - Appear one by one after 3 seconds */}
+              <Group justify="center" gap="xl">
+                {InPersonOccasions.map((occasion, index) => (
+                  <motion.div
+                    key={occasion.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 3 + (index * 0.4), duration: 0.5 }}
+                  >
+                    <Box style={{ cursor: 'default' }}>
+                      <Flex 
+                        direction="column" 
+                        align="center" 
+                        gap={4}
+                      >
+                        {occasion.icon ? (
+                          <Center 
+                            style={{ 
+                              width: rem(50), 
+                              height: rem(50),
+                              borderRadius: rem(25),
+                              backgroundColor: 'rgba(241, 243, 245, 0.5)',
+                              border: '2px solid transparent',
+                            }}
+                          >
+                            <Box style={{ transform: 'scale(1.3)' }}>
+                              {occasion.icon}
+                            </Box>
+                          </Center>
+                        ) : (
+                          <Text size="xl" fw={700} mt={8} c="dimmed">
+                            {occasion.title}
+                          </Text>
+                        )}
+                        {occasion.title && occasion.icon && (
+                          <Text fw={600} ta="center" size="sm" mt={4}>
+                            {occasion.title}
+                          </Text>
+                        )}
+                      </Flex>
+                    </Box>
+                  </motion.div>
+                ))}
+              </Group>
             </Stack>
           </Paper>
           
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 2.2, duration: 0.5 }}
+            transition={{ delay: 5, duration: 0.5 }}
           >
             <Button
               variant="light"
