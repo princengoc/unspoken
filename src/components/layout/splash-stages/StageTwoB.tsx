@@ -1,8 +1,8 @@
 // src/components/layout/splash-stages/StageTwoB.tsx
 
-import React, { useState } from 'react';
-import { Stack, Title, Group, Text, Paper, Button, Box, Flex, Center, rem } from "@mantine/core";
-import { IconMicrophone, IconPhoneCall, IconHome, IconPlayerPlay, IconCheck, IconSend } from "@tabler/icons-react";
+import React, { useState, useEffect } from 'react';
+import { Stack, Title, Text, Paper, Button, Box, Flex } from "@mantine/core";
+import { IconMicrophone, IconPlayerPlay, IconCheck } from "@tabler/icons-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerAvatar, AudioWave } from './SharedComponents';
 
@@ -11,250 +11,171 @@ interface StageTwoBProps {
   onContinue: () => void;
 }
 
-// Remote occasions
-const RemoteOccasions = [
-  {
-    id: 'longdistance',
-    icon: <IconPhoneCall style={{ color: '#228be6' }} stroke={1.5} />,
-    title: 'Long Distance',
-  },
-  {
-    id: 'family',
-    icon: <IconHome style={{ color: '#fd7e14' }} stroke={1.5} />,
-    title: 'Family Sharing',
-  },
-  {
-    id: 'message',
-    icon: <IconSend style={{ color: '#12b886' }} stroke={1.5} />,
-    title: 'Send Messages',
-  }
-];
-
 const StageTwoB = ({ selectedCardContent, onContinue }: StageTwoBProps) => {
-  // Animation state
-  const [animationStage, setAnimationStage] = useState<"recording" | "playback">("recording");
+  // Animation states - simplified to just three stages
+  const [showARecording, setShowARecording] = useState(true);
+  const [showASent, setShowASent] = useState(false);
+  const [showBListening, setShowBListening] = useState(false);
+  const [playButtonAnimating, setPlayButtonAnimating] = useState(true);
   
-  // Start with recording, then transition to playback
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimationStage("playback");
-    }, 3500);
+  // Sequential animations with slower transitions
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => {
+        setShowASent(true);
+        setShowARecording(false);
+      }, 4000),
+      setTimeout(() => {
+        setShowBListening(true);
+      }, 6000),
+      setTimeout(() => {
+        setPlayButtonAnimating(false);
+      }, 8000)
+    ];
     
-    return () => clearTimeout(timer);
+    return () => timers.forEach(timer => clearTimeout(timer));
   }, []);
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key="stage2b"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
-        <Stack align="center" gap="md">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Title order={3} ta="center" mb="xs" c="white">
-              Connect anywhere
-            </Title>
-          </motion.div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <Stack align="center" gap="md">
+        <Title order={3} ta="center" mb="xs" c="white">
+          Connect with voice messages
+        </Title>
 
-          <Paper shadow="md" p="lg" radius="md" withBorder style={{ maxWidth: 540 }}>
-            <Stack gap="xl">              
-              <Group justify="center" gap="xl">
-                {RemoteOccasions.map((occasion, index) => (
-                  <motion.div
-                    key={occasion.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + (index * 0.1) }}
-                  >
-                    <Box style={{ cursor: 'default' }}>
-                      <Flex 
-                        direction="column" 
-                        align="center" 
-                        gap={4}
-                      >
-                        <Center 
-                          style={{ 
-                            width: rem(56), 
-                            height: rem(56),
-                            borderRadius: rem(28),
-                            backgroundColor: 'rgba(241, 243, 245, 0.5)',
-                            transition: 'all 0.2s ease-in-out',
-                            border: '2px solid transparent',
-                          }}
-                        >
-                          <Box style={{ transform: 'scale(1.4)' }}>
-                            {occasion.icon}
-                          </Box>
-                        </Center>
-                        <Text fw={600} ta="center" size="sm" mt={4}>
-                          {occasion.title}
-                        </Text>
-                      </Flex>
-                    </Box>
-                  </motion.div>
-                ))}
-              </Group>
+        <Paper shadow="md" p="lg" radius="md" withBorder style={{ maxWidth: 520 }}>
+          {/* Card content reference */}
+          <Box mb="md" p="xs" style={{ backgroundColor: 'rgba(241, 243, 245, 0.5)', borderRadius: 8 }}>
+            <Text size="sm" ta="center" fw={500}>
+              Sharing: "{selectedCardContent}"
+            </Text>
+          </Box>
 
-              {/* Remote recording/playback visualization */}
+          <Box style={{ minHeight: 220 }}>
+            <Flex align="flex-start">
+              {/* Player A (You) */}
+              <Stack align="center" style={{ width: 60 }}>
+                <Box style={{ 
+                  opacity: showBListening ? 0.5 : 1 
+                }}>
+                  <PlayerAvatar 
+                    color="#228be6" 
+                    delay={0} 
+                    size={40} 
+                  />
+                  <Text size="xs" fw={600}>You</Text>
+                </Box>
+              </Stack>
+              
+              {/* Middle: Conversation Area - Fixed height to prevent re-flow */}
               <Box 
                 style={{ 
-                  height: 180, 
-                  borderTop: '1px solid rgba(0, 0, 0, 0.1)',
-                  paddingTop: 16,
-                  position: 'relative'
+                  flex: 1, 
+                  marginLeft: 12, 
+                  marginRight: 12, 
+                  minHeight: 220,
+                  position: 'relative'  
                 }}
               >
-                <AnimatePresence mode="wait">
-                  {/* Recording animation */}
-                  {animationStage === "recording" && (
+                {/* A Recording - Initial state */}
+                <AnimatePresence>
+                  {showARecording && (
                     <motion.div
-                      key="recording"
-                      initial={{ opacity: 1 }}
+                      initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.4 }}
+                      transition={{ duration: 0.7 }}
                       style={{ 
                         position: 'absolute',
-                        width: '100%',
-                        height: '100%'
+                        top: 0,
+                        left: 0,
+                        width: '100%' 
                       }}
                     >
-                      <Flex align="flex-start" gap="xl" style={{ height: '100%' }}>
-                        {/* Player A - recording */}
-                        <Stack align="center" style={{ width: 60 }}>
-                          <PlayerAvatar color="#228be6" delay={0} size={40} />
-                          <Text size="xs" fw={600}>You</Text>
-                        </Stack>
-                        
-                        <Flex 
-                          direction="column" 
-                          align="center"
-                          style={{ flex: 1 }}
+                      <Flex direction="column" gap="md">
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5, duration: 0.7 }}
+                          style={{ 
+                            backgroundColor: '#e7f5ff', 
+                            borderRadius: 12,
+                            padding: '12px 16px',
+                            alignSelf: 'flex-start',
+                            maxWidth: '85%'
+                          }}
                         >
-                          {/* Recording card */}
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            style={{ 
-                              backgroundColor: '#e7f5ff', 
-                              borderRadius: 12,
-                              padding: '12px 16px',
-                              width: '100%',
-                              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
-                            }}
-                          >
-                            <Flex direction="column" gap="md">
-                              <Flex align="center" justify="space-between">
-                                <Text size="sm" fw={500}>{selectedCardContent}</Text>
-                                
-                                <Flex align="center" gap="xs">
-                                  <motion.div
-                                    animate={{ 
-                                      scale: [1, 1.15, 1],
-                                    }}
-                                    transition={{ 
-                                      repeat: Infinity,
-                                      duration: 1.5
-                                    }}
-                                    style={{
-                                      width: 40,
-                                      height: 40,
-                                      borderRadius: '50%',
-                                      backgroundColor: '#fa5252',
-                                      display: 'flex',
-                                      justifyContent: 'center',
-                                      alignItems: 'center'
-                                    }}
-                                  >
-                                    <IconMicrophone size={20} color="white" />
-                                  </motion.div>
-                                  
-                                  <Box>
-                                    <Box style={{ display: 'flex', gap: 4, height: 20 }}>
-                                      {[0.5, 0.7, 0.9, 0.7, 0.5].map((height, i) => (
-                                        <motion.div
-                                          key={i}
-                                          animate={{ 
-                                            height: [height * 10, height * 18, height * 10], 
-                                            backgroundColor: ['#adb5bd', '#228be6', '#adb5bd']
-                                          }}
-                                          transition={{ 
-                                            repeat: Infinity, 
-                                            duration: 1, 
-                                            delay: i * 0.1,
-                                            repeatType: 'mirror'
-                                          }}
-                                          style={{
-                                            width: 3,
-                                            borderRadius: 1,
-                                            backgroundColor: '#adb5bd',
-                                          }}
-                                        />
-                                      ))}
-                                    </Box>
-                                    <Text size="xs" fw={500} c="dimmed">Recording...</Text>
-                                  </Box>
-                                </Flex>
-                              </Flex>
-                              
-                              {/* Recording progress bar */}
-                              <Box>
-                                <Flex align="center" gap="xs" mb={4}>
-                                  <Text size="xs" c="dimmed">0:00</Text>
-                                  <Box style={{ flex: 1 }}></Box>
-                                  <Text size="xs" c="dimmed">0:30</Text>
-                                </Flex>
-                                
-                                <Box style={{ 
-                                  height: 6, 
-                                  backgroundColor: '#e9ecef', 
-                                  borderRadius: 3,
-                                  overflow: 'hidden',
-                                  position: 'relative'
-                                }}>
-                                  <motion.div
-                                    initial={{ width: '0%' }}
-                                    animate={{ width: '100%' }}
-                                    transition={{ 
-                                      duration: 3,
-                                      ease: 'linear'
-                                    }}
-                                    style={{
-                                      height: '100%',
-                                      backgroundColor: '#228be6',
-                                      borderRadius: 3
-                                    }}
-                                  />
-                                </Box>
-                              </Box>
-                            </Flex>
-                          </motion.div>
-                          
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 3 }}
-                            style={{
-                              marginTop: 16,
-                              backgroundColor: '#e9ecef',
-                              borderRadius: 100,
-                              padding: '6px 14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8
-                            }}
-                          >
-                            <Box 
+                          <Flex justify="space-between" align="center" gap="md">
+                            <AudioWave delay={0} />
+                            
+                            <motion.div
+                              animate={{ 
+                                scale: [1, 1.15, 1],
+                              }}
+                              transition={{ 
+                                repeat: Infinity,
+                                duration: 1.5
+                              }}
                               style={{
-                                width: 18,
-                                height: 18,
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                backgroundColor: '#fa5252',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <IconMicrophone size={20} color="white" />
+                            </motion.div>
+                          </Flex>
+                        </motion.div>
+                        
+                      </Flex>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {/* A Sent Confirmation */}
+                <AnimatePresence>
+                  {showASent && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.7 }}
+                      style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%' 
+                      }}
+                    >
+                      <Flex direction="column" gap="md">
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.7 }}
+                          style={{ 
+                            backgroundColor: '#e7f5ff', 
+                            borderRadius: 12,
+                            padding: '12px 16px',
+                            alignSelf: 'flex-start',
+                            maxWidth: '85%'
+                          }}
+                        >
+                          <Flex justify="space-between" align="center" gap="md">
+                            <AudioWave delay={0} />
+                            
+                            <Box
+                              style={{
+                                width: 40,
+                                height: 40,
                                 borderRadius: '50%',
                                 backgroundColor: '#40c057',
                                 display: 'flex',
@@ -262,179 +183,135 @@ const StageTwoB = ({ selectedCardContent, onContinue }: StageTwoBProps) => {
                                 alignItems: 'center'
                               }}
                             >
-                              <IconCheck size={12} color="white" />
+                              <IconCheck size={20} color="white" />
                             </Box>
-                            <Text size="xs" fw={500} c="dimmed">
-                              Recording sent
-                            </Text>
-                          </motion.div>
-                        </Flex>
-                        
-                        {/* Partner space */}
-                        <Stack align="center" style={{ width: 60 }}>
-                          <PlayerAvatar color="#fd7e14" delay={0} size={40} />
-                          <Text size="xs" fw={600}>Partner</Text>
-                        </Stack>
+                          </Flex>
+                        </motion.div>
                       </Flex>
                     </motion.div>
                   )}
-                  
-                  {/* Playback animation */}
-                  {animationStage === "playback" && (
+                </AnimatePresence>
+                
+                {/* B Listening to A's message */}
+                <AnimatePresence>
+                  {showBListening && (
                     <motion.div
-                      key="playback"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.7 }}
                       style={{ 
                         position: 'absolute',
-                        width: '100%',
-                        height: '100%'
+                        top: 0,
+                        left: 0,
+                        width: '100%' 
                       }}
                     >
-                      <Flex align="flex-start" gap="xl" style={{ height: '100%' }}>
-                        {/* No player A in this stage */}
-                        <Box style={{ width: 60 }} />
-                        
-                        <Flex 
-                          direction="column"
-                          align="center"
-                          justify="center"
-                          style={{ flex: 1 }}
+                      <Flex direction="column" gap="md">
+                        {/* A's sent message stays visible but dimmed */}
+                        <motion.div
+                          style={{ 
+                            backgroundColor: '#e7f5ff', 
+                            borderRadius: 12,
+                            padding: '12px 16px',
+                            alignSelf: 'flex-start',
+                            maxWidth: '85%',
+                            opacity: 0.5
+                          }}
                         >
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            style={{ 
-                              backgroundColor: '#fff3bf', 
-                              borderRadius: 12,
-                              padding: '12px 16px',
-                              width: '100%',
-                              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
-                            }}
-                          >
-                            <Flex direction="column" gap="sm">
-                              <Flex align="center" justify="space-between">
-                                <Flex direction="column" gap={4}>
-                                  <Text size="xs" fw={500} c="dimmed">
-                                    Voice message from You
-                                  </Text>
-                                  <Text size="sm" fw={500}>
-                                    {selectedCardContent}
-                                  </Text>
-                                </Flex>
-                                
-                                <motion.div
-                                  initial={{ scale: 0.8, opacity: 0 }}
-                                  animate={{ scale: 1, opacity: 1 }}
-                                  transition={{ delay: 0.3 }}
-                                  style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: '50%',
-                                    backgroundColor: '#fd7e14',
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center'
-                                  }}
-                                >
-                                  <IconPlayerPlay size={18} color="white" />
-                                </motion.div>
-                              </Flex>
-                              
-                              {/* Playback progress bar */}
-                              <Box>
-                                <Box style={{ 
-                                  height: 28,
-                                  position: 'relative',
-                                  marginBottom: 6
-                                }}>
-                                  <motion.div
-                                    animate={{
-                                      opacity: [0, 1, 1, 0],
-                                      x: ['-50%', '-50%', '-50%', '-50%'],
-                                      left: ['0%', '25%', '75%', '100%']
-                                    }}
-                                    transition={{
-                                      duration: 3,
-                                      repeat: 0,
-                                      ease: 'linear',
-                                      delay: 0.5,
-                                      times: [0, 0.2, 0.8, 1]
-                                    }}
-                                    style={{
-                                      position: 'absolute',
-                                      bottom: 0,
-                                      width: 'auto'
-                                    }}
-                                  >
-                                    <AudioWave delay={0} />
-                                  </motion.div>
-                                </Box>
-                                
-                                <Box style={{ 
-                                  height: 4, 
-                                  backgroundColor: '#e9ecef', 
-                                  borderRadius: 2,
-                                  overflow: 'hidden',
-                                  position: 'relative'
-                                }}>
-                                  <motion.div
-                                    initial={{ width: '0%' }}
-                                    animate={{ width: '100%' }}
-                                    transition={{ 
-                                      duration: 3,
-                                      ease: 'linear',
-                                      delay: 0.5
-                                    }}
-                                    style={{
-                                      height: '100%',
-                                      backgroundColor: '#fd7e14',
-                                      borderRadius: 2
-                                    }}
-                                  />
-                                </Box>
-                                
-                                <Flex align="center" justify="space-between" mt={4}>
-                                  <Text size="xs" c="dimmed">0:00</Text>
-                                  <Text size="xs" c="dimmed">0:30</Text>
-                                </Flex>
-                              </Box>
-                            </Flex>
-                          </motion.div>
-                        </Flex>
+                          <Flex justify="space-between" align="center" gap="md">
+                            <AudioWave delay={0} />
+                            
+                            <Box
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                backgroundColor: '#40c057',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <IconCheck size={20} color="white" />
+                            </Box>
+                          </Flex>
+                        </motion.div>
                         
-                        {/* Player B - receiving */}
-                        <Stack align="center" style={{ width: 60 }}>
-                          <PlayerAvatar color="#fd7e14" delay={0} size={40} />
-                          <Text size="xs" fw={600}>Partner</Text>
-                        </Stack>
+                        {/* B receiving message */}
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5, duration: 0.7 }}
+                          style={{ 
+                            backgroundColor: '#fff3bf', 
+                            borderRadius: 12,
+                            padding: '12px 16px',
+                            alignSelf: 'flex-end',
+                            maxWidth: '85%'
+                          }}
+                        >
+                          <Flex justify="space-between" align="center" gap="md">
+                            <motion.div
+                              animate={playButtonAnimating ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                              transition={{ 
+                                repeat: playButtonAnimating ? Infinity : 0,
+                                duration: 2
+                              }}
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                backgroundColor: '#fd7e14',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <IconPlayerPlay size={20} color="white" />
+                            </motion.div>
+                            
+                            <AudioWave delay={0} />
+                          </Flex>
+                        </motion.div>
+                        
                       </Flex>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </Box>
-            </Stack>
-          </Paper>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
+              
+              {/* Player B (Partner) */}
+              <Stack align="center" style={{ width: 60 }}>
+                <Box style={{ opacity: !showBListening ? 0.5 : 1 }}>
+                  <PlayerAvatar 
+                    color="#fd7e14" 
+                    delay={0} 
+                    size={40} 
+                  />
+                  <Text size="xs" fw={600}>Partner</Text>
+                </Box>
+              </Stack>
+            </Flex>
+          </Box>
+        </Paper>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 3, duration: 0.7 }}
+        >
+          <Button
+            variant="light"
+            size="md"
+            radius="xl"
+            onClick={onContinue}
           >
-            <Button
-              variant="light"
-              size="md"
-              radius="xl"
-              onClick={onContinue}
-            >
-              Continue
-            </Button>
-          </motion.div>
-        </Stack>
-      </motion.div>
-    </AnimatePresence>
+            Continue
+          </Button>
+        </motion.div>
+      </Stack>
+    </motion.div>
   );
 };
 
