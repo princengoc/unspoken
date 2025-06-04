@@ -1,9 +1,9 @@
 // src/components/layout/splash-stages/StageFour.tsx
 
-import React from 'react';
+import React from "react";
 import { Stack, Title, Group, Text, Paper, Badge, Button } from "@mantine/core";
 import { IconMessages, IconMicrophone, IconHeart } from "@tabler/icons-react";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface StageFourProps {
   onContinue: () => void;
@@ -28,82 +28,98 @@ const StageFour = ({ onContinue }: StageFourProps) => {
               Build connections in a safe space
             </Title>
           </motion.div>
-          
+
           <Group gap="xl" align="center" justify="center">
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.5 }}
             >
-              <Paper 
-                shadow="sm" 
-                radius="md" 
+              <Paper
+                shadow="sm"
+                radius="md"
                 p="md"
-                style={{ textAlign: 'center', width: 120 }}
+                style={{ textAlign: "center", width: 120 }}
               >
                 <IconMessages size={36} color="#228be6" />
-                <Text size="sm" mt="xs">Draw Cards</Text>
+                <Text size="sm" mt="xs">
+                  Draw Cards
+                </Text>
               </Paper>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
             >
-              <Text fw={700} size="lg" c="white">→</Text>
+              <Text fw={700} size="lg" c="white">
+                →
+              </Text>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.9 }}
             >
-              <Paper 
-                shadow="sm" 
-                radius="md" 
+              <Paper
+                shadow="sm"
+                radius="md"
                 p="md"
-                style={{ textAlign: 'center', width: 120 }}
+                style={{ textAlign: "center", width: 120 }}
               >
                 <IconMicrophone size={36} color="#228be6" />
-                <Text size="sm" mt="xs">Share Stories</Text>
+                <Text size="sm" mt="xs">
+                  Share Stories
+                </Text>
               </Paper>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.1 }}
             >
-              <Text fw={700} size="lg" c="white">→</Text>
+              <Text fw={700} size="lg" c="white">
+                →
+              </Text>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 1.3 }}
             >
-              <Paper 
-                shadow="sm" 
-                radius="md" 
+              <Paper
+                shadow="sm"
+                radius="md"
                 p="md"
-                style={{ textAlign: 'center', width: 120 }}
+                style={{ textAlign: "center", width: 120 }}
               >
                 <IconHeart size={36} color="#228be6" />
-                <Text size="sm" mt="xs">Connect</Text>
+                <Text size="sm" mt="xs">
+                  Connect
+                </Text>
               </Paper>
             </motion.div>
           </Group>
-          
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.8 }}
           >
             <Group gap="xs" mt="md">
-              <Badge color="green" size="lg">Safe Space</Badge>
-              <Badge color="blue" size="lg">Low Pressure</Badge>
-              <Badge color="orange" size="lg">Remote or In-Person</Badge>
+              <Badge color="green" size="lg">
+                Safe Space
+              </Badge>
+              <Badge color="blue" size="lg">
+                Low Pressure
+              </Badge>
+              <Badge color="orange" size="lg">
+                Remote or In-Person
+              </Badge>
             </Group>
           </motion.div>
 
@@ -112,12 +128,7 @@ const StageFour = ({ onContinue }: StageFourProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 2.3 }}
           >
-            <Button
-              variant="light"
-              size="md"
-              radius="xl"
-              onClick={onContinue}
-            >
+            <Button variant="light" size="md" radius="xl" onClick={onContinue}>
               Continue
             </Button>
           </motion.div>

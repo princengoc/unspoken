@@ -17,13 +17,12 @@ import {
   Box,
   Transition,
   Paper,
-  Avatar,
   Modal,
   Center,
   Title,
   rem,
 } from "@mantine/core";
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure } from "@mantine/hooks";
 import {
   IconCheck,
   IconCopy,
@@ -38,7 +37,6 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { formatRelativeTime } from "@/core/game/utils";
-import { useState } from "react";
 
 // RoomCard component for displaying individual rooms
 const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
@@ -70,23 +68,24 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
   };
 
   return (
-    <Card 
+    <Card
       withBorder
       padding="lg"
       radius="md"
       style={{
-        backgroundColor: room.isNew
-          ? "rgba(173, 216, 230, 0.1)"
-          : undefined,
+        backgroundColor: room.isNew ? "rgba(173, 216, 230, 0.1)" : undefined,
         transition: "all 0.3s ease",
         transform: room.isNew ? "translateY(0)" : "translateY(0)",
-        boxShadow: room.isNew 
-          ? "0 8px 20px rgba(0, 123, 255, 0.15)" 
+        boxShadow: room.isNew
+          ? "0 8px 20px rgba(0, 123, 255, 0.15)"
           : "0 2px 10px rgba(0, 0, 0, 0.05)",
       }}
       h={220}
     >
-      <Card.Section bg={room.game_mode === "remote" ? "orange.4" : "blue.4"} p="xs">
+      <Card.Section
+        bg={room.game_mode === "remote" ? "orange.4" : "blue.4"}
+        p="xs"
+      >
         <Group justify="space-between">
           <Group gap="xs">
             <Text fw={500} c="white" size="lg">
@@ -100,9 +99,9 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
               </Tooltip>
             )}
           </Group>
-          
-          <Badge 
-            variant="light" 
+
+          <Badge
+            variant="light"
             color={room.game_mode === "remote" ? "orange" : "blue"}
           >
             {room.game_mode === "remote" ? "Remote" : "In-Person"}
@@ -110,9 +109,11 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
         </Group>
       </Card.Section>
 
-      <Stack mt="md" spacing="xs">
+      <Stack mt="md" gap="xs">
         <Group justify="space-between">
-          <Text size="sm" fw={500}>Passcode:</Text>
+          <Text size="sm" fw={500}>
+            Passcode:
+          </Text>
           <Group gap="xs">
             <Text
               fw={600}
@@ -130,11 +131,7 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
                   onClick={copy}
                   size="sm"
                 >
-                  {copied ? (
-                    <IconCheck size={16} />
-                  ) : (
-                    <IconCopy size={16} />
-                  )}
+                  {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
                 </ActionIcon>
               )}
             </CopyButton>
@@ -142,7 +139,9 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
         </Group>
 
         <Group justify="space-between">
-          <Text size="sm" fw={500}>Status:</Text>
+          <Text size="sm" fw={500}>
+            Status:
+          </Text>
           <Tooltip
             label={
               room.status === "pending"
@@ -158,29 +157,31 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
                         : "Unknown"
             }
           >
-            <Badge 
-              size="sm" 
+            <Badge
+              size="sm"
               variant="light"
               color={
-                room.status === "pending" 
-                  ? "orange" 
-                  : room.status === "rejected" 
-                    ? "red" 
+                room.status === "pending"
+                  ? "orange"
+                  : room.status === "rejected"
+                    ? "red"
                     : "blue"
               }
               leftSection={renderRoomStatusIcon(room)}
             >
-              {room.status === "pending" 
-                ? "Pending" 
-                : room.status === "rejected" 
-                  ? "Rejected" 
+              {room.status === "pending"
+                ? "Pending"
+                : room.status === "rejected"
+                  ? "Rejected"
                   : room.phase}
             </Badge>
           </Tooltip>
         </Group>
 
         <Group justify="space-between">
-          <Text size="sm" fw={500}>Players:</Text>
+          <Text size="sm" fw={500}>
+            Players:
+          </Text>
           <Tooltip
             label={
               loadedRoomMembers[room.id]
@@ -200,16 +201,16 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
         </Group>
 
         <Group justify="space-between">
-          <Text size="sm" fw={500}>Last activity:</Text>
+          <Text size="sm" fw={500}>
+            Last activity:
+          </Text>
           <Text size="sm" c="dimmed">
-            {room.lastUpdated
-              ? formatRelativeTime(room.lastUpdated)
-              : "—"}
+            {room.lastUpdated ? formatRelativeTime(room.lastUpdated) : "—"}
           </Text>
         </Group>
       </Stack>
 
-      <Group position="right" mt="md">
+      <Group justify="right" mt="md">
         {room.status === "creating" || room.status === "joining" ? (
           <Loader size="sm" />
         ) : room.status === "pending" ? (
@@ -221,7 +222,7 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
             Join request declined
           </Badge>
         ) : (
-          <Button 
+          <Button
             rightSection={<IconArrowRight size={16} />}
             onClick={() => onJoin(room.id)}
             variant="light"
@@ -247,14 +248,14 @@ const CreateRoomModal = ({
   handleCreateRoom,
 }: any) => {
   return (
-    <Modal 
-      opened={opened} 
-      onClose={onClose} 
-      title="Create New Game Room" 
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title="Create New Game Room"
       centered
       size="md"
     >
-      <Stack spacing="md">
+      <Stack gap="md">
         <TextInput
           label="Room Name"
           placeholder="Enter a name for your game room"
@@ -262,7 +263,7 @@ const CreateRoomModal = ({
           onChange={(e) => setNewRoomName(e.target.value)}
           required
         />
-        
+
         <NativeSelect
           label="Card Depth Filter"
           description="Choose the depth level of cards for your game"
@@ -276,17 +277,19 @@ const CreateRoomModal = ({
             { value: "all", label: "allow all" },
           ]}
         />
-        
+
         <Switch
           label="Remote Play Mode"
           description="Enable for remote gameplay, disable for in-person games"
           checked={isRemote}
           onChange={(event) => setIsRemote(event.currentTarget.checked)}
         />
-        
-        <Group position="right" mt="md">
-          <Button variant="subtle" onClick={onClose}>Cancel</Button>
-          <Button 
+
+        <Group justify="right" mt="md">
+          <Button variant="subtle" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
             onClick={() => {
               handleCreateRoom(cardDepthFilter, isRemote);
               onClose();
@@ -310,14 +313,14 @@ const JoinRoomModal = ({
   handleJoinRoom,
 }: any) => {
   return (
-    <Modal 
-      opened={opened} 
-      onClose={onClose} 
-      title="Join Game Room" 
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title="Join Game Room"
       centered
       size="md"
     >
-      <Stack spacing="md">
+      <Stack gap="md">
         <TextInput
           label="Room Code"
           placeholder="Enter the 6-digit room code"
@@ -327,10 +330,12 @@ const JoinRoomModal = ({
           required
           description="You'll need to be approved by the room creator"
         />
-        
-        <Group position="right" mt="md">
-          <Button variant="subtle" onClick={onClose}>Cancel</Button>
-          <Button 
+
+        <Group justify="right" mt="md">
+          <Button variant="subtle" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
             onClick={() => {
               handleJoinRoom();
               onClose();
@@ -383,10 +388,6 @@ const LobbyView = ({
   setNewRoomName,
   cardDepthFilter,
   setCardDepthFilter,
-  isAddingRoom,
-  setIsAddingRoom,
-  isJoiningRoom,
-  setIsJoiningRoom,
   isRemote,
   setIsRemote,
   loadActiveRooms,
@@ -400,7 +401,7 @@ const LobbyView = ({
   // Use Mantine's useDisclosure hook for modal states
   const [createModalOpened, createModalHandlers] = useDisclosure(false);
   const [joinModalOpened, joinModalHandlers] = useDisclosure(false);
-  
+
   return (
     <Transition
       mounted={visible}
@@ -409,27 +410,22 @@ const LobbyView = ({
       timingFunction="ease"
     >
       {(styles) => (
-        <Box 
+        <Box
           style={{
             ...styles,
-            minHeight: '100vh',
-            position: 'relative',
+            minHeight: "100vh",
+            position: "relative",
             paddingTop: rem(100),
             paddingBottom: rem(100),
-            top: 0
+            top: 0,
           }}
         >
           <Container size="xl">
-            <Stack spacing="xl">
-              <Paper
-                shadow="sm"
-                p="md"
-                withBorder
-                radius="md"
-              >
+            <Stack gap="xl">
+              <Paper shadow="sm" p="md" withBorder radius="md">
                 <Group justify="space-between">
                   <Title order={2}>Game Lobby</Title>
-                  
+
                   <Group>
                     <ActionIcon
                       variant="light"
@@ -440,7 +436,7 @@ const LobbyView = ({
                     >
                       <IconRefresh size={18} />
                     </ActionIcon>
-                    
+
                     {user ? (
                       <ActionIcon
                         variant="light"
@@ -452,9 +448,9 @@ const LobbyView = ({
                         <IconUser size={18} />
                       </ActionIcon>
                     ) : (
-                      <Button 
-                        variant="light" 
-                        onClick={onLogin} 
+                      <Button
+                        variant="light"
+                        onClick={onLogin}
                         loading={loading}
                       >
                         Login
@@ -463,16 +459,14 @@ const LobbyView = ({
                   </Group>
                 </Group>
               </Paper>
-              
+
               {!user ? (
                 <Center style={{ padding: "100px 0" }}>
-                  <Stack align="center" spacing="md">
-                    <Text size="xl" fw={500}>Login to see and join games</Text>
-                    <Button
-                      size="lg"
-                      onClick={onLogin}
-                      loading={loading}
-                    >
+                  <Stack align="center" gap="md">
+                    <Text size="xl" fw={500}>
+                      Login to see and join games
+                    </Text>
+                    <Button size="lg" onClick={onLogin} loading={loading}>
                       Login to Play
                     </Button>
                   </Stack>
@@ -480,7 +474,7 @@ const LobbyView = ({
               ) : (
                 <>
                   {/* Action Buttons */}
-                  <Group justify="center" spacing="md">
+                  <Group justify="center" gap="md">
                     <Button
                       size="md"
                       leftSection={<IconPlus size={20} />}
@@ -488,7 +482,7 @@ const LobbyView = ({
                     >
                       Create New Room
                     </Button>
-                    
+
                     <Button
                       size="md"
                       variant="light"
@@ -498,30 +492,33 @@ const LobbyView = ({
                       Join with Code
                     </Button>
                   </Group>
-                  
+
                   {/* Rooms Grid */}
                   {roomAPILoading && rooms.length === 0 ? (
                     <Center style={{ padding: "50px 0" }}>
                       <Loader size="xl" />
                     </Center>
                   ) : rooms.length === 0 ? (
-                    <Paper 
-                      withBorder 
-                      p="xl" 
-                      radius="md" 
+                    <Paper
+                      withBorder
+                      p="xl"
+                      radius="md"
                       style={{
-                        textAlign: 'center',
-                        padding: '50px 20px',
-                        background: 'rgba(0, 0, 0, 0.03)'
+                        textAlign: "center",
+                        padding: "50px 20px",
+                        background: "rgba(0, 0, 0, 0.03)",
                       }}
                     >
-                      <Stack align="center" spacing="md">
+                      <Stack align="center" gap="md">
                         <IconCards size={48} stroke={1.5} color="gray" />
-                        <Text size="xl" fw={500}>No Active Game Rooms</Text>
-                        <Text color="dimmed" size="md">
-                          Create a new room or join an existing one with a room code.
+                        <Text size="xl" fw={500}>
+                          No Active Game Rooms
                         </Text>
-                        <Button 
+                        <Text color="dimmed" size="md">
+                          Create a new room or join an existing one with a room
+                          code.
+                        </Text>
+                        <Button
                           onClick={createModalHandlers.open}
                           leftSection={<IconPlus size={20} />}
                           mt="md"
@@ -532,12 +529,8 @@ const LobbyView = ({
                     </Paper>
                   ) : (
                     <SimpleGrid
-                      cols={3}
-                      spacing="lg"
-                      breakpoints={[
-                        { maxWidth: 'md', cols: 2, spacing: 'md' },
-                        { maxWidth: 'sm', cols: 1, spacing: 'sm' },
-                      ]}
+                      cols={{ base: 1, sm: 1, md: 2, lg: 3 }}
+                      spacing={{ base: "sm", sm: "sm", md: "md", lg: "lg" }}
                     >
                       {rooms.map((room) => (
                         <RoomCard
@@ -553,7 +546,7 @@ const LobbyView = ({
               )}
             </Stack>
           </Container>
-          
+
           {/* Modals */}
           <CreateRoomModal
             opened={createModalOpened}
@@ -566,7 +559,7 @@ const LobbyView = ({
             setIsRemote={setIsRemote}
             handleCreateRoom={handleCreateRoom}
           />
-          
+
           <JoinRoomModal
             opened={joinModalOpened}
             onClose={joinModalHandlers.close}

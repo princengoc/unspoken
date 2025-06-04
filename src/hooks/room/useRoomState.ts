@@ -58,7 +58,10 @@ export const useRoomState = () => {
     isRemote: boolean;
     setIsRemote: React.Dispatch<React.SetStateAction<boolean>>;
     loadActiveRooms: () => Promise<void>;
-    handleCreateRoom: (cardDepth: string | null, isRemote: boolean) => Promise<void>;
+    handleCreateRoom: (
+      cardDepth: string | null,
+      isRemote: boolean,
+    ) => Promise<void>;
     handleJoinRoom: () => Promise<void>;
     goToRoom: (roomId: string) => Promise<void>;
     roomAPILoading: boolean;
@@ -86,7 +89,7 @@ export const useRoomState = () => {
   // Fetch rooms and update the state
   const loadActiveRooms = useCallback(async () => {
     if (!user) return;
-    
+
     try {
       const activeRooms = await roomsService.fetchActiveRooms(user.id);
       const roomsWithStatus: RoomWithStatus[] = activeRooms.map((room) => ({

@@ -1,9 +1,9 @@
 // src/components/layout/splash-stages/StageOne.tsx
 
-import React from 'react';
+import React from "react";
 import { Stack, Title, Group, Text, Button } from "@mantine/core";
-import { motion, AnimatePresence } from 'framer-motion';
-import { AnimatedCard } from './SharedComponents';
+import { motion, AnimatePresence } from "framer-motion";
+import { AnimatedCard } from "./SharedComponents";
 
 interface StageOneProps {
   cards: string[];
@@ -12,7 +12,12 @@ interface StageOneProps {
   onContinue: () => void;
 }
 
-const StageOne = ({ cards, selectedCard, onCardSelect, onContinue }: StageOneProps) => {
+const StageOne = ({
+  cards,
+  selectedCard,
+  onCardSelect,
+  onContinue,
+}: StageOneProps) => {
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -27,12 +32,14 @@ const StageOne = ({ cards, selectedCard, onCardSelect, onContinue }: StageOnePro
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <Title order={3} ta="center" mb="lg" c="white">Draw cards, select one that sparks a story</Title>
+            <Title order={3} ta="center" mb="lg" c="white">
+              Draw cards, select one that sparks a story
+            </Title>
           </motion.div>
-          
+
           <Group justify="center" gap="lg">
             {cards.map((content, index) => (
-              <AnimatedCard 
+              <AnimatedCard
                 key={index}
                 content={content}
                 delay={index * 0.3 + 0.8}
@@ -41,7 +48,7 @@ const StageOne = ({ cards, selectedCard, onCardSelect, onContinue }: StageOnePro
               />
             ))}
           </Group>
-          
+
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -63,7 +70,7 @@ const StageOne = ({ cards, selectedCard, onCardSelect, onContinue }: StageOnePro
               radius="xl"
               onClick={onContinue}
               disabled={selectedCard === null}
-              sx={{ opacity: selectedCard === null ? 0.5 : 1 }}
+              style={{ opacity: selectedCard === null ? 0.5 : 1 }}
             >
               Continue
             </Button>
