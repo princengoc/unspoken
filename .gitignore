@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# local supabase
+supabase/.temp/
+supabase/logs/
+
+# vs code
+.vscode/

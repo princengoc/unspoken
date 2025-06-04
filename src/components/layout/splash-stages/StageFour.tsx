@@ -25,7 +25,7 @@ const StageFour = ({ onContinue }: StageFourProps) => {
             transition={{ delay: 0.3 }}
           >
             <Title order={3} ta="center" mb="lg" c="white">
-              Build connections in a safe space
+              Build connections
             </Title>
           </motion.div>
 
@@ -112,13 +112,13 @@ const StageFour = ({ onContinue }: StageFourProps) => {
           >
             <Group gap="xs" mt="md">
               <Badge color="green" size="lg">
-                Safe Space
+                Remote or In-Person
               </Badge>
               <Badge color="blue" size="lg">
-                Low Pressure
+                Build Connections
               </Badge>
               <Badge color="orange" size="lg">
-                Remote or In-Person
+                Low Pressure
               </Badge>
             </Group>
           </motion.div>

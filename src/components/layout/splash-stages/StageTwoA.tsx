@@ -134,7 +134,7 @@ const StageTwoA = ({ selectedCardContent, onContinue }: StageTwoAProps) => {
             animate={{ opacity: 1 }}
             transition={{ delay: 3, duration: 0.5 }}
           >
-            <Button variant="light" size="md" radius="xl" onClick={onContinue}>
+            <Button size="md" radius="xl" onClick={onContinue}>
               Continue
             </Button>
           </motion.div>

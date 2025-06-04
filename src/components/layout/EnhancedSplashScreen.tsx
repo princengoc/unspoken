@@ -7,14 +7,7 @@ import { motion } from "framer-motion";
 import { SplashScreenProps } from "./types";
 
 // Import stage components
-import {
-  StageOne,
-  StageTwoA,
-  StageTwoB,
-  StageThree,
-  StageFour,
-  StageFive,
-} from "./splash-stages";
+import { StageOne, StageTwoA, StageFour, StageFive } from "./splash-stages";
 
 // Enhanced Splash Screen Component
 const EnhancedSplashScreen = ({
@@ -37,7 +30,7 @@ const EnhancedSplashScreen = ({
 
   // Function to immediately skip to the CTA
   const skipToEnd = () => {
-    setStage(4);
+    setStage(2);
   };
 
   // Function to handle card selection in first stage
@@ -79,19 +72,8 @@ const EnhancedSplashScreen = ({
           />
         );
       case 2:
-        return (
-          <StageTwoB
-            selectedCardContent={
-              cards[selectedCard !== null ? selectedCard : 0]
-            }
-            onContinue={goToNextStage}
-          />
-        );
-      case 3:
-        return <StageThree onContinue={goToNextStage} />;
-      case 4:
         return <StageFour onContinue={goToNextStage} />;
-      case 5:
+      case 3:
         return (
           <StageFive isLoggedIn={!!user} onComplete={completeAndEnterLobby} />
         );
