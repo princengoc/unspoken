@@ -4,6 +4,7 @@ import {
   Stack,
   Text,
   Group,
+  Menu,
   Card,
   TextInput,
   Badge,
@@ -18,8 +19,8 @@ import {
   Transition,
   Paper,
   Modal,
+  Drawer,
   Center,
-  Title,
   rem,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -35,8 +36,11 @@ import {
   IconPlus,
   IconArrowRight,
   IconUser,
+  IconLogout,
 } from "@tabler/icons-react";
 import { formatRelativeTime } from "@/core/game/utils";
+import { UnspokenGameTitle } from "@/core/game/unspokenIcon";
+import { ProfileSettings } from "@/app/auth/ProfileSettings";
 
 // RoomCard component for displaying individual rooms
 const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
@@ -80,7 +84,7 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
           ? "0 8px 20px rgba(0, 123, 255, 0.15)"
           : "0 2px 10px rgba(0, 0, 0, 0.05)",
       }}
-      h={220}
+      h={250}
     >
       <Card.Section
         bg={room.game_mode === "remote" ? "orange.4" : "blue.4"}
@@ -375,6 +379,7 @@ interface LobbyViewProps {
   roomAPILoading: boolean;
   onLogin: () => void;
   loadedRoomMembers?: Record<string, any[]>;
+  onLogout: () => void;
 }
 
 const LobbyView = ({
@@ -396,11 +401,15 @@ const LobbyView = ({
   goToRoom,
   roomAPILoading,
   onLogin,
+  onLogout,
   loadedRoomMembers,
 }: LobbyViewProps) => {
   // Use Mantine's useDisclosure hook for modal states
   const [createModalOpened, createModalHandlers] = useDisclosure(false);
   const [joinModalOpened, joinModalHandlers] = useDisclosure(false);
+
+  const [profileOpened, { open: openProfile, close: closeProfile }] =
+    useDisclosure(false);
 
   return (
     <Transition
@@ -422,9 +431,9 @@ const LobbyView = ({
         >
           <Container size="xl">
             <Stack gap="xl">
-              <Paper shadow="sm" p="md" withBorder radius="md">
+              <Paper p="md" radius="md">
                 <Group justify="space-between">
-                  <Title order={2}>Game Lobby</Title>
+                  <UnspokenGameTitle order={2} />
 
                   <Group>
                     <ActionIcon
@@ -438,23 +447,38 @@ const LobbyView = ({
                     </ActionIcon>
 
                     {user ? (
-                      <ActionIcon
-                        variant="light"
-                        color="blue"
-                        size="lg"
-                        radius="xl"
-                        title="User Settings"
-                      >
-                        <IconUser size={18} />
-                      </ActionIcon>
+                      <Menu position="bottom-end" shadow="md">
+                        <Menu.Target>
+                          <ActionIcon
+                            variant="light"
+                            color="blue"
+                            size="lg"
+                            radius="xl"
+                            title="User Settings"
+                          >
+                            <IconUser size={18} />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <Menu.Label>{user.username || "You"}</Menu.Label>
+                          <Menu.Item
+                            leftSection={<IconUser size={14} />}
+                            onClick={openProfile}
+                          >
+                            Profile Settings
+                          </Menu.Item>
+                          <Menu.Divider />
+                          <Menu.Item
+                            leftSection={<IconLogout size={14} />}
+                            color="purple"
+                            onClick={onLogout}
+                          >
+                            Sign Out
+                          </Menu.Item>
+                        </Menu.Dropdown>
+                      </Menu>
                     ) : (
-                      <Button
-                        variant="light"
-                        onClick={onLogin}
-                        loading={loading}
-                      >
-                        Login
-                      </Button>
+                      <Button>Log in</Button>
                     )}
                   </Group>
                 </Group>
@@ -567,6 +591,17 @@ const LobbyView = ({
             setJoinCode={setJoinCode}
             handleJoinRoom={handleJoinRoom}
           />
+
+          {/* Profile Modal */}
+          <Drawer
+            opened={profileOpened}
+            onClose={closeProfile}
+            title="Profile Settings"
+            size="md"
+            position="right"
+          >
+            <ProfileSettings />
+          </Drawer>
         </Box>
       )}
     </Transition>

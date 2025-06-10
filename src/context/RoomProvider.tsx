@@ -8,10 +8,12 @@ import React, {
   ReactNode,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 import { roomsService } from "@/services/supabase/rooms";
 import { roomMembersService } from "@/services/supabase/roomMembers";
 import type { Room, GamePhase, RoomSettings } from "@/core/game/types";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 // Context Type
 interface RoomContextType {
@@ -41,41 +43,83 @@ export function RoomProvider({ roomId, userId, children }: RoomProviderProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Use ref to track subscription to ensure proper cleanup
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
+
   // convenient states that can be derived from roomId and userId
   const isRemote = room?.game_mode === "remote";
   const isCreator = userId === room?.created_by;
 
   useEffect(() => {
     setLoading(true);
-    let subscription: ReturnType<typeof roomsService.subscribeToRoom>;
+    setError(null);
     let isMounted = true;
 
     const loadRoom = async () => {
       try {
-        const roomData = await roomsService.get(roomId);
-        if (isMounted) setRoom(roomData);
+        // Clean up any existing subscription first
+        if (subscriptionRef.current) {
+          await subscriptionRef.current.unsubscribe();
+          subscriptionRef.current = null;
+        }
 
-        subscription = roomsService.subscribeToRoom(roomId, (updatedRoom) => {
-          if (isMounted) setRoom(updatedRoom);
-        });
+        const roomData = await roomsService.get(roomId);
+        if (isMounted) {
+          setRoom(roomData);
+        }
+
+        // Only subscribe if component is still mounted
+        if (isMounted) {
+          subscriptionRef.current = roomsService.subscribeToRoom(
+            roomId,
+            (updatedRoom) => {
+              if (isMounted) {
+                setRoom(updatedRoom);
+              }
+            },
+          );
+        }
       } catch (err) {
         console.error("Error loading room:", err);
-        if (isMounted)
+        if (isMounted) {
           setError(
             err instanceof Error ? err : new Error("Failed to load room"),
           );
+        }
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadRoom();
 
+    // Cleanup function
     return () => {
       isMounted = false;
-      if (subscription) subscription.unsubscribe();
+
+      // Clean up subscription
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe().catch((err) => {
+          console.warn("Error unsubscribing from room:", err);
+        });
+        subscriptionRef.current = null;
+      }
     };
   }, [roomId]);
+
+  // Also clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe().catch((err) => {
+          console.warn("Error unsubscribing from room on unmount:", err);
+        });
+        subscriptionRef.current = null;
+      }
+    };
+  }, []);
 
   const leaveRoom = useCallback(async (): Promise<void> => {
     await roomMembersService.updatePlayerState(roomId, userId, {

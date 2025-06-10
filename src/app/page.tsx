@@ -6,8 +6,7 @@ import { useEffect, useState } from "react";
 import { Container } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 
-// Importing components
-import SplashScreen from "@/components/layout/SplashScreen";
+import NewSplashScreen from "@/components/layout/NewSplashScreen";
 import LobbyView from "@/components/layout/LobbyView";
 
 // Importing hooks and services
@@ -15,7 +14,7 @@ import { useRoomState } from "@/hooks/room/useRoomState";
 import { useScrollPosition } from "@/hooks/room/useScrollPosition";
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { height } = useViewportSize();
 
@@ -56,13 +55,17 @@ export default function Home() {
     }
   }, [showLobby, user, loadActiveRooms]);
 
+  const onLogout = async () => {
+    await logout();
+    router.push("/auth");
+  };
+
   return (
     <Container fluid p={0} style={{ height: "100vh", overflow: "auto" }}>
       {/* Splash Screen */}
-      <SplashScreen
+      <NewSplashScreen
         visible={!showLobby}
         user={user}
-        loading={loading}
         onLogin={() => router.push("/auth")}
         onEnterLobby={() => setShowLobbyView(true)}
       />
@@ -92,6 +95,7 @@ export default function Home() {
         goToRoom={goToRoom}
         roomAPILoading={roomAPILoading}
         onLogin={() => router.push("/auth")}
+        onLogout={onLogout}
       />
     </Container>
   );

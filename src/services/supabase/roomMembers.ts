@@ -183,7 +183,7 @@ export const roomMembersService = {
     callback: (players: Player[]) => void,
   ) {
     return supabase
-      .channel(`room_members:${roomId}`)
+      .channel(`room_members:${roomId}_${Date.now()}`)
       .on(
         "postgres_changes",
         {
