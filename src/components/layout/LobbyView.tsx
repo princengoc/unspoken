@@ -74,7 +74,7 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
   return (
     <Card
       withBorder
-      padding="lg"
+      padding="md"
       radius="md"
       style={{
         backgroundColor: room.isNew ? "rgba(173, 216, 230, 0.1)" : undefined,
@@ -84,10 +84,16 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
           ? "0 8px 20px rgba(0, 123, 255, 0.15)"
           : "0 2px 10px rgba(0, 0, 0, 0.05)",
       }}
-      h={250}
+      h={200}
     >
       <Card.Section
-        bg={room.game_mode === "remote" ? "orange.4" : "blue.4"}
+        bg={
+          room.status === "pending"
+            ? "orange.4"
+            : room.status === "rejected"
+              ? "red"
+              : "blue.4"
+        }
         p="xs"
       >
         <Group justify="space-between">
@@ -106,10 +112,32 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
 
           <Badge
             variant="light"
-            color={room.game_mode === "remote" ? "orange" : "blue"}
+            color={room.game_mode === "remote" ? "orange" : "white"}
           >
             {room.game_mode === "remote" ? "Remote" : "In-Person"}
           </Badge>
+
+          {/* Action button: Join */}
+
+          {room.status === "creating" || room.status === "joining" ? (
+            <Loader size="sm" />
+          ) : room.status === "pending" ? (
+            <Badge size="sm" color="blue">
+              Waiting for approval...
+            </Badge>
+          ) : room.status === "rejected" ? (
+            <Badge size="sm" color="red">
+              Join request declined
+            </Badge>
+          ) : (
+            <Button
+              rightSection={<IconArrowRight size={16} />}
+              onClick={() => onJoin(room.id)}
+              variant="primary"
+            >
+              Join Game
+            </Button>
+          )}
         </Group>
       </Card.Section>
 
@@ -213,28 +241,6 @@ const RoomCard = ({ room, onJoin, loadedRoomMembers }: any) => {
           </Text>
         </Group>
       </Stack>
-
-      <Group justify="right" mt="md">
-        {room.status === "creating" || room.status === "joining" ? (
-          <Loader size="sm" />
-        ) : room.status === "pending" ? (
-          <Badge size="sm" color="blue">
-            Waiting for approval...
-          </Badge>
-        ) : room.status === "rejected" ? (
-          <Badge size="sm" color="red">
-            Join request declined
-          </Badge>
-        ) : (
-          <Button
-            rightSection={<IconArrowRight size={16} />}
-            onClick={() => onJoin(room.id)}
-            variant="light"
-          >
-            Join Game
-          </Button>
-        )}
-      </Group>
     </Card>
   );
 };
@@ -553,7 +559,7 @@ const LobbyView = ({
                     </Paper>
                   ) : (
                     <SimpleGrid
-                      cols={{ base: 1, sm: 1, md: 2, lg: 3 }}
+                      cols={{ base: 1, sm: 3, md: 3, lg: 3 }}
                       spacing={{ base: "sm", sm: "sm", md: "md", lg: "lg" }}
                     >
                       {rooms.map((room) => (

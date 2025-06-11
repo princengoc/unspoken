@@ -74,7 +74,7 @@ export const useRoomState = () => {
   const [cardDepthFilter, setCardDepthFilter] = useState<string | null>(null);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
-  const [isRemote, setIsRemote] = useState(true);
+  const [isRemote, setIsRemote] = useState(false);
 
   const {
     findRoomByPasscode,
