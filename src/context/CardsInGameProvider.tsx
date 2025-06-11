@@ -110,11 +110,14 @@ export function CardsInGameProvider({
   const completePlayerSetup = useCallback(
     async (selectedCardId: string) => {
       try {
-        await cardsInRoomsService.completePlayerSetup(
+        const newState = await cardsInRoomsService.completePlayerSetup(
           roomId,
           userId,
           selectedCardId,
         );
+
+        // update card state straight away
+        setCardState(newState);
       } catch (error) {
         console.error("Failed to complete player setup:", error);
         throw error;

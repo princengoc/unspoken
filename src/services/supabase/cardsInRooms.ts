@@ -111,16 +111,21 @@ export const cardsInRoomsService = {
     roomId: string,
     playerId: string,
     selectedCardId: string,
-  ): Promise<void> {
+  ): Promise<CardState> {
     const { error } = await supabase.rpc("complete_player_setup", {
       p_room_id: roomId,
       p_player_id: playerId,
       p_selected_card_id: selectedCardId,
     });
 
+    // Fetch new state to force refresh
+    const newState = await this.fetchCurrentCardState(roomId);
+
     if (error) {
       console.error("Error completing player setup:", error);
       throw error;
     }
+
+    return newState;
   },
 };
