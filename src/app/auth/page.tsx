@@ -14,11 +14,15 @@ import {
   Text,
   PasswordInput,
   Loader,
+  Group,
+  Alert,
 } from "@mantine/core";
+import { IconCheck } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 
 export default function AuthPage() {
-  const { user, loading, loginWithEmail, signUpWithEmail } = useAuth();
+  const { user, loading, loginWithEmail, signUpWithEmail, resetPassword } =
+    useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -26,6 +30,8 @@ export default function AuthPage() {
   const [visible, { toggle }] = useDisclosure(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [signedUp, setSignedUp] = useState(false); // tracks if signup is complete
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -64,6 +70,36 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      notifications.show({
+        title: "Email Required",
+        message: "Please enter your email address first",
+        color: "orange",
+      });
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await resetPassword(email);
+      setResetEmailSent(true);
+      notifications.show({
+        title: "Reset Email Sent",
+        message: "Check your email for password reset instructions",
+        color: "green",
+      });
+    } catch (error) {
+      notifications.show({
+        title: "Error",
+        message: error.message || "Failed to send reset email",
+        color: "red",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // If the user has just signed up, show a message to check their email.
   if (isSignUp && signedUp) {
     return (
@@ -74,6 +110,35 @@ export default function AuthPage() {
             <Text>
               Please verify your email to complete the sign-up process.
             </Text>
+          </Stack>
+        </Center>
+      </Container>
+    );
+  }
+
+  // If reset email was sent, show confirmation
+  if (resetEmailSent) {
+    return (
+      <Container size="xs">
+        <Center style={{ height: "100vh" }}>
+          <Stack align="center" gap="md">
+            <Title order={2}>Reset Email Sent</Title>
+            <Alert icon={<IconCheck size={16} />} color="green">
+              <Text>
+                We've sent password reset instructions to{" "}
+                <strong>{email}</strong>. Please check your email and follow the
+                link to reset your password.
+              </Text>
+            </Alert>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetEmailSent(false);
+                setEmail("");
+              }}
+            >
+              Back to Sign In
+            </Button>
           </Stack>
         </Center>
       </Container>
@@ -105,16 +170,33 @@ export default function AuthPage() {
             />
           )}
 
-          <PasswordInput
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            visible={visible}
-            onVisibilityChange={toggle}
-            w="100%"
-          />
+          <div style={{ width: "100%" }}>
+            <PasswordInput
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              visible={visible}
+              onVisibilityChange={toggle}
+              w="100%"
+            />
+
+            {/* Forgot Password Button - only show for sign in */}
+            {!isSignUp && (
+              <Group justify="flex-end" mt={4}>
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  onClick={handleForgotPassword}
+                  loading={isResetting}
+                  disabled={!email.trim()}
+                >
+                  Forgot your password?
+                </Button>
+              </Group>
+            )}
+          </div>
 
           <Button fullWidth color="blue" onClick={handleLoginOrSignup}>
             {isSignUp ? "Sign Up" : "Sign In"}
@@ -122,7 +204,10 @@ export default function AuthPage() {
 
           <Text
             size="sm"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setResetEmailSent(false); // Reset the forgot password state when switching
+            }}
             style={{ cursor: "pointer", textDecoration: "underline" }}
           >
             {isSignUp

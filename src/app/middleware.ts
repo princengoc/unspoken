@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const protectedRoutes = ["/profile", "/room/"];
+const publicAuthRoutes = ["/auth", "/auth/reset-password"];
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
@@ -39,6 +40,14 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  // Allow access to public auth routes regardless of session status
+  if (
+    publicAuthRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+  ) {
+    return response;
+  }
+
+  // Protect other routes
   if (
     protectedRoutes.some((route) =>
       request.nextUrl.pathname.startsWith(route),
