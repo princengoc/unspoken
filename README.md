@@ -1,4 +1,26 @@
-# Current PR
+## FEEDBACK June 10th 2025
+
+Feedback received after playing games with a group of friends. 
+- Need clearer instructions. Exchange mechanic confusing. No "downtime" needed. 
+- Make intro compulsory (remove "Skip intro" for players not logged in).
+- Cards content too hard, needs a gradual "party" level to warm people up to the idea of sharing thoughts. 
+- Card background / color should match mood / difficulty. Lack of visual cues make it hard for people to be in the mood to share. 
+
+
+## Current PR
+
+Mechanics
+- [ ] Remove async exchange. Turn into two-round game: first pick card / share. Then pick card for others to share.  
+- [ ] Fix difficulty: warm-up, deeper etc
+- [ ] Perhaps add a collaboration aspect: need to clear 6 warm-up cards to get to harder levels.
+
+UI
+- [ ] Display backgrounds consistent to the mood assigned
+- [ ] Simplify UI to be more linear, at each step there is exactly one action button. 
+
+
+
+## Other TODOs
 
 - [ ] Endgame edits:
   - [ ] Allow direct player invitations (pre-approved join)
@@ -14,47 +36,11 @@
 - [ ] start game in IRL mode still loads audio
 - [ ] need to implement webm to mp4 for playback on iOS
 
-## FEEDBACK
-
-UI
-
-- [x] Improve instructions, text-based prefered
-- [x] Move Sidenavbar to top, assume vertical mobile
-
-IRL
-
-- [x] Remove start speaking, just do finish speaking
-
-Remote
-
-- [x] iOS sound compat (?)
 
 Content
 
-- [x] level 0 for playing with Bong
-- [x] Curate content
 - [ ] Translate the game into Vietnamese.
 - [ ] Add a language button (localized to player)
-
-- **Room management**
-
-- **Card history**
-  - [x] Add card history
-  - [x] Add personalization
-- **Bug**
-- [ ] Exchange: should not allow choosing of same card (server-side update of in_play?)
-
-Good things
-
-- 3 cards ok, mobile display ok
-
-Questions
-
-- Ripple ?
-
-# TODO
-
-- [ ] cards have two sides: question side and prompt side. Question side is most appropriate for Exchange.
 
 # Minor UIs
 
@@ -69,10 +55,6 @@ Exchange tab
 Exchange card
 
 - [ ] Show the "from_id" avatar in the bottom corner for the speaker
-
-Card backgrounds
-
-- [ ] Display backgrounds consistent to the mood assigned
 
 Card
 
